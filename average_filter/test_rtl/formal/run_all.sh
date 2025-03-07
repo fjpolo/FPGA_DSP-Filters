@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Source the OSS CAD Suite environment
-  echo "[FORMAL][SBY] Sourcing OSS CAD Suite environment..."
+  echo "    [FORMAL] Sourcing OSS CAD Suite environment..."
 source ~/oss-cad-suite/environment
 if [ $? -ne 0 ]; then
-    echo "[FORMAL][SBY] ailed to source OSS CAD Suite environment. Exiting script."
+    echo "    [FORMAL] ailed to source OSS CAD Suite environment. Exiting script."
     exit 1
 fi
 
@@ -12,7 +12,7 @@ fi
 for dir in */; do
   # Check if the directory contains a run.sh script
   if [ -f "$dir/run.sh" ]; then
-    echo "[FORMAL][SBY] Running $dir/run.sh..."
+    echo "    [FORMAL] Running $dir/run.sh..."
 
     # Run the run.sh script and capture the exit status
     (cd "$dir" && ./run.sh >> average_filter_log.txt)
@@ -20,11 +20,11 @@ for dir in */; do
 
     # Check if the script failed
     if [ $exit_status -ne 0 ]; then
-      echo "[FORMAL][SBY] average_filter failed!"
+      echo "    [FORMAL] average_filter failed!"
     else
-      echo "[FORMAL][SBY] average_filter passed!"
+      echo "    [FORMAL] average_filter passed!"
     fi
   else
-    echo "[FORMAL] No run.sh found in $dir"
+    echo "    [FORMAL] No run.sh found in $dir"
   fi
 done
