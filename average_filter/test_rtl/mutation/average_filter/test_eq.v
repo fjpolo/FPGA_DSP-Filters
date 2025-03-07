@@ -32,33 +32,41 @@
 module miter (
     input   wire    [0:0]   i_clk,
     input   wire    [0:0]   i_reset_n,
+    input   wire    [0:0]   i_ce,
     input   wire    [7:0]   i_data,
-    output  reg     [7:0]   o_data
+    output  reg     [7:0]   o_data,
+    output  reg     [0:0]   o_ce
 );
 
     // Reference signals
     wire    [7:0]   i_data_ref;
     wire    [7:0]   o_data_ref;
+    wire    [0:0]   o_ce_ref;
 
     // DUT signals
     wire    [7:0]   i_data_uut;
     wire    [7:0]   o_data_uut;
+    wire    [0:0]   o_ce_uut;
 
     // Instantiate the reference
     average_filter ref(
-        .i_clk(i_clk),
-        .i_reset_n(i_reset_n),
-        .i_data(i_data_ref),
-        .o_data(o_data_ref),
+        .clk(i_clk),
+        .reset_n(i_reset_n),
+        .i_ce(i_ce),
+        .data_in(i_data_ref),
+        .data_out(o_data_ref),
+        .o_ce(o_ce_ref),
         .mutsel(1'b0)
-    );
-
-    // Instantiate the UUT
-    average_filter uut(
-        .i_clk(i_clk),
-        .i_reset_n(i_reset_n),
-        .i_data(i_data_uut),
-        .o_data(o_data_uut),
+        );
+        
+        // Instantiate the UUT
+        average_filter uut(
+        .clk(i_clk),
+        .reset_n(i_reset_n),
+        .i_ce(i_ce),
+        .data_in(i_data_uut),
+        .data_out(o_data_uut),
+        .o_ce(o_ce_uut),
         .mutsel(1'b1)
     );
 

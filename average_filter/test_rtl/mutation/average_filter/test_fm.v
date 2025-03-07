@@ -32,28 +32,64 @@
 module testbench (
     input   wire    [0:0]   i_clk,
     input   wire    [0:0]   i_reset_n,
+    input   wire    [0:0]   i_ce,
     input   wire    [7:0]   i_data,
-    output  reg     [7:0]   o_data
+    output  reg     [7:0]   o_data,
+    output  reg     [0:0]   o_ce
 );
     // Instantiate the dut
     average_filter ref(
-        .i_clk(i_clk),
-        .i_reset_n(i_reset_n),
-        .i_data(i_data),
-        .o_data(o_data)
+        .clk(i_clk),
+        .reset_n(i_reset_n),
+        .i_ce(i_ce),
+        .data_in(i_data),
+        .data_out(o_data),
+        .o_ce(o_ce)
         );
+        
+    ////////////////////////////////////////////////////
+    //
+    // f_past_valid register
+    //
+    ////////////////////////////////////////////////////
+    reg	f_past_valid;
+    initial	f_past_valid = 0;
+        always @(posedge i_clk)
+            f_past_valid <= 1'b1;
+    
+    // initial assume(!i_reset_n);
 
     ////////////////////////////////////////////////////
-	//
-	// f_past_valid register
-	//
-	////////////////////////////////////////////////////
-	reg	f_past_valid;
-	initial	f_past_valid = 0;
-	always @(posedge i_clk)
-		f_past_valid <= 1'b1;
+    //
+    // Reset
+    //
+    ////////////////////////////////////////////////////
+    always @(posedge i_clk) begin
+        if(($past(f_past_valid))&&(f_past_valid)&&(!$past(i_reset_n))&&(i_reset_n)) begin
+            assert(!o_ce);
+            assert(o_data == 'h00);
+        end
+    end
 
-    always @(*)
-        assert((i_clk)||(!i_clk));
-        
+    ////////////////////////////////////////////////////
+    //
+    // BMC
+    //
+    ////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////
+    //
+    // Contract
+    //
+    //////////////////////////////////////////////////// 
+    
+    // Once a i_ce is issued, with valid data, after two clocks, o_ce must be high and o_data must be valid
+    always @(posedge i_clk) begin
+        if (($past(f_past_valid,2))&&($past(f_past_valid))&&(f_past_valid)&&(!$past(i_reset_n))&&(i_reset_n)) 
+          if(($past(i_ce,2))&&(!$past(i_ce))) begin
+            assert(o_ce);
+            assert(o_data == ($past(i_data, 2) + $past(i_data, 5)));
+          end
+    end
+                           
 endmodule
