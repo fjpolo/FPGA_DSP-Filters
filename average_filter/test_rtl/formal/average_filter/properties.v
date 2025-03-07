@@ -41,16 +41,25 @@
 	////////////////////////////////////////////////////
 	reg	f_past_valid;
 	initial	f_past_valid = 0;
-	always @(posedge clk)
-		f_past_valid <= 1'b1;
-
-
+		always @(posedge clk)
+			f_past_valid <= 1'b1;
+	
+	// initial assume(!reset_n);
 
     ////////////////////////////////////////////////////
 	//
 	// Reset
 	//
 	////////////////////////////////////////////////////
+	always @(posedge clk) begin
+		if(($past(f_past_valid))&&(f_past_valid)&&(!$past(reset_n))&&(reset_n)) begin
+			assert(!sum_ce);
+			assert(!o_ce);
+			assert(last_sample == 'h00);
+			assert(sum_ff == 'h00);
+			assert(data_out == 'h00);
+		end
+	end
 
     ////////////////////////////////////////////////////
 	//
@@ -58,11 +67,50 @@
 	//
 	////////////////////////////////////////////////////
 
+	always @(posedge clk) begin
+		if ((f_past_valid)&&($past(reset_n))&&(reset_n)) 
+		  if($past(i_ce))
+			assert(sum_ce == 1);
+	end
+
+	always @(posedge clk) begin
+		if ((f_past_valid)&&($past(reset_n))&&(reset_n)) 
+		  if($past(sum_ce))
+			assert(o_ce == 1);
+	end
+
+	always @(posedge clk) begin
+		if ((f_past_valid)&&($past(reset_n))&&(reset_n)) 
+		  if($past(i_ce))
+			assert(last_sample == $past(data_in));
+	end
+
+	always @(posedge clk) begin
+		if ((f_past_valid)&&($past(reset_n))&&(reset_n)) 
+		  if($past(i_ce))
+			assert(sum_ff == $past(data_in) + $past(last_sample));
+	end
+
+	always @(posedge clk) begin
+		if ((f_past_valid)&&($past(reset_n))&&(reset_n)) 
+		  if($past(sum_ce))
+			assert(data_out == $past(sum_ff[8:1]));
+	end
+
     ////////////////////////////////////////////////////
 	//
 	// Contract
 	//
-	////////////////////////////////////////////////////   
+	//////////////////////////////////////////////////// 
+	
+	// Once a i_ce is issued, with valid data, after two clocks, o_ce must be high and data_out must be valid
+	always @(posedge clk) begin
+		if (($past(f_past_valid,2))&&($past(f_past_valid))&&(f_past_valid)&&(!$past(reset_n))&&(reset_n)) 
+		  if(($past(i_ce,2))&&(!$past(i_ce))&&($past(sum_ce))&&(!sum_ce)&&(!$past(o_ce))) begin
+			assert(o_ce);
+			assert(data_out == ($past(data_in, 2) + $past(last_sample, 2)));
+		  end
+	end
 
     ////////////////////////////////////////////////////
 	//
@@ -74,7 +122,15 @@
 	//
 	// Cover
 	//
-	////////////////////////////////////////////////////     
+	////////////////////////////////////////////////////
+	always @(posedge clk) begin
+		assume(reset_n);
+		assume(data_in != $past(data_in));
+		assume(data_in != 0);
+		if((f_past_valid)&&($past(f_past_valid)))
+			if(i_ce)
+				cover(o_ce);
+	end     
            
 `endif
 

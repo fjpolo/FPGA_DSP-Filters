@@ -46,23 +46,16 @@ module average_filter(
     // i_ce       -> sum_ce     -> sum = past_sample + current_sample
     // sum_ce     -> o_ce       -> output = sum >>> 1
     reg [0:0] sum_ce;
-    reg [0:0] shift_ce;
 
     // sum_ce
     always @(posedge clk) begin
       if (!reset_n) begin
         sum_ce <= 1'b0;
       end else begin
-        sum_ce <= i_ce;
-      end
-    end
-
-    // shift_ce
-    always @(posedge clk) begin
-      if (!reset_n) begin
-        shift_ce <= 1'b0;
-      end else begin
-        shift_ce <= sum_ce;
+        if(i_ce)
+          sum_ce <= 1'b1;
+        else
+          sum_ce <= 1'b0;
       end
     end
 
@@ -71,7 +64,10 @@ module average_filter(
       if (!reset_n) begin
         o_ce <= 1'b0;
       end else begin
-        o_ce <= shift_ce;
+        if(sum_ce)
+          o_ce <= 1'b1;
+        else
+          o_ce <= 1'b0;
       end
     end
     
@@ -94,8 +90,7 @@ module average_filter(
 
     // data_out <= ($signed(data_in) + $signed(last_sample)) >>> 1;
     /* verilator lint_off UNUSEDSIGNAL */
-    reg [8:0] sum_ff;
-    reg [7:0] shift_ff;
+    reg signed [8:0] sum_ff;
     /* verilator lint_on UNUSEDSIGNAL */
 
     // Clock #0 - sum_ff
@@ -111,10 +106,10 @@ module average_filter(
     // Clock #1 - shift_ff
     always @(posedge clk) begin
       if (!reset_n) begin
-        shift_ff <= 8'd0;
+        data_out <= 8'd0;
       end else begin
         if(sum_ce)
-        data_out <= sum_ff[8:1];
+          data_out <= sum_ff[8:1];
       end
     end
   
