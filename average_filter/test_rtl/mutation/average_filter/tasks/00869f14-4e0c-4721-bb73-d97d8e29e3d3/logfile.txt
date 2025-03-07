@@ -1,0 +1,2 @@
+task 00869f14-4e0c-4721-bb73-d97d8e29e3d3 (test_sim)
+  1 5 mutate -mode const1 -module average_filter -cell i_ce_$mux_B -port Y -portbit 0 -wire sum_ce_$dff_Q_D -wirebit 0 -src average_filter.v:52.5-58.8 -src average_filter.v:53.11-53.19 -src average_filter.v:53.7-57.10

@@ -27,7 +27,18 @@ for FILE in "$ORIGINAL_FILE" "$FORMAL_FILE"; do
 done
 
 # Insert formal properties into the original master.v before `endmodule`
-gsed "/endmodule/e cat $FORMAL_FILE" "$ORIGINAL_FILE" > "$TEMP_FILE"
+OS=$(uname -s)
+
+if [[ "$OS" == "Darwin" ]]; then
+  # macOS (iOS)
+  gsed "/endmodule/e cat $FORMAL_FILE" "$ORIGINAL_FILE" > "$TEMP_FILE"
+elif [[ "$OS" == "Linux" ]]; then
+  # Linux
+  sed "/endmodule/e cat $FORMAL_FILE" "$ORIGINAL_FILE" > "$TEMP_FILE"
+else
+  echo "Unsupported OS"
+  exit 1
+fi
 
 
 # Verify the original master.v with formal properties

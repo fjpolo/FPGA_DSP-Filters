@@ -1,0 +1,2 @@
+task 3fdac250-2368-41d3-95cb-07102705eabb (test_sim)
+  1 3 mutate -mode const0 -module average_filter -cell last_sample_$dff_Q -port Q -portbit 6 -wire last_sample -wirebit 6 -src average_filter.v:83.22-83.33 -src average_filter.v:86.5-93.8

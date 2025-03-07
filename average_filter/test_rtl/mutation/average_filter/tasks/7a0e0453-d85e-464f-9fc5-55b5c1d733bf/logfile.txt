@@ -1,0 +1,2 @@
+task 7a0e0453-d85e-464f-9fc5-55b5c1d733bf (test_sim)
+  1 2 mutate -mode cnot0 -module average_filter -cell reset_n_$mux_S -port B -portbit 1 -ctrlbit 4 -wire i_ce_$mux_S_Y -wirebit 1 -src average_filter.v:87.11-87.19 -src average_filter.v:87.7-92.10
