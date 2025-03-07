@@ -93,13 +93,15 @@ module average_filter(
     end
 
     // data_out <= ($signed(data_in) + $signed(last_sample)) >>> 1;
+    /* verilator lint_off UNUSEDSIGNAL */
     reg [8:0] sum_ff;
     reg [7:0] shift_ff;
+    /* verilator lint_on UNUSEDSIGNAL */
 
     // Clock #0 - sum_ff
     always @(posedge clk) begin
       if (!reset_n) begin
-        sum_ff <= 8'd0;
+        sum_ff <= 9'd0;
       end else begin
         if(i_ce)
           sum_ff <= data_in + last_sample;
