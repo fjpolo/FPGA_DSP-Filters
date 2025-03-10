@@ -1,3 +1,0 @@
-read_rtlil ../../database/design.il
-mutate -mode const1 -module average_filter -cell i_ce_$mux_S_2 -port S -portbit 0 -src average_filter.v:101.12-101.16 -src average_filter.v:101.9-102.43
-write_verilog -norename mutated.v

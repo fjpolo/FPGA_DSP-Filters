@@ -1,6 +1,0 @@
-SBY 23:04:55 [test_eq] Removing directory '/Users/fjpolo/Workspace/FPGA_DSP-Filters/average_filter/test_rtl/mutation/average_filter/tasks/f35e2aa0-dda1-43c4-8c1f-784a52b6e059/test_eq'.
-SBY 23:04:55 [test_eq] Copy '/Users/fjpolo/Workspace/FPGA_DSP-Filters/average_filter/test_rtl/mutation/average_filter/tasks/f35e2aa0-dda1-43c4-8c1f-784a52b6e059/test_eq.v' to '/Users/fjpolo/Workspace/FPGA_DSP-Filters/average_filter/test_rtl/mutation/average_filter/tasks/f35e2aa0-dda1-43c4-8c1f-784a52b6e059/test_eq/src/test_eq.v'.
-SBY 23:04:55 [test_eq] Copy '/Users/fjpolo/Workspace/FPGA_DSP-Filters/average_filter/test_rtl/mutation/average_filter/tasks/f35e2aa0-dda1-43c4-8c1f-784a52b6e059/mutated.il' to '/Users/fjpolo/Workspace/FPGA_DSP-Filters/average_filter/test_rtl/mutation/average_filter/tasks/f35e2aa0-dda1-43c4-8c1f-784a52b6e059/test_eq/src/mutated.il'.
-SBY 23:04:55 [test_eq] engine_0: smtbmc yices
-SBY 23:04:55 [test_eq] base: starting process "cd test_eq/src; yosys -ql ../model/design.log ../model/design.ys"
-SBY 23:04:55 [test_eq] base: terminating process

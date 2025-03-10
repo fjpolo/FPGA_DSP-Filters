@@ -1,1 +1,0 @@
-1 mutate -mode inv -module average_filter -cell reset_n_$mux_S_1 -port B -portbit 6 -wire i_ce_$mux_S_2_Y -wirebit 6 -src average_filter.v:98.11-98.19 -src average_filter.v:98.7-103.10

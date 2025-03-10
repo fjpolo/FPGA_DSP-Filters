@@ -1,1 +1,0 @@
-1 mutate -mode const0 -module average_filter -cell sum_ff_$dff_Q -port Q -portbit 0 -wire sum_ff -wirebit 0 -src average_filter.v:93.22-93.28 -src average_filter.v:97.5-104.8
