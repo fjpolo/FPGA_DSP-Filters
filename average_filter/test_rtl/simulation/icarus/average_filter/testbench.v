@@ -56,6 +56,11 @@ integer error_count;
 integer i;
 
 initial begin
+  $dumpfile("dump.vcd");
+  $dumpvars(0, average_filter_tb); // Dump all signals in the testbench
+end
+
+initial begin
   clk = 0;
   forever #(CLK_PERIOD/2) clk = ~clk;
 end
