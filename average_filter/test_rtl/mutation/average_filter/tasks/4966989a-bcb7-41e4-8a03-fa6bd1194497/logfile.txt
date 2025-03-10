@@ -1,0 +1,10 @@
+task 4966989a-bcb7-41e4-8a03-fa6bd1194497 (test_sim)
+  1 753 mutate -mode const1 -module average_filter -cell i_ce_$mux_S_2 -port S -portbit 0 -src average_filter.v:101.12-101.16 -src average_filter.v:101.9-102.43
++ bash /Users/fjpolo/oss-cad-suite/libexec/../share/mcy/scripts/create_mutated.sh
++ iverilog -o sim ../../testbench.v mutated.v
++ vvp -n sim
++ grep PASS sim.out
+PASS: All tests passed.
++ grep ERROR sim.out
++ echo '1 PASS'
++ exit 0

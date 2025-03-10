@@ -1,0 +1,1 @@
+1 mutate -mode const1 -module average_filter -cell i_ce_$mux_S_1 -port S -portbit 0 -src average_filter.v:86.12-86.16 -src average_filter.v:86.9-87.34

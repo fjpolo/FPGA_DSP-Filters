@@ -1,0 +1,26 @@
+
+ /----------------------------------------------------------------------------\
+ |  yosys -- Yosys Open SYnthesis Suite                                       |
+ |  Copyright (C) 2012 - 2025  Claire Xenia Wolf <claire@yosyshq.com>         |
+ |  Distributed under an ISC-like license, type "license" to see terms        |
+ \----------------------------------------------------------------------------/
+ Yosys 0.49+10 (git sha1 18a7c0038, x86_64-apple-darwin23.5-clang++ 18.1.8 -fPIC -O3)
+
+-- Executing script file `mutate.ys' --
+
+1. Executing RTLIL frontend.
+Input filename: ../../database/design.il
+
+2. Executing MUTATE pass.
+Add input constant 1 at average_filter.i_ce_$mux_S_2.S[0].
+
+3. Executing Verilog backend.
+
+3.1. Executing BMUXMAP pass.
+
+3.2. Executing DEMUXMAP pass.
+Dumping module `\average_filter'.
+
+End of script. Logfile hash: 7163672f6c, CPU: user 0.03s system 0.01s, MEM: 5.26 MB peak
+Yosys 0.49+10 (git sha1 18a7c0038, x86_64-apple-darwin23.5-clang++ 18.1.8 -fPIC -O3)
+Time spent: 46% 1x clean_zerowidth (0 sec), 27% 2x write_verilog (0 sec), ...

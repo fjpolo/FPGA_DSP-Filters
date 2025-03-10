@@ -1,0 +1,32 @@
+
+ /----------------------------------------------------------------------------\
+ |  yosys -- Yosys Open SYnthesis Suite                                       |
+ |  Copyright (C) 2012 - 2025  Claire Xenia Wolf <claire@yosyshq.com>         |
+ |  Distributed under an ISC-like license, type "license" to see terms        |
+ \----------------------------------------------------------------------------/
+ Yosys 0.49+10 (git sha1 18a7c0038, x86_64-apple-darwin23.5-clang++ 18.1.8 -fPIC -O3)
+
+-- Executing script file `/var/folders/18/p4xvbm3s0bl9rcxybk080tgc0000gn/T/tmp.HiPXcITyya' --
+
+1. Executing RTLIL frontend.
+Input filename: ../../database/design.il
+
+2. Executing MUTATE pass.
+Add input inverter at average_filter.reset_n_$mux_S_2.A[5].
+Adding ctrl port mutsel to module average_filter.
+
+3. Executing CLK2FFLOGIC pass (convert clocked FFs to generic $ff cells).
+
+3.1. Executing PEEPOPT pass (run peephole optimizers).
+Replacing average_filter.sum_ff_$dff_Q ($dff): CLK=\clk, D=\reset_n_$mux_S_1_Y, Q=\sum_ff
+Replacing average_filter.sum_ce_$dff_Q ($dff): CLK=\clk, D=\sum_ce_$dff_Q_D, Q=\sum_ce
+Replacing average_filter.o_ce_$dff_Q ($dff): CLK=\clk, D=\o_ce_$dff_Q_D, Q=\o_ce
+Replacing average_filter.last_sample_$dff_Q ($dff): CLK=\clk, D=\reset_n_$mux_S_Y, Q=\last_sample
+Replacing average_filter.data_out_$dff_Q ($dff): CLK=\clk, D=\reset_n_$mux_S_2_Y, Q=\data_out
+
+4. Executing RTLIL backend.
+Output filename: mutated.il
+
+End of script. Logfile hash: 331996a51d, CPU: user 0.03s system 0.01s, MEM: 5.23 MB peak
+Yosys 0.49+10 (git sha1 18a7c0038, x86_64-apple-darwin23.5-clang++ 18.1.8 -fPIC -O3)
+Time spent: 36% 2x write_rtlil (0 sec), 25% 2x read_rtlil (0 sec), ...

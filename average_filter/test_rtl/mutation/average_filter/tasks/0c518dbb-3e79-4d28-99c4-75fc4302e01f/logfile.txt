@@ -1,0 +1,81 @@
+task 0c518dbb-3e79-4d28-99c4-75fc4302e01f (test_eq)
+  1 498 mutate -mode inv -module average_filter -cell reset_n_$mux_S_2 -port A -portbit 1 -src average_filter.v:108.11-108.19 -src average_filter.v:108.7-113.10
++ bash /Users/fjpolo/oss-cad-suite/libexec/../share/mcy/scripts/create_mutated_eq.sh -c -o mutated.il
++ ln -s ../../test_eq.v ../../test_eq.sby .
++ sby -f test_eq.sby
+SBY 23:04:54 [test_eq] Removing directory '/Users/fjpolo/Workspace/FPGA_DSP-Filters/average_filter/test_rtl/mutation/average_filter/tasks/0c518dbb-3e79-4d28-99c4-75fc4302e01f/test_eq'.
+SBY 23:04:54 [test_eq] Copy '/Users/fjpolo/Workspace/FPGA_DSP-Filters/average_filter/test_rtl/mutation/average_filter/tasks/0c518dbb-3e79-4d28-99c4-75fc4302e01f/test_eq.v' to '/Users/fjpolo/Workspace/FPGA_DSP-Filters/average_filter/test_rtl/mutation/average_filter/tasks/0c518dbb-3e79-4d28-99c4-75fc4302e01f/test_eq/src/test_eq.v'.
+SBY 23:04:54 [test_eq] Copy '/Users/fjpolo/Workspace/FPGA_DSP-Filters/average_filter/test_rtl/mutation/average_filter/tasks/0c518dbb-3e79-4d28-99c4-75fc4302e01f/mutated.il' to '/Users/fjpolo/Workspace/FPGA_DSP-Filters/average_filter/test_rtl/mutation/average_filter/tasks/0c518dbb-3e79-4d28-99c4-75fc4302e01f/test_eq/src/mutated.il'.
+SBY 23:04:54 [test_eq] engine_0: smtbmc yices
+SBY 23:04:54 [test_eq] base: starting process "cd test_eq/src; yosys -ql ../model/design.log ../model/design.ys"
+SBY 23:04:54 [test_eq] base: Warning: Wire miter.\o_data [7] is used but has no driver.
+SBY 23:04:54 [test_eq] base: Warning: Wire miter.\o_data [6] is used but has no driver.
+SBY 23:04:54 [test_eq] base: Warning: Wire miter.\o_data [5] is used but has no driver.
+SBY 23:04:54 [test_eq] base: Warning: Wire miter.\o_data [4] is used but has no driver.
+SBY 23:04:54 [test_eq] base: Warning: Wire miter.\o_data [3] is used but has no driver.
+SBY 23:04:54 [test_eq] base: Warning: Wire miter.\o_data [2] is used but has no driver.
+SBY 23:04:54 [test_eq] base: Warning: Wire miter.\o_data [1] is used but has no driver.
+SBY 23:04:54 [test_eq] base: Warning: Wire miter.\o_data [0] is used but has no driver.
+SBY 23:04:54 [test_eq] base: Warning: Wire miter.\o_ce is used but has no driver.
+SBY 23:04:54 [test_eq] base: Warning: Wire miter.\i_data_uut [7] is used but has no driver.
+SBY 23:04:54 [test_eq] base: Warning: Wire miter.\i_data_uut [6] is used but has no driver.
+SBY 23:04:54 [test_eq] base: Warning: Wire miter.\i_data_uut [5] is used but has no driver.
+SBY 23:04:54 [test_eq] base: Warning: Wire miter.\i_data_uut [4] is used but has no driver.
+SBY 23:04:54 [test_eq] base: Warning: Wire miter.\i_data_uut [3] is used but has no driver.
+SBY 23:04:54 [test_eq] base: Warning: Wire miter.\i_data_uut [2] is used but has no driver.
+SBY 23:04:54 [test_eq] base: Warning: Wire miter.\i_data_uut [1] is used but has no driver.
+SBY 23:04:54 [test_eq] base: Warning: Wire miter.\i_data_uut [0] is used but has no driver.
+SBY 23:04:54 [test_eq] base: Warning: Wire miter.\i_data_ref [7] is used but has no driver.
+SBY 23:04:54 [test_eq] base: Warning: Wire miter.\i_data_ref [6] is used but has no driver.
+SBY 23:04:54 [test_eq] base: Warning: Wire miter.\i_data_ref [5] is used but has no driver.
+SBY 23:04:54 [test_eq] base: Warning: Wire miter.\i_data_ref [4] is used but has no driver.
+SBY 23:04:54 [test_eq] base: Warning: Wire miter.\i_data_ref [3] is used but has no driver.
+SBY 23:04:54 [test_eq] base: Warning: Wire miter.\i_data_ref [2] is used but has no driver.
+SBY 23:04:54 [test_eq] base: Warning: Wire miter.\i_data_ref [1] is used but has no driver.
+SBY 23:04:54 [test_eq] base: Warning: Wire miter.\i_data_ref [0] is used but has no driver.
+SBY 23:04:54 [test_eq] base: finished (returncode=0)
+SBY 23:04:54 [test_eq] prep: starting process "cd test_eq/model; yosys -ql design_prep.log design_prep.ys"
+SBY 23:04:54 [test_eq] prep: Warning: Wire miter.\o_data [7] is used but has no driver.
+SBY 23:04:54 [test_eq] prep: Warning: Wire miter.\o_data [6] is used but has no driver.
+SBY 23:04:54 [test_eq] prep: Warning: Wire miter.\o_data [5] is used but has no driver.
+SBY 23:04:54 [test_eq] prep: Warning: Wire miter.\o_data [4] is used but has no driver.
+SBY 23:04:54 [test_eq] prep: Warning: Wire miter.\o_data [3] is used but has no driver.
+SBY 23:04:54 [test_eq] prep: Warning: Wire miter.\o_data [2] is used but has no driver.
+SBY 23:04:54 [test_eq] prep: Warning: Wire miter.\o_data [1] is used but has no driver.
+SBY 23:04:54 [test_eq] prep: Warning: Wire miter.\o_data [0] is used but has no driver.
+SBY 23:04:54 [test_eq] prep: Warning: Wire miter.\o_ce is used but has no driver.
+SBY 23:04:54 [test_eq] prep: Warning: Wire miter.\ref_uut.data_in_gate [7] is used but has no driver.
+SBY 23:04:54 [test_eq] prep: Warning: Wire miter.\ref_uut.data_in_gate [6] is used but has no driver.
+SBY 23:04:54 [test_eq] prep: Warning: Wire miter.\ref_uut.data_in_gate [5] is used but has no driver.
+SBY 23:04:54 [test_eq] prep: Warning: Wire miter.\ref_uut.data_in_gate [4] is used but has no driver.
+SBY 23:04:54 [test_eq] prep: Warning: Wire miter.\ref_uut.data_in_gate [3] is used but has no driver.
+SBY 23:04:54 [test_eq] prep: Warning: Wire miter.\ref_uut.data_in_gate [2] is used but has no driver.
+SBY 23:04:54 [test_eq] prep: Warning: Wire miter.\ref_uut.data_in_gate [1] is used but has no driver.
+SBY 23:04:54 [test_eq] prep: Warning: Wire miter.\ref_uut.data_in_gate [0] is used but has no driver.
+SBY 23:04:54 [test_eq] prep: Warning: Wire miter.\i_data_ref [7] is used but has no driver.
+SBY 23:04:54 [test_eq] prep: Warning: Wire miter.\i_data_ref [6] is used but has no driver.
+SBY 23:04:54 [test_eq] prep: Warning: Wire miter.\i_data_ref [5] is used but has no driver.
+SBY 23:04:54 [test_eq] prep: Warning: Wire miter.\i_data_ref [4] is used but has no driver.
+SBY 23:04:54 [test_eq] prep: Warning: Wire miter.\i_data_ref [3] is used but has no driver.
+SBY 23:04:54 [test_eq] prep: Warning: Wire miter.\i_data_ref [2] is used but has no driver.
+SBY 23:04:54 [test_eq] prep: Warning: Wire miter.\i_data_ref [1] is used but has no driver.
+SBY 23:04:54 [test_eq] prep: Warning: Wire miter.\i_data_ref [0] is used but has no driver.
+SBY 23:04:54 [test_eq] prep: finished (returncode=0)
+SBY 23:04:54 [test_eq] smt2: starting process "cd test_eq/model; yosys -ql design_smt2.log design_smt2.ys"
+SBY 23:04:54 [test_eq] smt2: finished (returncode=0)
+SBY 23:04:54 [test_eq] engine_0: starting process "cd test_eq; yosys-smtbmc -s yices --presat --unroll --noprogress -t 16  --append 0 --dump-vcd engine_0/trace.vcd --dump-yw engine_0/trace.yw --dump-vlogtb engine_0/trace_tb.v --dump-smtc engine_0/trace.smtc model/design_smt2.smt2"
+SBY 23:04:55 [test_eq] engine_0: ##   0:00:00  Solver: yices
+SBY 23:04:55 [test_eq] engine_0: ##   0:00:00  Checking assumptions in step 0..
+SBY 23:04:55 [test_eq] engine_0: ##   0:00:00  Checking assertions in step 0..
+SBY 23:04:55 [test_eq] engine_0: ##   0:00:00  Checking assumptions in step 1..
+SBY 23:04:55 [test_eq] engine_0: ##   0:00:00  Checking assertions in step 1..
+SBY 23:04:55 [test_eq] engine_0: ##   0:00:00  Checking assumptions in step 2..
+SBY 23:04:55 [test_eq] engine_0: ##   0:00:00  Checking assertions in step 2..
+SBY 23:04:55 [test_eq] engine_0: ##   0:00:00  Checking assumptions in step 3..
+SBY 23:04:55 [test_eq] engine_0: ##   0:00:00  Checking assertions in step 3..
+SBY 23:04:55 [test_eq] engine_0: ##   0:00:00  Checking assumptions in step 4..
+SBY 23:04:55 [test_eq] engine_0: ##   0:00:00  Checking assertions in step 4..
+SBY 23:04:55 [test_eq] engine_0: ##   0:00:00  Checking assumptions in step 5..
+SBY 23:04:55 [test_eq] engine_0: ##   0:00:00  Checking assertions in step 5..
+SBY ---- Keyboard interrupt or external termination signal ----
+SBY 23:04:55 [test_eq] engine_0: terminating process

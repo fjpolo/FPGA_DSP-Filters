@@ -1,0 +1,63 @@
+
+ /----------------------------------------------------------------------------\
+ |  yosys -- Yosys Open SYnthesis Suite                                       |
+ |  Copyright (C) 2012 - 2025  Claire Xenia Wolf <claire@yosyshq.com>         |
+ |  Distributed under an ISC-like license, type "license" to see terms        |
+ \----------------------------------------------------------------------------/
+ Yosys 0.49+10 (git sha1 18a7c0038, x86_64-apple-darwin23.5-clang++ 18.1.8 -fPIC -O3)
+
+-- Executing script file `design_smt2.ys' --
+
+1. Executing RTLIL frontend.
+Input filename: design_prep.il
+
+2. Executing HIERARCHY pass (managing design hierarchy).
+Attribute `top' found on module `miter'. Setting top module to miter.
+
+2.1. Analyzing design hierarchy..
+Top module:  \miter
+
+2.2. Analyzing design hierarchy..
+Top module:  \miter
+Removed 0 unused modules.
+Module miter directly or indirectly contains formal properties -> setting "keep" attribute.
+
+3. Executing FORMALFF pass.
+
+4. Executing DFFUNMAP pass (unmap clock enable and synchronous reset from FFs).
+
+5. Printing statistics.
+
+=== miter ===
+
+   Number of wires:                 82
+   Number of wire bits:            395
+   Number of public wires:          54
+   Number of public wire bits:     272
+   Number of ports:                  6
+   Number of port bits:             20
+   Number of memories:               0
+   Number of memory bits:            0
+   Number of processes:              0
+   Number of cells:                 78
+     $add                            2
+     $anyinit                       10
+     $anyseq                        17
+     $assume                         2
+     $eq                             6
+     $eqx                            1
+     $ff                            10
+     $mux                           28
+     $reduce_and                     1
+     $scopeinfo                      1
+
+6. Executing SMT2 backend.
+
+6.1. Executing BMUXMAP pass.
+
+6.2. Executing DEMUXMAP pass.
+Creating SMT-LIBv2 representation of module miter.
+
+End of script. Logfile hash: 5adc20484c, CPU: user 0.04s system 0.01s, MEM: 5.82 MB peak
+Yosys 0.49+10 (git sha1 18a7c0038, x86_64-apple-darwin23.5-clang++ 18.1.8 -fPIC -O3)
+Time spent: 65% 2x write_smt2 (0 sec), 23% 2x read_rtlil (0 sec), ...

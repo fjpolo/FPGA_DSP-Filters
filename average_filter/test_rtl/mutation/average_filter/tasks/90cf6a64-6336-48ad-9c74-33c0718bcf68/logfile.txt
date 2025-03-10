@@ -1,0 +1,12 @@
+task 90cf6a64-6336-48ad-9c74-33c0718bcf68 (test_eq)
+  1 502 mutate -mode inv -module average_filter -cell reset_n_$mux_S_1 -port B -portbit 6 -wire i_ce_$mux_S_2_Y -wirebit 6 -src average_filter.v:98.11-98.19 -src average_filter.v:98.7-103.10
++ bash /Users/fjpolo/oss-cad-suite/libexec/../share/mcy/scripts/create_mutated_eq.sh -c -o mutated.il
++ ln -s ../../test_eq.v ../../test_eq.sby .
++ sby -f test_eq.sby
+SBY 23:04:55 [test_eq] Removing directory '/Users/fjpolo/Workspace/FPGA_DSP-Filters/average_filter/test_rtl/mutation/average_filter/tasks/90cf6a64-6336-48ad-9c74-33c0718bcf68/test_eq'.
+SBY 23:04:55 [test_eq] Copy '/Users/fjpolo/Workspace/FPGA_DSP-Filters/average_filter/test_rtl/mutation/average_filter/tasks/90cf6a64-6336-48ad-9c74-33c0718bcf68/test_eq.v' to '/Users/fjpolo/Workspace/FPGA_DSP-Filters/average_filter/test_rtl/mutation/average_filter/tasks/90cf6a64-6336-48ad-9c74-33c0718bcf68/test_eq/src/test_eq.v'.
+SBY 23:04:55 [test_eq] Copy '/Users/fjpolo/Workspace/FPGA_DSP-Filters/average_filter/test_rtl/mutation/average_filter/tasks/90cf6a64-6336-48ad-9c74-33c0718bcf68/mutated.il' to '/Users/fjpolo/Workspace/FPGA_DSP-Filters/average_filter/test_rtl/mutation/average_filter/tasks/90cf6a64-6336-48ad-9c74-33c0718bcf68/test_eq/src/mutated.il'.
+SBY 23:04:55 [test_eq] engine_0: smtbmc yices
+SBY 23:04:55 [test_eq] base: starting process "cd test_eq/src; yosys -ql ../model/design.log ../model/design.ys"
+SBY ---- Keyboard interrupt or external termination signal ----
+SBY 23:04:55 [test_eq] base: terminating process
