@@ -29,14 +29,16 @@
 `default_nettype none
 `timescale 1ps/1ps
 
-module average_filter(
-    input   wire                  clk,
-    input   wire                  reset_n,
-    input   wire                  i_ce,
-    input   wire  signed  [7:0]   data_in,
-    output  reg   signed  [7:0]   data_out,
-    output  reg                   o_ce
-  );
+module average_filter #(
+    parameter DATA_WIDTH = 8
+) (
+    input wire clk,
+    input wire reset_n,
+    input wire i_ce,
+    input wire signed [(DATA_WIDTH-1):0] data_in,
+    output reg signed [(DATA_WIDTH-1):0] data_out,
+    output reg o_ce
+);
   
     // 
     // Pipelined CE signals
@@ -76,12 +78,12 @@ module average_filter(
     // 
 
     // Data
-    reg signed [7:0] last_sample;
+    reg signed [(DATA_WIDTH-1):0] last_sample;
 
     // last_sample
     always @(posedge clk) begin
       if (!reset_n) begin
-        last_sample <= 8'd0;
+        last_sample <= 'd0;
       end else begin
         if(i_ce)
           last_sample <= data_in;
@@ -90,13 +92,13 @@ module average_filter(
 
     // data_out <= ($signed(data_in) + $signed(last_sample)) >>> 1;
     /* verilator lint_off UNUSEDSIGNAL */
-    reg signed [8:0] sum_ff;
+    reg signed [(DATA_WIDTH):0] sum_ff;
     /* verilator lint_on UNUSEDSIGNAL */
 
     // Clock #0 - sum_ff
     always @(posedge clk) begin
       if (!reset_n) begin
-        sum_ff <= 9'd0;
+        sum_ff <= 'd0;
       end else begin
         if(i_ce)
           sum_ff <= data_in + last_sample;
@@ -106,10 +108,10 @@ module average_filter(
     // Clock #1 - shift_ff
     always @(posedge clk) begin
       if (!reset_n) begin
-        data_out <= 8'd0;
+        data_out <= 'd0;
       end else begin
         if(sum_ce)
-          data_out <= sum_ff[8:1];
+          data_out <= sum_ff[(DATA_WIDTH):1];
       end
     end
   

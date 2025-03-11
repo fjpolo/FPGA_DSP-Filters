@@ -28,29 +28,44 @@
 `default_nettype none
 `timescale 1ps/1ps
 
-module average_filter_tb;
+module average_filter_tb();
+
+parameter DATA_WIDTH = 8;
 
 reg clk;
 reg reset_n;
 reg i_ce;
-reg signed [7:0] data_in;
-wire signed [7:0] data_out;
+reg signed [(DATA_WIDTH-1):0] data_in;
+wire signed [(DATA_WIDTH-1):0] data_out;
 wire o_ce;
 
-average_filter uut (
-  .clk(clk),
-  .reset_n(reset_n),
-  .i_ce(i_ce),
-  .data_in(data_in),
-  .data_out(data_out),
-  .o_ce(o_ce)
-);
+`ifdef MCY
+  average_filter uut(
+    .clk(clk),
+    .reset_n(reset_n),
+    .i_ce(i_ce),
+    .data_in(data_in),
+    .data_out(data_out),
+    .o_ce(o_ce)
+  );
+`else
+  average_filter #(
+    .DATA_WIDTH(DATA_WIDTH)
+  ) uut(
+    .clk(clk),
+    .reset_n(reset_n),
+    .i_ce(i_ce),
+    .data_in(data_in),
+    .data_out(data_out),
+    .o_ce(o_ce)
+  );
+`endif
 
 parameter CLK_PERIOD = 10;
 parameter TEST_VECTOR_SIZE = 10;
 
-reg [7:0] test_vectors [0:TEST_VECTOR_SIZE-1];
-reg signed [7:0] expected_outputs [0:TEST_VECTOR_SIZE-1];
+reg [(DATA_WIDTH-1):0] test_vectors [0:TEST_VECTOR_SIZE-1];
+reg signed [(DATA_WIDTH-1):0] expected_outputs [0:TEST_VECTOR_SIZE-1];
 integer test_index;
 integer error_count;
 integer i;

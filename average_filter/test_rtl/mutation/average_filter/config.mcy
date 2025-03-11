@@ -3,7 +3,7 @@ size 50
 tags COVERED UNCOVERED NOCHANGE EQGAP FMONLY
 
 [script]
-read -sv average_filter.v
+read -sv -DMCY average_filter.v
 prep -top average_filter
 autoname
 
