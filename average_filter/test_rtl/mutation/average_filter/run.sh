@@ -11,6 +11,13 @@
     # Copy original rtl here
     cp ${PWD}/../../../rtl/average_filter.v .
 
+    # Append `define MCY after `timescale 1ps/1ps
+    sed '/\`timescale 1ps\/1ps/a \
+    \`define MCY' average_filter.v > average_filter_temp.v
+
+    #replace the orginal average_filter file with the temp file.
+    mv average_filter_temp.v average_filter.v
+
     # Copy testbench here
     cp ${PWD}/../../simulation/icarus/average_filter/testbench.v .
 
@@ -31,7 +38,7 @@
     mcy purge; mcy init; mcy run -j8
 
     # Remove testbench
-    # rm testbench.v
+    rm testbench.v
 
     # Copy original rtl here
-    # rm average_filter.v
+    rm average_filter.v
