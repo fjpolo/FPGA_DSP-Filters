@@ -38,16 +38,8 @@ This module uses [`icarus verilog`](https://github.com/steveicarus/iverilog), [`
 
 With a mixture of simulation and formal verification, it's ensured that every and each mutation possible (1117) are detected either by the testbench, equivalence checking or formal properties. A whitebox testing approach has been used both for testbench simulation and formal verification in order to catch internal module's mutations.
 
-Usage:
-
-Linux/macOS
-```bash
-/$ cd test_rtl && ./test_all_log.sh
-```
-
-This will generate a `test_log.txt` in `test_rtl/`, and more logs in `<test_rtl/<dir>/average_filter/average_filter.txt`
-
 `mcy` spits out a report:
+
 ```
 Database contains 2502 cached results.
 Database contains 1117 cached "FAIL" results for "test_eq".
@@ -66,6 +58,15 @@ Results:
 The mutations the testbench can't catch (test_sim PASS), are either catched by equivalence checking or formal verification! And a `100%` coverage is achieved!
 
 ![Graphs](./images/mcy_graphs.png)
+
+### Usage
+
+Linux/macOS
+```bash
+/$ cd test_rtl && ./test_all_log.sh
+```
+
+This will generate a `test_log.txt` in `test_rtl/`, and more logs in `<test_rtl/<dir>/average_filter/average_filter.txt`
 
 ## Synthesis
 
