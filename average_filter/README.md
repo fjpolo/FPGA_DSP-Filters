@@ -17,16 +17,20 @@ Linux or macOS with [oss-cad-suite](https://github.com/YosysHQ/oss-cad-suite-bui
 1. **Instantiate the module:**
 
    ```verilog
+   parameter USER_DATA_WIDTH = 8;
+   wire [USER_DATA_WIDTH-1:0] i_data;
+   wire [USER_DATA_WIDTH-1:0] o_data;
    average_filter #(
-       // Optional parameters here 
+       .DATA_WIDTH(USER_DATA_WIDTH)
    ) my_filter (
        .clk(clk),
        .reset_n(reset_n),
        .i_ce(i_ce),
-       .data_in(data_in),
-       .data_out(data_out),
+       .data_in(i_data),
+       .data_out(o_data),
        .o_ce(o_ce)
    );
+   ```
 
 ## Validation
 
