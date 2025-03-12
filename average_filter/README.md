@@ -36,6 +36,8 @@ Linux or macOS with [oss-cad-suite](https://github.com/YosysHQ/oss-cad-suite-bui
 
 This module uses [`icarus verilog`](https://github.com/steveicarus/iverilog), [`symbiyosys`](https://github.com/YosysHQ/sby), [`equivalence checking wiht yosys`](https://github.com/YosysHQ/eqy) and [`mutation cover with yosys`](https://github.com/YosysHQ/mcy) to get a `100% mutation test coverage`!
 
+With a mixture of simulation and formal verification, it's ensured that every and each mutation possible (1117) are detected either by the testbench, equivalence checking or formal properties. A whitebox testing approach has been used both for testbench simulation and formal verification in order to catch internal module's mutations.
+
 Usage:
 
 Linux/macOS
@@ -45,6 +47,7 @@ Linux/macOS
 
 This will generate a `test_log.txt` in `test_rtl/`, and more logs in `<test_rtl/<dir>/average_filter/average_filter.txt`
 
+mcy spits out a report:
 ```
 Database contains 2502 cached results.
 Database contains 1117 cached "FAIL" results for "test_eq".
@@ -56,7 +59,11 @@ Tagged 268 mutations as "FMONLY".
 Coverage: 100.00%
 ```
 
+Results: 
+
 ![Results](./images/mcy_results.png)
+
+The mutations the testbench can catch, are either catched by equivalence checking or formal verification! And a `100%` coverage is achieved!
 
 ![Graphs](./images/mcy_graphs.png)
 
