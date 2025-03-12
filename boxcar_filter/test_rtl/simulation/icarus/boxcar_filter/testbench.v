@@ -25,83 +25,91 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 // =============================================================================
-
 `default_nettype none
-`timescale 1ps/1ps
+`timescale 1ns/1ps
 
-module testbench;
+module boxcar_filter_tb;
+
+    // Parameters
+    parameter DATA_WIDTH = 8;
+    parameter NUM_SAMPLES = 2;
+    parameter NUM_TESTS = 8;
 
     // Inputs
-    reg         i_clk;
-    reg         i_reset_n;
-    reg  [7:0]  i_data;
+    reg i_clk;
+    reg i_reset_n;
+    reg i_ce;
+    reg signed [DATA_WIDTH-1:0] i_data;
 
     // Outputs
-    wire [7:0]  o_data;
+    wire signed [DATA_WIDTH-1:0] o_data;
+    wire o_ce;
 
-    // Instantiate the Unit Under Test (UUT)
-    boxcar_filter uut (
-        .i_clk     (i_clk),
-        .i_reset_n (i_reset_n),
-        .i_data    (i_data),
-        .o_data    (o_data)
+    // Instantiate the module
+    boxcar_filter #(
+        .DATA_WIDTH(DATA_WIDTH),
+        .NUM_SAMPLES(NUM_SAMPLES)
+    ) dut (
+        .i_clk(i_clk),
+        .i_reset_n(i_reset_n),
+        .i_ce(i_ce),
+        .i_data(i_data),
+        .o_data(o_data),
+        .o_ce(o_ce)
     );
 
     // Clock generation
+    always #5 i_clk = ~i_clk;
+
+    // Test vectors
+    reg signed [DATA_WIDTH-1:0] test_data [15:0];
+    reg [3:0] test_index;
+
     initial begin
+        // Initialize
         i_clk = 0;
-        forever #5 i_clk = ~i_clk; // 10ps clock period
-    end
-
-    // Waveform dumping
-    initial begin
-        $dumpfile("dump.vcd"); // Specify the waveform file name
-        $dumpvars(0, testbench); // Dump all signals in the testbench module
-    end
-
-    // Test sequence
-    initial begin
-        // Initialize inputs
         i_reset_n = 0;
-        i_data    = 8'h00;
+        test_index = 0;
 
-        // Apply reset
+        // Test data
+        test_data[0] = 1;
+        test_data[1] = 2;
+        test_data[2] = 3;
+        test_data[3] = 4;
+        test_data[4] = 5;
+        test_data[5] = 6;
+        test_data[6] = 7;
+        test_data[7] = 8;
+        test_data[8] = 9;
+        test_data[9] = 10;
+        test_data[10] = 11;
+        test_data[11] = 12;
+        test_data[12] = -1;
+        test_data[13] = -2;
+        test_data[14] = -3;
+        test_data[15] = -4;
+
+        // Reset
         #10;
         i_reset_n = 1;
+        #10;
 
-        // // Test 1: Check reset behavior
-        // #10;
-        // if (o_data !== 8'h00) begin
-        //     $display("FAIL: Reset test failed. Expected 8'h00, got %h", o_data);
-        //     $finish;
-        // end
+        // Apply test vectors and display variables
+        for (test_index = 0; test_index < NUM_TESTS; test_index = test_index + 1) begin
+            i_data = test_data[test_index];
+            i_ce = 1;
+            #10;
+            i_ce = 0;
+            $display("Time=%0t, index=%d, i_data=%d, i_ce=%b, o_data=%d, o_ce=%b", $time, test_index, i_data, i_ce, o_data, o_ce);
+        end
 
-        // // Test 2: Check data propagation
-        // i_data = 8'hA5;
-        // #10;
-        // if (o_data !== 8'hA5) begin
-        //     $display("FAIL: Data propagation test failed. Expected 8'hA5, got %h", o_data);
-        //     $finish;
-        // end
-
-        // // Test 3: Check another data value
-        // i_data = 8'h3C;
-        // #10;
-        // if (o_data !== 8'h3C) begin
-        //     $display("FAIL: Data propagation test failed. Expected 8'h3C, got %h", o_data);
-        //     $finish;
-        // end
-
-        // If all tests pass
-        $display("PASS: All tests passed.");
+        // Finish simulation
         $finish;
     end
 
-    // Monitor for errors
     initial begin
-        #100; // Timeout to catch unexpected behavior
-        $display("ERROR: Simulation timed out.");
-        $finish;
+        $dumpfile("dump.vcd");
+        $dumpvars(0, boxcar_filter_tb);
     end
 
 endmodule
