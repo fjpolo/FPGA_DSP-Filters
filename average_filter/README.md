@@ -63,7 +63,7 @@ Results:
 
 ![Results](./images/mcy_results.png)
 
-The mutations the testbench can catch, are either catched by equivalence checking or formal verification! And a `100%` coverage is achieved!
+The mutations the testbench can't catch (SIM PASS), are either catched by equivalence checking or formal verification! And a `100%` coverage is achieved!
 
 ![Graphs](./images/mcy_graphs.png)
 
