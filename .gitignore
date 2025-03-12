@@ -2,9 +2,15 @@
 *.log
 *.vcd
 *.pyc
+*.il
+*.xml
+*_synth.v
+*.vvp
 
-tasks/
-obj_dir/
-sim_build/
-database/
-__pycache__
+**/database/
+**/tasks/
+**/obj_dir/
+**/sim_build/
+**/__pycache__
+
+

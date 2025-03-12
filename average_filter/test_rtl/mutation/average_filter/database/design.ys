@@ -1,5 +1,0 @@
-read -sv average_filter.v
-prep -top average_filter
-autoname
-
-write_rtlil database/design.il

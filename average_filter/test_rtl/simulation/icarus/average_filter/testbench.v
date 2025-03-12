@@ -142,9 +142,11 @@ initial begin
   data_in = test_vectors[0];
   #(3*CLK_PERIOD);
 
-  // Now start the main test loop.
+  // Now start the main test loop
   data_in = test_vectors[0];
+`ifdef MCY
   tb_last_sample = test_vectors[0];
+`endif
   i_ce = 1;
   #CLK_PERIOD;
 `ifdef MCY
@@ -155,7 +157,9 @@ initial begin
   if(!o_ce) $display("FAIL: o_ce should be high two clocks after i_ce\r\n");
   for (i = 1; i < TEST_VECTOR_SIZE-1; i = i + 1) begin
     data_in = test_vectors[i];
+`ifdef MCY
     tb_last_sample = test_vectors[i-1];
+`endif
     i_ce = 1;
     #CLK_PERIOD;
     i_ce = 0;
@@ -178,5 +182,8 @@ initial begin
   end
   $finish;
 end
+
+
+
 
 endmodule
