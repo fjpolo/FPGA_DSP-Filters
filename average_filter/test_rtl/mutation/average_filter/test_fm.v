@@ -37,6 +37,12 @@ module testbench (
     output  reg     [7:0]   o_data,
     output  reg     [0:0]   o_ce
 );
+    parameter DATA_WIDTH = 8;
+
+    wire [0:0]               o_sum_ce;
+    wire [(DATA_WIDTH-1):0]  o_last_sample;
+    wire [(DATA_WIDTH):0]    o_sum_ff;
+
     // Instantiate the dut
     average_filter ref(
         .clk(i_clk),
@@ -44,7 +50,11 @@ module testbench (
         .i_ce(i_ce),
         .data_in(i_data),
         .data_out(o_data),
-        .o_ce(o_ce)
+        .o_ce(o_ce),
+        // Whitebox testing FV
+        .o_sum_ce(o_sum_ce),
+        .o_last_sample(o_last_sample),
+        .o_sum_ff(o_sum_ff)
         );
         
     ////////////////////////////////////////////////////
@@ -71,11 +81,48 @@ module testbench (
         end
     end
 
+    always @(posedge i_clk) begin
+		if(($past(f_past_valid))&&(f_past_valid)&&(!$past(i_reset_n))&&(i_reset_n)) begin
+			assert(!o_sum_ce);
+			assert(o_last_sample == 'h00);
+			assert(o_sum_ff == 'h00);
+		end
+	end
+
     ////////////////////////////////////////////////////
     //
     // BMC
     //
     ////////////////////////////////////////////////////
+	always @(posedge i_clk) begin
+		if ((f_past_valid)&&($past(i_reset_n))&&(i_reset_n)) 
+		  if($past(i_ce))
+			assert(o_sum_ce == 1);
+	end
+
+	always @(posedge i_clk) begin
+		if ((f_past_valid)&&($past(i_reset_n))&&(i_reset_n)) 
+		  if($past(o_sum_ce))
+			assert(o_ce == 1);
+	end
+
+	always @(posedge i_clk) begin
+		if ((f_past_valid)&&($past(i_reset_n))&&(i_reset_n)) 
+		  if($past(i_ce))
+			assert(o_last_sample == $past(i_data));
+	end
+
+	always @(posedge i_clk) begin
+		if ((f_past_valid)&&($past(i_reset_n))&&(i_reset_n)) 
+		  if($past(i_ce))
+			assert(o_sum_ff == $past(i_data) + $past(o_last_sample));
+	end
+
+	always @(posedge i_clk) begin
+		if ((f_past_valid)&&($past(i_reset_n))&&(i_reset_n)) 
+		  if($past(o_sum_ce))
+			assert(o_data == $past(o_sum_ff[8:1]));
+	end
 
     ////////////////////////////////////////////////////
     //

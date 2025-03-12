@@ -111,6 +111,14 @@ initial begin
   test_index = 0;
   error_count = 0;
 
+  // Test after reset states
+  reset_n = 0;
+  #CLK_PERIOD;
+  reset_n = 1;
+  if(o_ce) $display("FAIL: o_ce should be low after reset!\r\n");
+  if(data_out != 'h00) $display("FAIL: data_out should be 'h00 after reset!\r\n");
+
+
   // Apply the first test vector and wait 3 clock cycles.
   data_in = test_vectors[0];
   #(3*CLK_PERIOD);

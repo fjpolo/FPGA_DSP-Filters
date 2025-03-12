@@ -1,0 +1,10 @@
+*.txt
+*.log
+*.vcd
+*.pyc
+
+tasks/
+obj_dir/
+sim_build/
+database/
+__pycache__

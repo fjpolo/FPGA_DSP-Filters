@@ -108,7 +108,7 @@
 		if (($past(f_past_valid,2))&&($past(f_past_valid))&&(f_past_valid)&&(!$past(reset_n))&&(reset_n)) 
 		  if(($past(i_ce,2))&&(!$past(i_ce))&&($past(sum_ce))&&(!sum_ce)&&(!$past(o_ce))) begin
 			assert(o_ce);
-			assert(data_out == ($past(data_in, 2) + $past(last_sample, 2)));
+			assert(data_out == (($past(data_in, 2) + $past(last_sample, 2)) >>> 1) );
 		  end
 	end
 

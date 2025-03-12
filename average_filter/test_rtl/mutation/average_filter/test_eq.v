@@ -71,17 +71,18 @@ module miter (
     );
 
     // Assumptions
-    always @(*) begin
+    always @(*)
         assume(i_data == i_data_ref == i_data_ref);
-    end
 
-    // // Assertions
-    // always @(posedge i_clk) begin
-    //     if(!$past(i_reset_n))
-    //         assert(o_data_ref == o_data_dut);
-    // end
+    // Assertions
+    always @(posedge i_clk)
+        if(!$past(i_reset_n))
+            assert(o_data_ref == o_data_uut);
 
-    // always @(*)
-    //     assert(o_data_ref == o_data_dut);
+    always @(*)
+        assert(o_data_ref == o_data_uut);
+
+    always @(*)
+        assert(o_ce_ref == o_ce_uut);
 
 endmodule

@@ -38,6 +38,13 @@ module average_filter #(
     input wire signed [(DATA_WIDTH-1):0] data_in,
     output reg signed [(DATA_WIDTH-1):0] data_out,
     output reg o_ce
+    // White box testing FV
+`ifdef MCY
+    ,
+    output wire [0:0]               o_sum_ce,
+    output wire [(DATA_WIDTH-1):0]  o_last_sample,
+    output wire [(DATA_WIDTH):0]    o_sum_ff
+`endif
 );
   
     // 
@@ -114,6 +121,13 @@ module average_filter #(
           data_out <= sum_ff[(DATA_WIDTH):1];
       end
     end
+
+    // Whitebox testing FV
+`ifdef MCY
+    assign o_sum_ce = sum_ce;
+    assign o_last_sample = last_sample;
+    assign o_sum_ff = sum_ff;
+`endif
   
   endmodule
 
