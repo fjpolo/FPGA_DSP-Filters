@@ -47,7 +47,7 @@ Linux/macOS
 
 This will generate a `test_log.txt` in `test_rtl/`, and more logs in `<test_rtl/<dir>/average_filter/average_filter.txt`
 
-mcy spits out a report:
+`mcy` spits out a report:
 ```
 Database contains 2502 cached results.
 Database contains 1117 cached "FAIL" results for "test_eq".
