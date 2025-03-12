@@ -4,7 +4,7 @@
 echo "    [MUTATION] Sourcing OSS CAD Suite environment..."
 source ~/oss-cad-suite/environment
 if [ $? -ne 0 ]; then
-    echo "[MUTATION] Failed to source OSS CAD Suite environment. Exiting script."
+    echo "[MUTATION] FAIL: Failed to source OSS CAD Suite environment. Exiting script."
     exit 1
 fi
 
@@ -20,7 +20,8 @@ for dir in */; do
 
     # Check if the script failed
     if [ $exit_status -ne 0 ]; then
-      echo "    [MUTATION] average_filter failed!"
+      echo "    [MUTATION] FAIL: average_filter failed!"
+      echo "    [MUTATION] Please check ${PWD}/${dir}/average_filter_log.txt!"
     else
       echo "    [MUTATION] average_filter passed!"
       echo "    [MUTATION] Don't forget to check ${PWD}/${dir}/average_filter_log.txt!"
