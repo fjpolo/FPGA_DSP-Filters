@@ -1,6 +1,0 @@
-<testsuites name="results">
-  <testsuite name="all" package="all">
-    <property name="random_seed" value="1741373908" />
-    <testcase name="test_average_filter" classname="testbench" file="/Users/fjpolo/Workspace/FPGA_DSP-Filters/average_filter/test_rtl/simulation/cocotb/average_filter/testbench.py" lineno="4" time="0.00042700767517089844" sim_time_ns="1.001" ratio_time="2344.2201585706307" />
-  </testsuite>
-</testsuites>
