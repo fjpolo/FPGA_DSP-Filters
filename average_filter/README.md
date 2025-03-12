@@ -56,6 +56,10 @@ Tagged 268 mutations as "FMONLY".
 Coverage: 100.00%
 ```
 
+![Results](./images/mcy_results.png)
+
+![Graphs](./images/mcy_graphs.png)
+
 ## Synthesis
 
 There's a little yosys synth script in `average_filter/test_rtl/synth/average_filter/average_filter.ys`for Tang Nano 20k, but it's untested.
