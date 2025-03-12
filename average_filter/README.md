@@ -23,12 +23,12 @@ Linux or macOS with [oss-cad-suite](https://github.com/YosysHQ/oss-cad-suite-bui
    average_filter #(
        .DATA_WIDTH(USER_DATA_WIDTH)
    ) my_filter (
-       .clk(clk),
-       .reset_n(reset_n),
-       .i_ce(i_ce),
-       .data_in(i_data),
-       .data_out(o_data),
-       .o_ce(o_ce)
+       .clk(clk),               // Input
+       .reset_n(reset_n),       // Input - active low
+       .i_ce(i_ce),             // Input
+       .data_in(i_data),        // Input
+       .data_out(o_data),       // Output
+       .o_ce(o_ce)              // Output
    );
    ```
 
