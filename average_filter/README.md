@@ -1,6 +1,6 @@
 # Average Filter Module
 
-This Verilog module implements a pipelined average filter. It takes a stream of 8-bit signed data and outputs the average of the current and previous sample.
+This Verilog module implements a pipelined average filter. It takes a stream of <DATA_WIDTH>-bit signed data and outputs the average of the current and previous sample.
 
 ## Features
 
