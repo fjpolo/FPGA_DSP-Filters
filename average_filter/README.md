@@ -1,6 +1,6 @@
 # Average Filter Module
 
-This Verilog module implements a pipelined average filter. It takes a stream of <DATA_WIDTH>-bit signed data and outputs the average of the current and previous sample.
+This Verilog module implements a pipelined 2-sample average filter. It takes a stream of <DATA_WIDTH>-bit signed data and outputs the average of the current and previous sample.
 
 ## Features
 
@@ -45,8 +45,41 @@ Linux/macOS
 
 This will generate a `test_log.txt` in `test_rtl/`, and more logs in `<test_rtl/<dir>/average_filter/average_filter.txt`
 
+```
+Database contains 2502 cached results.
+Database contains 1117 cached "FAIL" results for "test_eq".
+Database contains 268 cached "FAIL" results for "test_fm".
+Database contains 849 cached "FAIL" results for "test_sim".
+Database contains 268 cached "PASS" results for "test_sim".
+Tagged 1117 mutations as "COVERED".
+Tagged 268 mutations as "FMONLY".
+Coverage: 100.00%
+```
+
 ## Synthesis
 
 There's a little yosys synth script in `average_filter/test_rtl/synth/average_filter/average_filter.ys`for Tang Nano 20k, but it's untested.
+
+```
+=== average_filter ===
+
+   Number of wires:                303
+   Number of wire bits:            425
+   Number of public wires:          29
+   Number of public wire bits:      29
+   Number of ports:                 20
+   Number of port bits:             20
+   Number of memories:               0
+   Number of memory bits:            0
+   Number of processes:              0
+   Number of cells:                414
+     $_MUX_                        176
+     $_SDFFE_PN0P_                  24
+     $_SDFF_PN0_                     2
+     GND                           108
+     IBUF                           11
+     OBUF                            9
+     VCC                            84
+```
 
 Also, there's a Tang Nano 9k Gowin IDE project in `average_filter/gowin/nano9k/average_filter.gprj`, to check STA, but also, sofar unused.
