@@ -99,7 +99,6 @@ module boxcar_filter_tb;
             i_data = test_data[test_index];
             i_ce = 1;
             #10;
-            i_ce = 0;
             $display("Time=%0t, index=%d, i_data=%d, i_ce=%b, o_data=%d, o_ce=%b", $time, test_index, i_data, i_ce, o_data, o_ce);
         end
 
