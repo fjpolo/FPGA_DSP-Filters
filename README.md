@@ -1,23 +1,5 @@
-# boxcar_filter Module
+# DSP FPGA filters in Verilog
 
-This Verilog module implements...
+## average_filter
 
-## Features
-
-* Feature1
-* Feature2
-* Feature3
-
-## Usage
-
-1. **Instantiate the module:**
-
-   ```verilog
-   boxcar_filter #(
-       // Optional parameters here 
-   ) boxcar_filter (
-       .clk(clk),           // Input
-       .reset_n(reset_n),   // Input - active low
-       .data_in(data_in),   // Input
-       .data_out(data_out)  // Output
-   );
+## boxcar_filter
