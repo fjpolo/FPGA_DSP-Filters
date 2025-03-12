@@ -16,8 +16,8 @@ This Verilog module implements...
    boxcar_filter #(
        // Optional parameters here 
    ) boxcar_filter (
-       .clk(clk),
-       .reset_n(reset_n),
-       .data_in(data_in),
-       .data_out(data_out)
+       .clk(clk),           // Input
+       .reset_n(reset_n),   // Input - active low
+       .data_in(data_in),   // Input
+       .data_out(data_out)  // Output
    );
