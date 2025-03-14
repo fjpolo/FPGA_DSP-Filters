@@ -28,86 +28,116 @@
 `default_nettype none
 `timescale 1ps/1ps
 
+`default_nettype none
+`timescale 1ps/1ps
+
 module boxcar_filter #(
     parameter DATA_WIDTH = 8,
-    parameter NUM_SAMPLES = 8
+    parameter NUM_SAMPLES = 2,
+    parameter INDEX_WIDTH = $clog2(NUM_SAMPLES)
 ) (
     input   wire    [0:0]               i_clk,
     input   wire    [0:0]               i_reset_n,
     input   wire    [0:0]               i_ce,
     input   signed  [DATA_WIDTH-1:0]    i_data,
-    output  signed  [DATA_WIDTH-1:0]    o_data,
-    output  wire    [0:0]               o_ce
+    output  signed  [(DATA_WIDTH + $clog2(NUM_SAMPLES) - 1):0]    o_data,
+    output  wire    [0:0]               o_ce,
+    // Whitebox testing
+    output wire o_valid_reg,
+    output wire [(DATA_WIDTH + INDEX_WIDTH - 1):0] o_accumulator,
+    output wire [INDEX_WIDTH-1:0] o_sample_index
 );
 
-    localparam INDEX_WIDTH = $clog2(NUM_SAMPLES);
     localparam MAX_INDEX = NUM_SAMPLES - 1;
 
-    reg [INDEX_WIDTH-1:0] sample_index;
-    reg signed [(DATA_WIDTH + (INDEX_WIDTH-1)):0] accumulator;
-    integer i;
+    reg [INDEX_WIDTH:0] sample_index;
+    reg signed [(DATA_WIDTH + INDEX_WIDTH - 1):0] accumulator;
+    reg signed [DATA_WIDTH-1:0] sample_buffer [NUM_SAMPLES:0];
+    reg [INDEX_WIDTH:0] oldest_sample_index;
+    reg valid_reg;
 
     // Helper wires
     wire sample_index_is_max;
-    /* verilator lint_off WIDTHEXPAND */
+    wire oldest_sample_index_is_max;
     assign sample_index_is_max = (sample_index == MAX_INDEX);
-    /* verilator lint_on WIDTHEXPAND */
+    assign oldest_sample_index_is_max = (oldest_sample_index == MAX_INDEX);
+
+    initial begin
+        sample_index = 0;
+        accumulator = 0;
+        valid_reg = 1'b0;
+    end
+
+    // sample_index
+    always @(posedge i_clk) begin
+        if (!i_reset_n) begin
+            sample_index <= 0;
+        end else if(i_ce) begin
+            if (sample_index_is_max) begin
+                sample_index <= 0;
+            end else begin
+                sample_index <= sample_index + 1;
+            end
+        end
+    end
+
+    // 
+    reg output_is_valid;
+    initial output_is_valid = 0;
+    always @(posedge i_clk)
+        if(!i_reset_n)
+            output_is_valid = 0;
+        else if(sample_index_is_max)
+            output_is_valid <= 1'b1;
 
     // valid_reg
-    reg valid_reg;
-    initial valid_reg = 1'b0;
     always @(posedge i_clk) begin
         if (!i_reset_n) begin
             valid_reg <= 1'b0;
         end else begin
-            if(i_ce) begin
-                if (sample_index_is_max)
-                    valid_reg <= 1'b1;
-                else
-                    valid_reg <= 1'b0;
-            end
+            valid_reg <= (sample_index_is_max)&&(i_ce);
         end
     end
 
-    // sample_index
-    initial sample_index = 'h00;
+    // oldest_sample_index
+    initial oldest_sample_index = -NUM_SAMPLES;
     always @(posedge i_clk) begin
         if (!i_reset_n) begin
-            sample_index <= 0;
-        end else begin
-            if(i_ce) begin
-                if (sample_index_is_max)
-                    sample_index <= 0;
-                else
-                    sample_index <= sample_index + 1;
+            sample_index <= -NUM_SAMPLES;
+        end else if(i_ce) begin
+            if (oldest_sample_index_is_max) begin
+                oldest_sample_index <= 0;
+            end else begin
+                oldest_sample_index <= sample_index + 1;
             end
         end
-    end
+    end    
 
-    // sample_buffer memory
-    reg signed [DATA_WIDTH-1:0] sample_buffer [NUM_SAMPLES-1:0];
-    initial begin
-        for (i = 0; i < NUM_SAMPLES; i = i + 1) begin
-            sample_buffer[i] = 0;
-        end
-    end
-    always @(posedge i_clk) begin
-        if(i_ce)
-            sample_buffer[sample_index] <= i_data;
-    end
 
-    // accummulator
+    // accumulator
     always @(posedge i_clk) begin
         if (!i_reset_n) begin
             accumulator <= 0;
-        end else if (i_ce) begin
-            for (i = 0; i < NUM_SAMPLES; i = i + 1) begin
-                accumulator <= accumulator + { {INDEX_WIDTH{sample_buffer[i][DATA_WIDTH-1]}}, sample_buffer[i] };
+        end else if(i_ce) begin
+            if (output_is_valid) begin
+                accumulator <= accumulator - sample_buffer[oldest_sample_index] + i_data;
+            end else begin
+                accumulator <= accumulator + i_data;
             end
         end
     end
 
-    assign o_data = accumulator[DATA_WIDTH + INDEX_WIDTH - 1:INDEX_WIDTH];
-    assign o_ce = valid_reg;
+    // sample_buffer
+    always @(posedge i_clk) begin
+        if(i_ce) begin
+            sample_buffer[sample_index] <= i_data;
+        end
+    end
+
+    assign o_data = accumulator >>> INDEX_WIDTH;
+    assign o_ce = output_is_valid;
+    assign o_valid_reg = valid_reg;
+    assign o_sample_index = sample_index;
+    assign o_accumulator = accumulator;
 
 endmodule
