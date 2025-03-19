@@ -50,7 +50,7 @@ sby -f $CONFIG_FILE
 # Check if sby succeeded
 if [ $? -ne 0 ]; then
     echo "        [SBY] FAIL: sby failed for $ORIGINAL_FILE. Exiting script."
-    rm $TEMP_FILE
+    # rm $TEMP_FILE
     exit 1
 fi
 

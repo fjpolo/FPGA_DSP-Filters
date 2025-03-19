@@ -32,7 +32,7 @@ module boxcar_filter_tb;
 
     // Parameters
     parameter DATA_WIDTH = 8;
-    parameter NUM_SAMPLES = 16;
+    parameter NUM_SAMPLES = 32;
     parameter NUM_TESTS = 64; // Increased to 64
     parameter INDEX_WIDTH = $clog2(NUM_SAMPLES);
     parameter MAX_INDEX = NUM_SAMPLES - 1;

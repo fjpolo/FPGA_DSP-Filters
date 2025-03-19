@@ -45,28 +45,53 @@ module boxcar_filter #(
     // Whitebox testing
     output wire o_valid_reg,
     output wire [(DATA_WIDTH + INDEX_WIDTH - 1):0] o_accumulator,
-    output wire [INDEX_WIDTH-1:0] o_sample_index
+    output wire [(INDEX_WIDTH+1):0] o_sample_index
 );
 
-    localparam MAX_INDEX = NUM_SAMPLES - 1;
+    localparam MAX_INDEX = NUM_SAMPLES;
 
-    reg [INDEX_WIDTH:0] sample_index;
-    reg signed [(DATA_WIDTH + INDEX_WIDTH - 1):0] accumulator;
+    reg [(INDEX_WIDTH+1):0] oldest_sample_index;
+    reg [(INDEX_WIDTH+1):0] sample_index;
+    reg signed [(DATA_WIDTH + INDEX_WIDTH):0] accumulator;
     reg signed [DATA_WIDTH-1:0] sample_buffer [NUM_SAMPLES:0];
-    reg [INDEX_WIDTH:0] oldest_sample_index;
     reg valid_reg;
+    reg i_ce_ff;
+    reg output_is_valid;
 
     // Helper wires
-    wire sample_index_is_max;
     wire oldest_sample_index_is_max;
+    wire sample_index_is_max;
     assign sample_index_is_max = (sample_index == MAX_INDEX);
     assign oldest_sample_index_is_max = (oldest_sample_index == MAX_INDEX);
 
     initial begin
+        oldest_sample_index = -NUM_SAMPLES;
         sample_index = 0;
+        output_is_valid = 0;
         accumulator = 0;
         valid_reg = 1'b0;
+        i_ce_ff = 1'b0;
     end
+
+    // i_ce_ff
+    always @(posedge i_clk)
+        if(!i_reset_n)
+            i_ce_ff <= 1'b0;
+        else
+            i_ce_ff <= i_ce;
+
+    // oldest_sample_index
+    always @(posedge i_clk) begin
+        if (!i_reset_n) begin
+            oldest_sample_index <= -NUM_SAMPLES;
+        end else if(i_ce) begin
+            if (oldest_sample_index_is_max) begin
+                oldest_sample_index <= 0;
+            end else begin
+                oldest_sample_index <= oldest_sample_index + 1;
+            end
+        end
+    end  
 
     // sample_index
     always @(posedge i_clk) begin
@@ -81,9 +106,7 @@ module boxcar_filter #(
         end
     end
 
-    // 
-    reg output_is_valid;
-    initial output_is_valid = 0;
+    // output_is_valid
     always @(posedge i_clk)
         if(!i_reset_n)
             output_is_valid = 0;
@@ -98,21 +121,6 @@ module boxcar_filter #(
             valid_reg <= (sample_index_is_max)&&(i_ce);
         end
     end
-
-    // oldest_sample_index
-    initial oldest_sample_index = -NUM_SAMPLES;
-    always @(posedge i_clk) begin
-        if (!i_reset_n) begin
-            sample_index <= -NUM_SAMPLES;
-        end else if(i_ce) begin
-            if (oldest_sample_index_is_max) begin
-                oldest_sample_index <= 0;
-            end else begin
-                oldest_sample_index <= sample_index + 1;
-            end
-        end
-    end    
-
 
     // accumulator
     always @(posedge i_clk) begin
@@ -135,7 +143,7 @@ module boxcar_filter #(
     end
 
     assign o_data = accumulator >>> INDEX_WIDTH;
-    assign o_ce = output_is_valid;
+    assign o_ce = (output_is_valid)&&(i_ce_ff);
     assign o_valid_reg = valid_reg;
     assign o_sample_index = sample_index;
     assign o_accumulator = accumulator;
