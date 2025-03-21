@@ -32,7 +32,7 @@ module boxcar_filter_tb;
 
     // Parameters
     parameter DATA_WIDTH = 8;
-    parameter NUM_SAMPLES = 32;
+    parameter NUM_SAMPLES = 2;
     parameter NUM_TESTS = 64; // Increased to 64
     parameter INDEX_WIDTH = $clog2(NUM_SAMPLES);
     parameter MAX_INDEX = NUM_SAMPLES - 1;
@@ -54,6 +54,17 @@ module boxcar_filter_tb;
     wire [(DATA_WIDTH + INDEX_WIDTH - 1):0] o_accumulator;
     wire [INDEX_WIDTH-1:0] o_sample_index;
 
+`ifndef MCY
+        // Instantiate the module
+    boxcar_filter dut (
+        .i_clk(i_clk),
+        .i_reset_n(i_reset_n),
+        .i_ce(i_ce),
+        .i_data(i_data),
+        .o_data(o_data),
+        .o_ce(o_ce)
+    );
+`else
     // Instantiate the module
     boxcar_filter #(
         .DATA_WIDTH(DATA_WIDTH),
@@ -65,12 +76,16 @@ module boxcar_filter_tb;
         .i_ce(i_ce),
         .i_data(i_data),
         .o_data(o_data),
-        .o_ce(o_ce),
+        .o_ce(o_ce)
         // Whitebox testing
+    `ifdef MCY
+        ,
         .o_valid_reg(o_valid_reg),
         .o_accumulator(o_accumulator),
         .o_sample_index(o_sample_index)
+    `endif
     );
+`endif
 
     // Clock generation
     always #5 i_clk = ~i_clk;
@@ -128,20 +143,21 @@ module boxcar_filter_tb;
             $display("Time=%0t, index=%d, i_reset_n=%d, i_data=%d, i_ce=%b, o_valid_reg=%d, o_sample_index=%d, o_accumulator=%d, o_data=%d, expected=%d, o_ce=%b", $time, test_index, i_reset_n, i_data, i_ce, o_valid_reg, o_sample_index, o_accumulator,o_data, expected_result[test_index-NUM_SAMPLES+1], o_ce);
             if (test_index >= valid_index) begin : test
                 if (o_data == expected_result[test_index-NUM_SAMPLES+1]) begin
-                    $display("PASS: index=%d, i_data=%d, o_data=%d, expected=%d", test_index, i_data, o_data, expected_result[test_index-NUM_SAMPLES+1]);
+                    // $display("PASS: index=%d, i_data=%d, o_data=%d, expected=%d", test_index, i_data, o_data, expected_result[test_index-NUM_SAMPLES+1]);
                     pass_count = pass_count + 1;
                 end else begin
                     // $display("FAIL: index=%d, i_data=%d, o_data=%d, expected=%d", test_index, i_data, o_data, expected_result);
                     fail_count = fail_count + 1;
-                    if (fail_count > 100) begin
-                        $display("ERROR: Too many failures");
-                        error_count = error_count + 1;
-                        $finish;
-                    end
+                    // if (fail_count > 100) begin
+                    //     $display("ERROR: Too many failures");
+                    //     error_count = error_count + 1;
+                    //     $finish;
+                    // end
                 end
             end
         end
 
+`ifndef MCY
         // Report results
         $display("--------------------");
         $display("Test Results:");
@@ -149,7 +165,7 @@ module boxcar_filter_tb;
         $display("FAIL: %d", fail_count);
         $display("ERROR: %d", error_count);
         $display("--------------------");
-
+        
         if (fail_count == 0 && error_count == 0) begin
             $display("TEST PASSED");
             $finish;
@@ -157,6 +173,13 @@ module boxcar_filter_tb;
             $display("TEST FAILED");
             $finish;
         end
+`else
+        if((pass_count)&&(!fail_count)) begin
+            $display("PASS: %d\n", fail_count);
+        end else if(fail_count) begin
+            $display("FAIL: %d\n", fail_count);
+        end
+`endif
     end
 
     initial begin

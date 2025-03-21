@@ -3,12 +3,14 @@
 # Read the Verilog file
 read_verilog boxcar_filter.v
 
+show -prefix maf_iter_00
+
 # Synthesize the design
 synth -top boxcar_filter
 
 # Generate a simple netlist graph (for visualization)
 # This is done every iteration.
-show -prefix maf_iter_01
+# show -prefix maf_iter_01
 
 # Clean up unused cells and wires
 clean

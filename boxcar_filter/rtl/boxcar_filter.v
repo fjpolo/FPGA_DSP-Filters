@@ -28,24 +28,24 @@
 `default_nettype none
 `timescale 1ps/1ps
 
-`default_nettype none
-`timescale 1ps/1ps
-
 module boxcar_filter #(
     parameter DATA_WIDTH = 8,
     parameter NUM_SAMPLES = 2,
     parameter INDEX_WIDTH = $clog2(NUM_SAMPLES)
 ) (
-    input   wire    [0:0]               i_clk,
-    input   wire    [0:0]               i_reset_n,
-    input   wire    [0:0]               i_ce,
-    input   signed  [DATA_WIDTH-1:0]    i_data,
-    output  signed  [(DATA_WIDTH + $clog2(NUM_SAMPLES) - 1):0]    o_data,
-    output  wire    [0:0]               o_ce,
+    input   wire    [0:0]                                       i_clk,
+    input   wire    [0:0]                                       i_reset_n,
+    input   wire    [0:0]                                       i_ce,
+    input   signed  [DATA_WIDTH-1:0]                            i_data,
+    output  signed  [(DATA_WIDTH + $clog2(NUM_SAMPLES) - 1):0]  o_data,
+    output  wire    [0:0]                                       o_ce
     // Whitebox testing
-    output wire o_valid_reg,
-    output wire [(DATA_WIDTH + INDEX_WIDTH - 1):0] o_accumulator,
-    output wire [(INDEX_WIDTH+1):0] o_sample_index
+`ifdef MCY
+    ,
+    output wire [0:0]                                           o_valid_reg,
+    output wire [(DATA_WIDTH + INDEX_WIDTH - 1):0]              o_accumulator,
+    output wire [(INDEX_WIDTH+1):0]                             o_sample_index
+`endif
 );
 
     localparam MAX_INDEX = NUM_SAMPLES;
@@ -109,7 +109,7 @@ module boxcar_filter #(
     // output_is_valid
     always @(posedge i_clk)
         if(!i_reset_n)
-            output_is_valid = 0;
+            output_is_valid <= 0;
         else if(sample_index_is_max)
             output_is_valid <= 1'b1;
 
@@ -144,8 +144,10 @@ module boxcar_filter #(
 
     assign o_data = accumulator >>> INDEX_WIDTH;
     assign o_ce = (output_is_valid)&&(i_ce_ff);
+`ifdef MCY
     assign o_valid_reg = valid_reg;
     assign o_sample_index = sample_index;
     assign o_accumulator = accumulator;
+`endif
 
 endmodule

@@ -157,6 +157,12 @@
 	// 			assert($stable(accumulator));
 	// end
 
+	// There can't be a valid output if there was no valid input
+	always @(posedge i_clk) begin
+		if(!$past(i_ce))
+			assert(!o_ce);
+	end
+
     ////////////////////////////////////////////////////
 	//
 	// Induction
