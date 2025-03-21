@@ -38,7 +38,6 @@ module boxcar_filter_tb;
     parameter MAX_INDEX = NUM_SAMPLES - 1;
     parameter CLOCK_PERIOD = 10;
 
-
     // Inputs
     reg i_clk;
     reg i_reset_n;
@@ -55,7 +54,7 @@ module boxcar_filter_tb;
     wire [INDEX_WIDTH-1:0] o_sample_index;
 
 `ifndef MCY
-        // Instantiate the module
+    // Instantiate the module
     boxcar_filter dut (
         .i_clk(i_clk),
         .i_reset_n(i_reset_n),
@@ -101,7 +100,6 @@ module boxcar_filter_tb;
     reg signed [(2*DATA_WIDTH):0] expected_result [63:0];
     integer i, j;
 
-
     initial begin
         // Initialize
         i_clk = 0;
@@ -128,11 +126,17 @@ module boxcar_filter_tb;
             // $display("expected_result[%d]=%d", i, expected_result[i]);
         end
 
-
         // Reset
+        $display("DEBUG: Before Reset, Time=%0t, i_reset_n=%d", $time, i_reset_n);
         #CLOCK_PERIOD;
         i_reset_n = 1;
+        $display("DEBUG: After Reset, Time=%0t, i_reset_n=%d", $time, i_reset_n);
         #CLOCK_PERIOD;
+
+        // Timeout mechanism
+        # (NUM_TESTS * CLOCK_PERIOD * 2); // Adjust timeout as needed
+        $display("TIMEOUT: Testbench did not produce PASS or FAIL within the expected time.");
+        $finish;
 
         // Apply test vectors and check results
         for (test_index = 0; test_index < NUM_TESTS; test_index = test_index + 1) begin
@@ -143,17 +147,21 @@ module boxcar_filter_tb;
             $display("Time=%0t, index=%d, i_reset_n=%d, i_data=%d, i_ce=%b, o_valid_reg=%d, o_sample_index=%d, o_accumulator=%d, o_data=%d, expected=%d, o_ce=%b", $time, test_index, i_reset_n, i_data, i_ce, o_valid_reg, o_sample_index, o_accumulator,o_data, expected_result[test_index-NUM_SAMPLES+1], o_ce);
             if (test_index >= valid_index) begin : test
                 if (o_data == expected_result[test_index-NUM_SAMPLES+1]) begin
-                    // $display("PASS: index=%d, i_data=%d, o_data=%d, expected=%d", test_index, i_data, o_data, expected_result[test_index-NUM_SAMPLES+1]);
+                    $display("DEBUG: About to print PASS, Time=%0t", $time);
+                    $display("PASS: index=%d, i_data=%d, o_data=%d, expected=%d", test_index, i_data, o_data, expected_result[test_index-NUM_SAMPLES+1]);
+                    $fflush;
+                    $display("DEBUG: Printed PASS, Time=%0t", $time);
                     pass_count = pass_count + 1;
                 end else begin
-                    // $display("FAIL: index=%d, i_data=%d, o_data=%d, expected=%d", test_index, i_data, o_data, expected_result);
+                    $display("DEBUG: About to print FAIL, Time=%0t", $time);
+                    $display("FAIL: index=%d, i_data=%d, o_data=%d, expected=%d, o_sample_index=%d, o_accumulator=%d", test_index, i_data, o_data, expected_result[test_index-NUM_SAMPLES+1], o_sample_index, o_accumulator);
+                    $fflush;
+                    $display("DEBUG: Printed FAIL, Time=%0t", $time);
                     fail_count = fail_count + 1;
-                    // if (fail_count > 100) begin
-                    //     $display("ERROR: Too many failures");
-                    //     error_count = error_count + 1;
-                    //     $finish;
-                    // end
+                    assert (o_data == expected_result[test_index-NUM_SAMPLES+1]) $error("o_data does not match expected result");
                 end
+                assert (o_sample_index == (test_index%NUM_SAMPLES)) $error("o_sample_index is not correct");
+                assert (o_ce == 1) $error("o_ce is not high");
             end
         end
 
@@ -165,7 +173,7 @@ module boxcar_filter_tb;
         $display("FAIL: %d", fail_count);
         $display("ERROR: %d", error_count);
         $display("--------------------");
-        
+
         if (fail_count == 0 && error_count == 0) begin
             $display("TEST PASSED");
             $finish;
@@ -178,6 +186,8 @@ module boxcar_filter_tb;
             $display("PASS: %d\n", fail_count);
         end else if(fail_count) begin
             $display("FAIL: %d\n", fail_count);
+        end else begin
+            $display("DEFAULT FAIL: No explicit PASS or FAIL reported.");
         end
 `endif
     end
