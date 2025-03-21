@@ -39,7 +39,7 @@ reg signed [(DATA_WIDTH-1):0] data_in;
 wire signed [(DATA_WIDTH-1):0] data_out;
 wire o_ce;
 
-`ifdef MCY
+`ifndef MCY
   average_filter uut(
     .clk(clk),
     .reset_n(reset_n),
@@ -58,12 +58,12 @@ wire o_ce;
     .data_in(data_in),
     .data_out(data_out),
     .o_ce(o_ce)
-`ifdef MCY
+  `ifdef MCY
     ,
     .o_sum_ce(o_sum_ce),
     .o_last_sample(o_last_sample),
     .o_sum_ff(o_sum_ff)
-    `endif
+  `endif
   );
 `endif
 
