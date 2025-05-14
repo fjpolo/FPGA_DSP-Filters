@@ -2,8 +2,7 @@
 
 # Read the Verilog file
 read_verilog boxcar_filter.v
-
-show -prefix maf_iter_00
+show
 
 # Synthesize the design
 synth -top boxcar_filter

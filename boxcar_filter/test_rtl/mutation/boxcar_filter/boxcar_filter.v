@@ -27,10 +27,10 @@
 // =============================================================================
 `default_nettype none
 `timescale 1ps/1ps
-
+    `define MCY
 `default_nettype none
 `timescale 1ps/1ps
-
+    `define MCY
 module boxcar_filter #(
     parameter DATA_WIDTH = 8,
     parameter NUM_SAMPLES = 2,
