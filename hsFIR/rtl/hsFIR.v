@@ -38,11 +38,11 @@
 `default_nettype	none
 
 module	hsFIR #(
-		parameter		    NTAPS=128, 
-        parameter           IW=12, 
-        parameter           TW=IW, 
-        parameter           OW=(2*IW+7),
-		parameter [0:0]		FIXED_TAPS=0
+		parameter		    NTAPS=144,      // Number of taps
+        parameter           IW=16,          // Number of bits in the input samples
+        parameter           TW=IW,          // Number of bits in the individual coefficients
+        parameter           OW=(2*IW+7),    // Output width and the width of the accumulator.
+		parameter [0:0]		FIXED_TAPS=1    // Load taps from memory
 	) (
 		input	wire			    i_clk, 
         input   wire                i_reset,
