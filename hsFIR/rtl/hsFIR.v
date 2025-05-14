@@ -1,47 +1,120 @@
-// =============================================================================
-// File        : hsFIR.v
-// Author      : @fjpolo
-// email       : fjpolo@gmail.com
-// Description : <Brief description of the module or file>
-// License     : MIT License
+////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (c) 2025 | @fjpolo
+// Filename: 	hsFIR.v
+// {{{
+// Project:	DSP Filtering Example Project
 //
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
+// Purpose:	Implement a high speed (1-output per clock), adjustable tap FIR
 //
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// Creator:	Dan Gisselquist, Ph.D.
+//		Gisselquist Technology, LLC
 //
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-// =============================================================================
+////////////////////////////////////////////////////////////////////////////////
+// }}}
+// Copyright (C) 2017-2024, Gisselquist Technology, LLC
+// {{{
+// This file is part of the DSP filtering set of designs.
+//
+// The DSP filtering designs are free RTL designs: you can redistribute them
+// and/or modify any of them under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation, either version 3 of
+// the License, or (at your option) any later version.
+//
+// The DSP filtering designs are distributed in the hope that they will be
+// useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTIBILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
+// General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with these designs.  (It's in the $(ROOT)/doc directory.  Run make
+// with no target there if the PDF file isn't present.)  If not, see
+// <http://www.gnu.org/licenses/> for a copy.
+// }}}
+// License:	LGPL, v3, as defined and found on www.gnu.org,
+// {{{
+//		http://www.gnu.org/licenses/lgpl.html
+//
+////////////////////////////////////////////////////////////////////////////////
+`default_nettype	none
 
-`default_nettype none
-`timescale 1ps/1ps
+module	hsFIR #(
+		parameter		    NTAPS=128, 
+        parameter           IW=12, 
+        parameter           TW=IW, 
+        parameter           OW=(2*IW+7),
+		parameter [0:0]		FIXED_TAPS=0
+	) (
+		input	wire			    i_clk, 
+        input   wire                i_reset,
+		input	wire			    i_tap_wr,	// Ignored if FIXED_TAPS
+		input	wire	[(TW-1):0]	i_tap,		// Ignored if FIXED_TAPS
+		input	wire			    i_ce,
+		input	wire	[(IW-1):0]	i_sample,
+		output	wire	[(OW-1):0]	o_result
+	);
 
-module hsFIR(
-    input   wire    [0:0]   i_clk,
-    input   wire    [0:0]   i_reset_n,
-    input   wire    [7:0]   i_data,
-    output  reg     [7:0]   o_data
-);
+	// Local declarations
+	wire	[(TW-1):0] tap		[NTAPS:0];
+	wire	[(TW-1):0] tapout	[NTAPS:0];
+	wire	[(IW-1):0] sample	[NTAPS:0];
+	wire	[(OW-1):0] result	[NTAPS:0];
+	wire		tap_wr;
 
-always @(posedge i_clk) begin
-    if(!i_reset_n) begin
-        o_data <= 8'h00;
-    end else begin
-        o_data <= i_data;
-    end
-end
+	genvar	k;
 
+	// The first sample in our sample chain is the sample we are given
+	assign	sample[0]	= i_sample;
+	// Initialize the partial summing accumulator with zero
+	assign	result[0]	= 0;
+
+	// Initialize filter memory
+	generate if(FIXED_TAPS)
+	begin : LOAD_TAPS
+		initial $readmemh("taps.hex", tap);
+
+		assign	tap_wr = 1'b0;
+	end else begin : GEN_TAP_UPDATE_LOGIC
+		assign	tap_wr = i_tap_wr;
+		assign	tap[0] = i_tap;
+	end
+
+	for(k=0; k<NTAPS; k=k+1)
+	begin: FILTER
+
+		firtap #(
+			.FIXED_TAPS(FIXED_TAPS),
+			.IW(IW), .OW(OW), .TW(TW),
+			.INITIAL_VALUE(0)
+		) tapk(
+			i_clk, i_reset,
+			// Tap update circuitry
+			tap_wr, tap[NTAPS-1-k], tapout[k],
+			// Sample delay line
+			i_ce, sample[k], sample[k+1],
+			// The output accumulator
+			result[k], result[k+1]
+		);
+
+		if (!FIXED_TAPS)
+		begin : TAP_OUT
+			assign	tap[NTAPS-1-k] = tapout[k+1];
+		end
+
+		// Make verilator happy
+		// verilator lint_off UNUSED
+		wire	[(TW-1):0]	unused_tap;
+		if (FIXED_TAPS)
+		begin : GEN_UNUSED
+			assign	unused_tap    = tapout[k];
+		end
+		// verilator lint_on UNUSED
+	end endgenerate
+
+	assign	o_result = result[NTAPS];
+
+	// Make verilator happy
+	// verilator lint_off UNUSED
+	wire	[(TW):0]	unused;
+	assign	unused = { i_tap_wr, i_tap };
+	// verilator lint_on UNUSED
 endmodule
