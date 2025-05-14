@@ -3,3 +3,5 @@
 ## average_filter
 
 ## boxcar_filter
+
+## hsFIR: High Speed Finite Impulse Response Filter
