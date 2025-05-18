@@ -1,0 +1,14 @@
+[options]
+mode prove
+depth 8
+
+
+[engines]
+smtbmc yices
+
+[script]
+read_verilog -sv -DhsFIR -formal hsFIR_formal.v
+prep -top hsFIR
+
+[files]
+hsFIR_formal.v

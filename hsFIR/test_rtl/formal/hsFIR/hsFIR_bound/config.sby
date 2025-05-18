@@ -1,0 +1,14 @@
+[options]
+mode bmc
+depth 16
+
+
+[engines]
+smtbmc
+
+[script]
+read_verilog -sv -DhsFIR -formal hsFIR_formal.v
+prep -top hsFIR
+
+[files]
+hsFIR_formal.v
