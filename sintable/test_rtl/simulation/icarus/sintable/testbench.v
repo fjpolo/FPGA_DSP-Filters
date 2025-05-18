@@ -2,106 +2,131 @@
 // File        : testbench.v for sintable.v
 // Author      : @fjpolo
 // email       : fjpolo@gmail.com
-// Description : <Brief description of the module or file>
+// Description : Reset state testbench with VCD waveform support
 // License     : MIT License
 //
 // Copyright (c) 2025 | @fjpolo
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
 // =============================================================================
-
 `default_nettype none
 `timescale 1ps/1ps
 
-module testbench;
-
-    // Inputs
-    reg         i_clk;
-    reg         i_reset_n;
-    reg  [7:0]  i_data;
-
-    // Outputs
-    wire [7:0]  o_data;
-
-    // Instantiate the Unit Under Test (UUT)
-    sintable uut (
-        .i_clk     (i_clk),
-        .i_reset_n (i_reset_n),
-        .i_data    (i_data),
-        .o_data    (o_data)
+module testbench();
+    // Parameters
+    parameter PW = 17;
+    parameter OW = 13;
+    
+    // Clock and reset
+    reg i_clk = 0;
+    reg i_reset = 1;
+    
+    // Module inputs
+    reg i_ce = 0;
+    reg [PW-1:0] i_phase = 0;
+    reg i_aux = 0;
+    
+    // Module outputs
+    wire [OW-1:0] o_val;
+    wire o_aux;
+    
+    // Test variables
+    reg [31:0] error_count = 0;
+    reg [31:0] test_count = 0;
+    reg test_finished = 0;
+    
+    // Instantiate the DUT
+    sintable #(
+        .PW(PW),
+        .OW(OW)
+    ) dut (
+        .i_clk(i_clk),
+        .i_reset(i_reset),
+        .i_ce(i_ce),
+        .i_phase(i_phase),
+        .o_val(o_val),
+        .i_aux(i_aux),
+        .o_aux(o_aux)
     );
-
-    // Clock generation
+    
+    // Generate clock
+    always #500 i_clk = ~i_clk;
+    
+    // Waveform initialization
     initial begin
-        i_clk = 0;
-        forever #5 i_clk = ~i_clk; // 10ps clock period
+        $dumpfile("reset_test.vcd");
+        $dumpvars(0, testbench);
     end
-
-    // Waveform dumping
-    initial begin
-        $dumpfile("dump.vcd"); // Specify the waveform file name
-        $dumpvars(0, testbench); // Dump all signals in the testbench module
-    end
-
+    
     // Test sequence
     initial begin
-        // Initialize inputs
-        i_reset_n = 0;
-        i_data    = 8'h00;
-
-        // Apply reset
-        #10;
-        i_reset_n = 1;
-
-        // // Test 1: Check reset behavior
-        // #10;
-        // if (o_data !== 8'h00) begin
-        //     $display("FAIL: Reset test failed. Expected 8'h00, got %h", o_data);
-        //     $finish;
-        // end
-
-        // // Test 2: Check data propagation
-        // i_data = 8'hA5;
-        // #10;
-        // if (o_data !== 8'hA5) begin
-        //     $display("FAIL: Data propagation test failed. Expected 8'hA5, got %h", o_data);
-        //     $finish;
-        // end
-
-        // // Test 3: Check another data value
-        // i_data = 8'h3C;
-        // #10;
-        // if (o_data !== 8'h3C) begin
-        //     $display("FAIL: Data propagation test failed. Expected 8'h3C, got %h", o_data);
-        //     $finish;
-        // end
-
-        // If all tests pass
-        $display("PASS: All tests passed.");
-        $finish;
+        // Wait for waveform initialization
+        #100;
+        
+        // Test 1: Initial reset state
+        $display("TEST 1: Checking initial reset state...");
+        if (o_val !== 0 || o_aux !== 0) begin
+            $display("ERROR: Initial reset state failed");
+            error_count = error_count + 1;
+        end
+        test_count = test_count + 1;
+        #1000;
+        
+        // Test 2: Release reset and check outputs
+        $display("TEST 2: Releasing reset...");
+        i_reset = 0;
+        i_ce = 1;
+        i_phase = 10'h123;  // Non-zero phase
+        i_aux = 1;
+        #2000;
+        
+        // Test 3: Assert reset during operation
+        $display("TEST 3: Asserting reset during operation...");
+        i_reset = 1;
+        #1000;
+        if (o_val !== 0 || o_aux !== 0) begin
+            $display("ERROR: Reset assertion failed - outputs not zero");
+            error_count = error_count + 1;
+        end
+        test_count = test_count + 1;
+        
+        // Test 4: Release reset again
+        $display("TEST 4: Releasing reset again...");
+        i_reset = 0;
+        #1000;
+        
+        // Test 5: Multiple reset pulses
+        $display("TEST 5: Testing multiple reset pulses...");
+        repeat (3) begin
+            i_reset = 1;
+            #500;
+            if (o_val !== 0 || o_aux !== 0) begin
+                $display("ERROR: Reset pulse failed - outputs not zero");
+                error_count = error_count + 1;
+            end
+            i_reset = 0;
+            #500;
+        end
+        test_count = test_count + 1;
+        
+        // Finish tests
+        test_finished = 1;
+        #1000;
+        
+        // Print results
+        if (error_count == 0) begin
+            $display("PASS: All %0d reset tests passed", test_count);
+            $finish;
+        end else begin
+            $display("FAIL: %0d errors in reset tests", error_count);
+            $finish;
+        end
     end
-
-    // Monitor for errors
+    
+    // Timeout check
     initial begin
-        #100; // Timeout to catch unexpected behavior
-        $display("ERROR: Simulation timed out.");
-        $finish;
+        #1000000; // 1ms timeout
+        if (!test_finished) begin
+            $display("ERROR: Testbench timed out");
+            $finish;
+        end
     end
-
 endmodule

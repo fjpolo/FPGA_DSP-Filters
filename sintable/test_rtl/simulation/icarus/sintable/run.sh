@@ -3,6 +3,7 @@
 # Define paths
 TESTBENCH="testbench.v"
 RTL_MODULE="${PWD}/../../../../rtl/sintable.v"
+LUT="${PWD}/../../../../rtl/sintable.hex"
 OUTPUT="testbench"
 WAVEFORM="dump.vcd"
 
@@ -19,6 +20,9 @@ if [ ! -f "$RTL_MODULE" ]; then
   exit 1
 fi
 
+# Copy LUT
+cp ${LUT} .
+
 # Compile the testbench and RTL module
 echo "        [ICARUS] Compiling testbench and RTL module..."
 iverilog -o "$OUTPUT" "$TESTBENCH" "$RTL_MODULE"
@@ -31,7 +35,8 @@ fi
 
 # Run the simulation and generate waveform
 echo "        [ICARUS] Running simulation and generating waveform..."
-vvp "$OUTPUT" -lxt2
+# vvp "$OUTPUT" -lxt2
+vvp "$OUTPUT" +fst
 
 # Check if simulation was successful
 if [ $? -ne 0 ]; then
@@ -39,13 +44,13 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-# Rename the waveform file to the desired name
-if [ -f "dump.vcd" ]; then
-  mv "dump.vcd" "$WAVEFORM"
-  echo "        [ICARUS] Waveform saved to $WAVEFORM"
-else
-  echo "        [ICARUS] ERROR: Waveform file not generated."
-  exit 1
-fi
+# # Rename the waveform file to the desired name
+# if [ -f "dump.vcd" ]; then
+#   mv "dump.vcd" "$WAVEFORM"
+#   echo "        [ICARUS] Waveform saved to $WAVEFORM"
+# else
+#   echo "        [ICARUS] ERROR: Waveform file not generated."
+#   exit 1
+# fi
 
 echo "        [ICARUS] PASS: Simulation completed successfully."
