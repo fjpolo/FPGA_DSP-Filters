@@ -21,3 +21,7 @@ This Verilog module implements...
        .data_in(data_in),   // Input
        .data_out(data_out)  // Output
    );
+
+## References
+
+[The simplest sine wave generator within an FPGA](https://zipcpu.com/dsp/2017/07/11/simplest-sinewave-generator.html)
