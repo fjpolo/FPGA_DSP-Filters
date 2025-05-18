@@ -29,19 +29,47 @@
 `default_nettype none
 `timescale 1ps/1ps
 
-module nco(
-    input   wire    [0:0]   i_clk,
-    input   wire    [0:0]   i_reset_n,
-    input   wire    [7:0]   i_data,
-    output  reg     [7:0]   o_data
-);
+module	nco(i_clk, i_ld, i_dphase, i_ce, o_val);
+	parameter	LGTBL = 9,  // Log, base two, of the table size
+			    W = 32,     // Word-size
+			    OW = 8;     // Output width
+	localparam	P = LGTBL;
+	//
+	input	wire		        i_clk;
+	//
+	input	wire		        i_ld;
+	input	wire	[W-1:0]	    i_dphase;
+	//
+	input	wire		        i_ce;
+	output	wire    [OW-1:0]	o_val;
 
-always @(posedge i_clk) begin
-    if(!i_reset_n) begin
-        o_data <= 8'h00;
-    end else begin
-        o_data <= i_data;
-    end
-end
+    reg	[W-1:0]	r_step;
 
+	initial	r_step = 0;
+	always @(posedge i_clk)
+        if (i_ld)
+            r_step <= i_dphase; // = 2^W * f/fs
+
+    reg	[W-1:0]	r_phase;
+
+	initial	r_phase = 0;
+	always @(posedge i_clk)
+	if (i_ce)
+		// PHI[n] = PHI[n-1] + 2^W * f / fs
+		r_phase <= r_phase + r_step;
+    	
+        // SIN LUT
+        /* verilator lint_off UNUSEDSIGNAL */
+        wire nco_o_aux;
+        /* verilator lint_on UNUSEDSIGNAL */
+        sintable #(.PW(P), .OW(OW))
+		stbl(
+            .i_clk(i_clk), 
+            .i_reset(1'b0), 
+            .i_ce(i_ce), 
+            .i_phase(r_phase[(W-1):(W-P)]), 
+            .o_val(o_val),
+            .i_aux(1'b0), 
+            .o_aux(nco_o_aux)
+            );
 endmodule

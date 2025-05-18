@@ -21,3 +21,7 @@ This Verilog module implements...
        .data_in(data_in),   // Input
        .data_out(data_out)  // Output
    );
+
+## References 
+
+[Building a Numerically Controlled Oscillator](https://zipcpu.com/dsp/2017/12/09/nco.html)

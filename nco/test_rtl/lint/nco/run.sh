@@ -10,7 +10,7 @@ fi
 
 # Run verilator as linter
 echo "        [VERILATOR] Running linter..."
-verilator --lint-only --Wall --cc ${PWD}/../../../rtl/nco.v
+verilator --lint-only --Wall --cc -I${PWD}/../../../rtl ${PWD}/../../../rtl/nco.v
 if [ $? -ne 0 ]; then
     echo "        [VERILATOR] FAIL: Verilator linter failed. Exiting script."
     exit 1
