@@ -13,6 +13,9 @@ ORIGINAL_FILE="${PWD}/../../../rtl/sintable.v"
 FORMAL_FILE="properties.v"
 CONFIG_FILE="sintable.sby"
 
+# Copy hex here
+cp ${PWD}/../../../rtl/sintable.hex .
+
 # Generate a timestamp for the temporary file
 TEMP_FILE="sintable_formal.v"
 echo -n > $TEMP_FILE
@@ -59,4 +62,7 @@ echo ""
 
 # Clean up the temporary file for the original master.v
 rm $TEMP_FILE
+
+# Remove hex from here
+#rm sintable.hex
 
