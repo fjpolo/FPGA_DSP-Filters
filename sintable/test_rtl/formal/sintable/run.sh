@@ -64,5 +64,5 @@ echo ""
 rm $TEMP_FILE
 
 # Remove hex from here
-#rm sintable.hex
+rm sintable.hex
 
