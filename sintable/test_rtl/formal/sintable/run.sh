@@ -48,6 +48,7 @@ fi
 # Run SymbiYosys (sby) on the temporary file
 echo "        [SBY] Verifying $ORIGINAL_FILE with formal properties..."
 CONFIG_FILE="sintable.sby"
+# sby --autotune -f $CONFIG_FILE
 sby -f $CONFIG_FILE
 
 # Check if sby succeeded
