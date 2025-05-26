@@ -12,15 +12,18 @@ This Verilog module implements...
 
 1. **Instantiate the module:**
 
-   ```verilog
-   sintable #(
-       // Optional parameters here 
-   ) sintable (
-       .clk(clk),           // Input
-       .reset_n(reset_n),   // Input - active low
-       .data_in(data_in),   // Input
-       .data_out(data_out)  // Output
-   );
+```verilog
+module	sintable #(
+	parameter	                PW =17, // Number of bits in the input phase
+			                    OW =13  // Number of output bits
+	) (
+	input	wire			    i_clk,
+	input	wire			    i_reset,
+	input	wire			    i_ce,
+	input	wire	[(PW-1):0]	i_phase,
+	output	reg	    [(OW-1):0]	o_val
+    );
+```
 
 ## References
 
