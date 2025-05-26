@@ -45,12 +45,18 @@
 		f_past_valid <= 1'b1;
 
 
-
     ////////////////////////////////////////////////////
 	//
 	// Reset
 	//
 	////////////////////////////////////////////////////
+	always @(posedge i_clk)
+		if((f_past_valid)&&($past(i_reset)))
+			assert(!o_val);
+
+	always @(posedge i_clk)
+		if((f_past_valid)&&($past(i_reset)))
+			assert(!o_aux);
 
     ////////////////////////////////////////////////////
 	//
@@ -63,6 +69,10 @@
 	// Contract
 	//
 	////////////////////////////////////////////////////   
+
+	always @(posedge i_clk)
+		if((f_past_valid)&&(!$past(i_reset))&&($past(i_ce)))
+			assert(o_val == $past(tbl[i_phase]));
 
     ////////////////////////////////////////////////////
 	//

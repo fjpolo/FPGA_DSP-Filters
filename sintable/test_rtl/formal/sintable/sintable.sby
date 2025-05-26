@@ -1,16 +1,21 @@
 [tasks]
 bound
+prf
 cvr
 
 [options]
 bound:  mode bmc
 bound:  depth 8
+prf:    mode prove
+prf:    depth 8
 cvr:    mode cover
 cvr:    depth 8
 cvr:    append 5
 
+
 [engines]
 bound:  smtbmc --nounroll yices -- --noincr
+prf:    smtbmc --nounroll yices -- --noincr
 cvr:    smtbmc
 
 [script]

@@ -49,7 +49,7 @@ fi
 echo "        [SBY] Verifying $ORIGINAL_FILE with formal properties..."
 CONFIG_FILE="sintable.sby"
 # sby --autotune -f $CONFIG_FILE
-sby -f $CONFIG_FILE
+sby -f $CONFIG_FILE bound
 
 # Check if sby succeeded
 if [ $? -ne 0 ]; then
