@@ -15,6 +15,9 @@ fi
 # Copy testbench here
 cp ${PWD}/../../../rtl/sintable.v .
 
+# Copy hex here
+cp ${PWD}/../../../rtl/sintable.hex .
+
 # Check if the RTL module exists
 if [ ! -f "$RTL_MODULE" ]; then
   echo "        [YOSYS] ERROR: RTL module not found at $RTL_MODULE"
@@ -34,3 +37,6 @@ echo "        [YOSYS] PASS: Synthesis passed!"
 
 # Remove testbench from here
 rm sintable.v
+
+# Remove hex from here
+rm sintable.hex
