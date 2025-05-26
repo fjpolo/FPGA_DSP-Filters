@@ -50,6 +50,10 @@ module testbench();
     reg [31:0] error_count = 0;
     reg [31:0] test_count = 0;
     reg test_finished = 0;
+
+    // Memory for expected sine values
+    reg [OW-1:0] expected_sine [0:((1<<PW)-1)];
+    initial $readmemh("sintable.hex", expected_sine);
     
     // Instantiate the DUT
     sintable #(
@@ -70,7 +74,7 @@ module testbench();
     
     // Waveform initialization
     initial begin
-        $dumpfile("reset_test.vcd");
+        $dumpfile("testbench_dump.vcd");
         $dumpvars(0, testbench);
     end
     
@@ -135,7 +139,7 @@ module testbench();
         $display("TEST 2.2: Reset during phase transition...");
         i_reset = 0;
         i_ce = 1;
-        i_phase = 10'hABC;
+        i_phase = 'hABC;
         #1000;
         i_reset = 1;
         #1000;
@@ -155,7 +159,7 @@ module testbench();
         // Test 3.1: Reset exactly at clock edge
         $display("TEST 3.1: Reset at clock edge...");
         i_reset = 0;
-        i_phase = 10'hFFF;
+        i_phase = 'hFFF;
         #900;
         @(posedge i_clk);
         i_reset = 1;
@@ -182,25 +186,109 @@ module testbench();
         #1000
         
         // =============================================
-        // Final Checks
+        // Phase 2: Core Functionality Testing
+        // =============================================
+        $display("\n=== PHASE 2: Core Functionality Tests ===");
+        i_reset = 0;
+        i_ce = 1;
+        
+        // Test 4.1: Basic sine lookup
+        $display("TEST 4.1: Basic sine lookup");
+        i_phase = 0;
+        #1000
+        @(posedge i_clk);
+        if (o_val !== expected_sine[0]) begin
+            $display("ERROR: Phase 0x0, Expected 0x%h, Got 0x%h", expected_sine[0], o_val);
+            error_count++;
+        end
+        test_count++;
+        
+        // Test 4.2: Quarter phase points
+        $display("TEST 4.2: Quarter phase points");
+        i_phase = (1 << (PW-2)); // 90 degrees
+        #1000
+        @(posedge i_clk);
+        if (o_val !== expected_sine[i_phase]) begin
+            $display("ERROR: Phase 0x%h, Expected 0x%h, Got 0x%h", 
+                    i_phase, expected_sine[i_phase], o_val);
+            error_count++;
+        end
+        test_count++;
+        
+        // Test 4.3: Phase wrapping
+        $display("TEST 4.3: Phase wrapping");
+        i_phase = (1 << PW) - 1; // Max phase
+        #1000
+        @(posedge i_clk);
+        if (o_val !== expected_sine[i_phase]) begin
+            $display("ERROR: Phase wrap, Expected 0x%h, Got 0x%h", 
+                    expected_sine[i_phase], o_val);
+            error_count++;
+        end
+        test_count++;
+        
+        // =============================================
+        // Phase 3: Auxiliary Signal Testing
+        // =============================================
+        $display("\n=== PHASE 3: Auxiliary Signal Tests ===");
+        
+        // Test 5.1: Aux signal propagation
+        $display("TEST 5.1: Aux signal propagation");
+        i_aux = 1;
+        #1000
+        @(posedge i_clk);
+        if (o_aux !== 1) begin
+            $display("ERROR: Aux not propagated (1)");
+            error_count++;
+        end
+        test_count++;
+        
+        // Test 5.2: Aux signal toggle
+        $display("TEST 5.2: Aux signal toggle");
+        i_aux = 0;
+        #1000
+        @(posedge i_clk);
+        if (o_aux !== 0) begin
+            $display("ERROR: Aux not propagated (0)");
+            error_count++;
+        end
+        test_count++;
+        
+        // =============================================
+        // Phase 4: Clock Enable Testing
+        // =============================================
+        $display("\n=== PHASE 4: Clock Enable Tests ===");
+        
+        // Test 6.1: Clock enable disable
+        $display("TEST 6.1: Clock enable disable");
+        i_ce = 0;
+        i_phase = 'h555;
+        i_aux = 1;
+        #1000
+        @(posedge i_clk);
+        if (o_val === expected_sine[i_phase] || o_aux === 1) begin
+            $display("ERROR: Output changed with i_ce=0");
+            error_count++;
+        end
+        test_count++;
+        
+        // =============================================
+        // Test Completion
         // =============================================
         test_finished = 1;
         #1000;
         
-        // Print results
-        $display("\n=== TEST SUMMARY ===");
+        $display("\n=== FINAL TEST SUMMARY ===");
         if (error_count == 0) begin
-            $display("PASS: All %0d reset tests passed", test_count);
-            $finish;
+            $display("PASS: All %0d tests passed", test_count);
         end else begin
-            $display("FAIL: %0d errors in %0d reset tests", error_count, test_count);
-            $finish;
+            $display("FAIL: %0d errors in %0d tests", error_count, test_count);
         end
+        $finish;
     end
     
-    // Timeout check
     initial begin
-        #1000000; // 1ms timeout
+        #10000000; // 10ms timeout
         if (!test_finished) begin
             $display("ERROR: Testbench timed out");
             $finish;
