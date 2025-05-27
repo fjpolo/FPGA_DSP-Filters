@@ -29,13 +29,14 @@
 `default_nettype none
 `timescale 1ps/1ps
 
-module	nco(i_clk, i_ld, i_dphase, i_ce, o_val);
+module	nco(i_clk, i_reset, i_ld, i_dphase, i_ce, o_val);
 	parameter	LGTBL = 9,  // Log, base two, of the table size
 			    W = 32,     // Word-size
 			    OW = 8;     // Output width
 	localparam	P = LGTBL;
 	//
 	input	wire		        i_clk;
+	input	wire		        i_reset;
 	//
 	input	wire		        i_ld;
 	input	wire	[W-1:0]	    i_dphase;
@@ -65,7 +66,7 @@ module	nco(i_clk, i_ld, i_dphase, i_ce, o_val);
         sintable #(.PW(P), .OW(OW))
 		stbl(
             .i_clk(i_clk), 
-            .i_reset(1'b0), 
+            .i_reset(i_reset), 
             .i_ce(i_ce), 
             .i_phase(r_phase[(W-1):(W-P)]), 
             .o_val(o_val),

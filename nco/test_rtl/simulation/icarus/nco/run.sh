@@ -3,6 +3,7 @@
 # Define paths
 TESTBENCH="testbench.v"
 RTL_MODULE="${PWD}/../../../../rtl/nco.v"
+RTL_SINTABLLE_MODULE="${PWD}/../../../../rtl/sintable.v"
 OUTPUT="testbench"
 WAVEFORM="dump.vcd"
 
@@ -19,9 +20,12 @@ if [ ! -f "$RTL_MODULE" ]; then
   exit 1
 fi
 
+# Copy hex here
+cp ${PWD}/../../../../rtl/sintable.hex .
+
 # Compile the testbench and RTL module
 echo "        [ICARUS] Compiling testbench and RTL module..."
-iverilog -o "$OUTPUT" "$TESTBENCH" "$RTL_MODULE"
+iverilog -o "$OUTPUT" "$TESTBENCH" "$RTL_MODULE" "$RTL_SINTABLLE_MODULE"
 
 # Check if compilation was successful
 if [ $? -ne 0 ]; then
@@ -47,5 +51,8 @@ else
   echo "        [ICARUS] ERROR: Waveform file not generated."
   exit 1
 fi
+
+# Remove hex
+rm sintable.hex
 
 echo "        [ICARUS] PASS: Simulation completed successfully."
