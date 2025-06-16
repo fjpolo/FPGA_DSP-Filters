@@ -1,26 +1,16 @@
 [tasks]
 bound
-prf
-cvr
 
 [options]
-bound:  mode bmc
-bound:  depth 16
-prf:    mode prove
-prf:    depth 8
-cvr:    mode cover
-cvr:    depth 64
-cvr:    append 20
-
+bound:  mode prove
 
 [engines]
-bound:  smtbmc
-prf:    smtbmc yices
-cvr:    smtbmc
+bound:  smtbmc boolector
 
 [script]
-read_verilog -sv -DDELAYW -formal template_formal.v
+read_verilog -sv -DDELAYW -formal delayw_formal.v
+hierarchy -top delayw -chparam DW 1 -chparam LGDLY 3
 prep -top delayw
 
 [files]
-template_formal.v
+delayw_formal.v

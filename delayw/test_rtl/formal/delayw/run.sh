@@ -14,7 +14,7 @@ FORMAL_FILE="properties.v"
 CONFIG_FILE="delayw.sby"
 
 # Generate a timestamp for the temporary file
-TEMP_FILE="template_formal.v"
+TEMP_FILE="delayw_formal.v"
 echo -n > $TEMP_FILE
 
 # Check if required files exist
