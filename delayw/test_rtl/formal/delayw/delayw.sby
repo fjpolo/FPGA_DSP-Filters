@@ -1,11 +1,11 @@
 [tasks]
-bound
+prf
 
 [options]
-bound:  mode prove
+prf:  mode prove
 
 [engines]
-bound:  smtbmc boolector
+prf:  smtbmc boolector
 
 [script]
 read_verilog -sv -DDELAYW -formal delayw_formal.v
