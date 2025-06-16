@@ -4,14 +4,14 @@ module led (
     output  wire     [5:0]   o_led    // 6 LEDS pin
 );
 
-// module template(
+// module delayw(
 //     input   wire    [0:0]   i_clk,
 //     input   wire    [0:0]   i_reset_n,
 //     input   wire    [7:0]   i_data,
 //     output  reg     [7:0]   o_data
 // );
 wire [7:0] o_output;
-template DUT(
+delayw DUT(
     .i_clk(i_sys_clk),
     .i_reset_n(i_sys_rst_n),
     .i_data('h00),  // Example input data, modify as needed

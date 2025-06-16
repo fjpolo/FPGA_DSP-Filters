@@ -20,9 +20,9 @@ for dir in */; do
 
     # Check if the script failed
     if [ $exit_status -ne 0 ]; then
-      echo "[TEST] template failed!"
+      echo "[TEST] delayw failed!"
     else
-      echo "[TEST] template passed!"
+      echo "[TEST] delayw passed!"
     fi
   else
     echo "[TEST] No run_all.sh found in $dir"

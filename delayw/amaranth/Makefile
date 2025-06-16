@@ -18,7 +18,7 @@ MODULE := test_template
 VERILATOR_FLAGS += -Wno-WIDTHEXPAND
 
 # Path to your Amaranth-generated Verilog file
-VERILOG_SOURCES += template.v
+VERILOG_SOURCES += delayw.v
 
 # Path to your cocotb testbench file
 PYTHON_SOURCES += test_template.py
@@ -27,15 +27,15 @@ PYTHON_SOURCES += test_template.py
 include $(shell cocotb-config --makefiles)/Makefile.sim
 
 # Rule to generate Verilog before running cocotb simulation
-# This ensures that template.v is up-to-date
+# This ensures that delayw.v is up-to-date
 all: simulate
 
-simulate: template.v
+simulate: delayw.v
 	$(MAKE) -C $(shell pwd) sim
 
-template.v:
-	python template.py # This will execute the "Conversion" section of your script
+delayw.v:
+	python delayw.py # This will execute the "Conversion" section of your script
 
 .PHONY: clean_all
 clean_all:
-	rm -rf results.xml sim_build *.vcd template.v
+	rm -rf results.xml sim_build *.vcd delayw.v

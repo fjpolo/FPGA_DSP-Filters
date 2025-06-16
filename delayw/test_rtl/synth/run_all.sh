@@ -20,9 +20,9 @@ for dir in */; do
 
     # Check if the script failed
     if [ $exit_status -ne 0 ]; then
-      echo "    [SYNTHESIS] FAIL: template failed!"
+      echo "    [SYNTHESIS] FAIL: delayw failed!"
     else
-      echo "    [SYNTHESIS] PASS: template passed!"
+      echo "    [SYNTHESIS] PASS: delayw passed!"
     fi
   else
     echo "    [SYNTHESIS] ERROR: No run.sh found in $dir"

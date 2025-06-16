@@ -26,9 +26,9 @@ for dir in */; do
 
     # Check if the script failed
     if [ $exit_status -ne 0 ]; then
-      echo "    [MUTATION] FAIL: template failed!"
+      echo "    [MUTATION] FAIL: delayw failed!"
     else
-      echo "    [MUTATION] PASS: template passed!"
+      echo "    [MUTATION] PASS: delayw passed!"
     fi
   else
     echo "    [MUTATION] ERROR: No run.sh found in $dir"

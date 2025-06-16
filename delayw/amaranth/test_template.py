@@ -7,7 +7,7 @@ async def counter_test(dut):
     """Test the 16-bit up counter with a fixed limit."""
 
     # Define the limit value used in the Amaranth design
-    # This must match the 'limit' passed to template() in template.py's conversion section
+    # This must match the 'limit' passed to delayw() in delayw.py's conversion section
     LIMIT_VAL = 25
 
     # Create a clock
@@ -43,10 +43,10 @@ async def counter_test(dut):
     # The overflow should clear in one cycle (as count goes back to 0).
     await RisingEdge(dut.clk)
     assert dut.ovf.value == 0, "Error: ovf did not deassert after overflow."
-    # If you want to check the count, inspect your template.v for the exact path:
+    # If you want to check the count, inspect your delayw.v for the exact path:
     # Example: if your Amaranth module instance inside 'top' is named '_design',
     # and count is an internal signal, it might be dut._design.count.value
-    # For a simple template, dut.count.value *might* work, depending on Verilator's flattening.
+    # For a simple delayw, dut.count.value *might* work, depending on Verilator's flattening.
     # For now, we'll stick to 'ovf' as it's a top-level port.
 
     cocotb.log.info("Cocotb test finished successfully!")

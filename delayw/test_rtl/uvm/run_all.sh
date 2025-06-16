@@ -20,9 +20,9 @@ for dir in */; do
 
     # Check if the script failed
     if [ $exit_status -ne 0 ]; then
-      echo "    [UVM] FAIL: template failed!"
+      echo "    [UVM] FAIL: delayw failed!"
     else
-      echo "    [UVM] PASS: template passed!"
+      echo "    [UVM] PASS: delayw passed!"
     fi
   else
     echo "    [UVM] ERROR: No run_all.sh found in $dir"

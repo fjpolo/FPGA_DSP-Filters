@@ -1,6 +1,6 @@
 *.vcd
 *.v
 *.il
-template/
+delayw/
 template_bmc/
 template_cover/

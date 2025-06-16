@@ -1,4 +1,4 @@
-# template Module
+# delayw Module
 
 This Verilog module implements...
 
@@ -13,9 +13,9 @@ This Verilog module implements...
 1. **Instantiate the module:**
 
    ```verilog
-   template #(
+   delayw #(
        // Optional parameters here 
-   ) template (
+   ) delayw (
        .clk(clk),           // Input
        .reset_n(reset_n),   // Input - active low
        .data_in(data_in),   // Input

@@ -20,9 +20,9 @@ for dir in */; do
 
     # Check if the script failed
     if [ $exit_status -ne 0 ]; then
-      echo "[SIMULATION][ICARUS] FAIL: template failed!"
+      echo "[SIMULATION][ICARUS] FAIL: delayw failed!"
     else
-      echo "[SIMULATION][ICARUS] template passed!"
+      echo "[SIMULATION][ICARUS] delayw passed!"
     fi
   else
     echo "[SIMULATION][ICARUS] ERROR: No run.sh found in $dir"
