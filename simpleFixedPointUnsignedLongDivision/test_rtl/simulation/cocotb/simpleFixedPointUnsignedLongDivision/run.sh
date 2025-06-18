@@ -1,32 +1,41 @@
-# !/bin/bash
+#!/bin/bash
 
-# Source the OSS CAD Suite environment
-echo "          [COCOTB] Sourcing OSS CAD Suite environment..."
-source ~/oss-cad-suite/environment
-if [ $? -ne 0 ]; then
-    echo "          [COCOTB] FAIL: Failed to source OSS CAD Suite environment. Exiting script."
-    exit 1
-fi
+# No sourcing of OSS CAD Suite environment as we're not using it.
+echo "           [COCOTB] Using system-installed tools."
+
+# Remove any LD_LIBRARY_PATH or LD_PRELOAD manipulations
+# as they are no longer needed (and were causing conflicts).
+unset LD_LIBRARY_PATH
+unset LD_PRELOAD
+
+# Ensure system tools are found by explicitly adding /usr/bin to PATH if necessary.
+# Usually, /usr/bin is already in PATH by default, so this might not be needed.
+# export PATH="/usr/bin:$PATH" # Uncomment if 'iverilog' or 'vvp' are not found
 
 # Copy original simpleFixedPointUnsignedLongDivision.v
-cp ${PWD}/../../../../rtl/simpleFixedPointUnsignedLongDivision.v .
+cp "${PWD}/../../../../rtl/simpleFixedPointUnsignedLongDivision.v" .
 
-# Call cocoTB
-echo "        [COCOTB][ICARUS] Running testbench..."
-python3 testrunner_icarus.py
+# Call cocoTB for Icarus
+echo "         [COCOTB][ICARUS] Running testbench..."
+# Explicitly use the system's python3.
+# This will automatically find the system-installed iverilog and vvp.
+/usr/bin/python3 testrunner_icarus.py
 if [ $? -ne 0 ]; then
-    echo "          [COCOTB][ICARUS] FAIL: Simulation failed. Exiting script."
+    echo "           [COCOTB][ICARUS] FAIL: Simulation failed. Exiting script."
     exit 1
 fi
-echo "        [COCOTB][ICARUS] PASS: CocoTB simulation passed!"
+echo "         [COCOTB][ICARUS] PASS: CocoTB simulation passed!"
 
-echo "        [COCOTB][VERILATOR] Running testbench..."
-python3 testrunner_verilator.py
+# Call cocoTB for Verilator (assuming you have verilator also installed via system package manager)
+echo "         [COCOTB][VERILATOR] Running testbench..."
+/usr/bin/python3 testrunner_verilator.py
 if [ $? -ne 0 ]; then
-    echo "          [COCOTB][VERILATOR] FAIL: Simulation failed. Exiting script."
+    echo "           [COCOTB][VERILATOR] FAIL: Simulation failed. Exiting script."
     exit 1
 fi
-echo "        [COCOTB][VERILATOR] PASS: CocoTB simulation passed!"
+echo "         [COCOTB][VERILATOR] PASS: CocoTB simulation passed!"
 
-# Remove simpleFixedPointUnsignedLongDivision.-v
+# Remove simpleFixedPointUnsignedLongDivision.v
 rm simpleFixedPointUnsignedLongDivision.v
+
+echo "Simulation script finished."
