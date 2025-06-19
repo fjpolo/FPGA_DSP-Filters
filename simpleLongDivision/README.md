@@ -56,4 +56,4 @@ This Verilog module implements a synchronous, iterative long division algorithm.
 
 ## References
 
--   [Division in Verilog](https://projectf.io/posts/division-in-verilog/)
+- [Division in Verilog](https://projectf.io/posts/division-in-verilog/)

@@ -37,3 +37,7 @@ This Verilog module implements an iterative unsigned long division algorithm for
         .o_val(o_val)       // Output - Result value: quotient
     );
     ```
+
+## References
+
+- [Division in Verilog](https://projectf.io/posts/division-in-verilog/)
