@@ -60,7 +60,8 @@ module simpleFixedPointUnsignedLongDivision #(
         if (acc >= {1'b0, b1}) begin
             acc_next = acc - b1;
             {acc_next, quo_next} = {acc_next[WIDTH-1:0], quo, 1'b1};
-        end else begin
+        end
+        else begin
             {acc_next, quo_next} = {acc, quo} << 1;
         end
     end
@@ -68,37 +69,49 @@ module simpleFixedPointUnsignedLongDivision #(
     // calculation control
     always_ff @(posedge i_clk) begin
         o_done <= 0;
+        // i_start
         if (i_start) begin
             o_valid <= 0;
             o_ovf <= 0;
             i <= 0;
+            // b == 0
             if (b == 0) begin  // catch divide by zero
                 o_busy <= 0;
                 o_done <= 1;
                 o_dbz <= 1;
-            end else begin
+            end
+            // b != 0
+            else begin
                 o_busy <= 1;
                 o_dbz <= 0;
                 b1 <= b;
                 {acc, quo} <= {{WIDTH{1'b0}}, a, 1'b0};  // initialize calculation
             end
-        end else if (o_busy) begin
+        end
+        // o_busy
+        else if (o_busy) begin
+            // Last counter iteration
             if (i == ITER-1) begin  // o_done
                 o_busy <= 0;
                 o_done <= 1;
                 o_valid <= 1;
                 o_val <= quo_next;
-            end else if (i == WIDTH-1 && quo_next[WIDTH-1:WIDTH-FBITSW] != 0) begin  // overflow?
+            end
+            // Check overflow
+            else if (i == WIDTH-1 && quo_next[WIDTH-1:WIDTH-FBITSW] != 0) begin  // overflow?
                 o_busy <= 0;
                 o_done <= 1;
                 o_ovf <= 1;
                 o_val <= 0;
-            end else begin  // next iteration
+            end
+            // next iteration
+            else begin 
                 i <= i + 1;
                 acc <= acc_next;
                 quo <= quo_next;
             end
         end
+        // i_rst
         if (i_rst) begin
             o_busy <= 0;
             o_done <= 0;
