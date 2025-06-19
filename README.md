@@ -13,3 +13,7 @@
 ## sintable - Simplest Sin LUT
 
 ## wbpwmaudio - Bit-Reversed PWM Audio DAC
+
+## simpleLongDivision
+
+## simpleFixedPointUnsignedLongDivision
