@@ -1,0 +1,6 @@
+*.vcd
+*.v
+*.il
+simpleFixedPointSignedLongDivision/
+simpleFixedPointSignedLongDivision_bmc/
+simpleFixedPointSignedLongDivision_cover/
