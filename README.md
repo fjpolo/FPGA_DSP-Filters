@@ -17,3 +17,7 @@
 ## simpleLongDivision
 
 ## simpleFixedPointUnsignedLongDivision
+
+## simpleFixedPointSignedLongDivision
+
+## sqrtFixedPoint
