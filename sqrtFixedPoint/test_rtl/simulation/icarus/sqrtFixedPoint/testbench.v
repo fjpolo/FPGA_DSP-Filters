@@ -25,83 +25,77 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 // =============================================================================
-
 `default_nettype none
 `timescale 1ps/1ps
 
-module testbench;
+module testbench();
 
-    // Inputs
-    reg         i_clk;
-    reg         i_reset_n;
-    reg  [7:0]  i_data;
+    parameter CLK_PERIOD = 10;
+    parameter WIDTH = 16;
+    parameter FBITS = 8;
+    // Removed SF and all floating-point math inside Verilog for maximum compatibility.
 
-    // Outputs
-    wire [7:0]  o_data;
+    logic clk;
+    logic start;
+    logic [WIDTH-1:0] rad;
 
-    // Instantiate the Unit Under Test (UUT)
-    sqrtFixedPoint uut (
-        .i_clk     (i_clk),
-        .i_reset_n (i_reset_n),
-        .i_data    (i_data),
-        .o_data    (o_data)
+    wire busy;
+    wire valid;
+    wire [WIDTH-1:0] root;
+    wire [WIDTH-1:0] rem;
+
+    // Instantiate the Device Under Test (DUT)
+    sqrtFixedPoint #(.WIDTH(WIDTH), .FBITS(FBITS)) sqrt_inst (
+        .clk(clk),
+        .start(start),
+        .busy(busy),
+        .valid(valid),
+        .rad(rad),
+        .root(root),
+        .rem(rem)
     );
 
     // Clock generation
+    always #(CLK_PERIOD / 2) clk = ~clk;
+
+    // Monitor displayed values - now only displays raw bit vectors
     initial begin
-        i_clk = 0;
-        forever #5 i_clk = ~i_clk; // 10ps clock period
+        // You'll need to manually interpret the fixed-point values,
+        // or write a script to post-process the simulation output.
+        $monitor("\t%d:\trad=%b (root=%b, rem=%b, valid=%b)",
+                         $time, rad, root, rem, valid);
     end
 
-    // Waveform dumping
+    // Test stimulus
     initial begin
-        $dumpfile("dump.vcd"); // Specify the waveform file name
-        $dumpvars(0, testbench); // Dump all signals in the testbench module
-    end
+        clk = 1;
 
-    // Test sequence
-    initial begin
-        // Initialize inputs
-        i_reset_n = 0;
-        i_data    = 8'h00;
+        // Test Case 1: sqrt(232.5625) -> Radicand = 16'b1110_1000_1001_0000 (decimal 59536)
+        // Manual check: sqrt(232.5625) approx 15.25, in Q8.8 is 15.25 * 256 = 3904 (16'b0000_1111_0100_0000)
+        #100    rad = 16'b1110_1000_1001_0000;
+        start = 1;
+        #10     start = 0;
 
-        // Apply reset
+        wait(valid);
         #10;
-        i_reset_n = 1;
 
-        // // Test 1: Check reset behavior
-        // #10;
-        // if (o_data !== 8'h00) begin
-        //     $display("FAIL: Reset test failed. Expected 8'h00, got %h", o_data);
-        //     $finish;
-        // end
+        // Test Case 2: sqrt(0.25) -> Radicand = 16'b0000_0000_0100_0000 (decimal 64)
+        // Manual check: sqrt(0.25) = 0.5, in Q8.8 is 0.5 * 256 = 128 (16'b0000_0000_1000_0000)
+        #120    rad = 16'b0000_0000_0100_0000;
+        start = 1;
+        #10     start = 0;
 
-        // // Test 2: Check data propagation
-        // i_data = 8'hA5;
-        // #10;
-        // if (o_data !== 8'hA5) begin
-        //     $display("FAIL: Data propagation test failed. Expected 8'hA5, got %h", o_data);
-        //     $finish;
-        // end
+        wait(valid);
+        #10;
 
-        // // Test 3: Check another data value
-        // i_data = 8'h3C;
-        // #10;
-        // if (o_data !== 8'h3C) begin
-        //     $display("FAIL: Data propagation test failed. Expected 8'h3C, got %h", o_data);
-        //     $finish;
-        // end
+        // Test Case 3: sqrt(2.0) -> Radicand = 16'b0000_0010_0000_0000 (decimal 512)
+        // Manual check: sqrt(2.0) approx 1.414, in Q8.8 is 1.414 * 256 = 362 (16'b0000_0001_0110_1010)
+        #120    rad = 16'b0000_0010_0000_0000;
+        start = 1;
+        #10     start = 0;
+        wait(valid);
+        #10;
 
-        // If all tests pass
-        $display("PASS: All tests passed.");
-        $finish;
+        #120    $finish; // End simulation
     end
-
-    // Monitor for errors
-    initial begin
-        #100; // Timeout to catch unexpected behavior
-        $display("ERROR: Simulation timed out.");
-        $finish;
-    end
-
 endmodule
