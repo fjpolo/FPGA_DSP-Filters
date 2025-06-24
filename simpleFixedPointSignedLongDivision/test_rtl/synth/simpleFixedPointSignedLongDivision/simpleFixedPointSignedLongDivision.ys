@@ -1,7 +1,7 @@
 # yosys script for simpleFixedPointSignedLongDivision.v
 
 # Read the Verilog file
-read_verilog simpleFixedPointSignedLongDivision.v
+read_verilog -sv simpleFixedPointSignedLongDivision.v
 
 # Synthesize the design
 synth -top simpleFixedPointSignedLongDivision

@@ -2,20 +2,20 @@
 // Remove the uvm_macros.svh include
 
 module tb_top;
-    bit clk;
+    bit i_clk;
     logic reset_n;
     logic [7:0] data_in;
     logic [7:0] data_out;
     
     // Clock generation
     initial begin
-        clk = 0;
-        forever #500 clk = ~clk; // 1GHz clock
+        i_clk = 0;
+        forever #500 i_clk = ~i_clk; // 1GHz clock
     end
     
     // DUT instantiation
     simpleFixedPointSignedLongDivision dut (
-        .i_clk(clk),
+        .i_clk(i_clk),
         .i_reset_n(reset_n),
         .i_data(data_in),
         .o_data(data_out)
@@ -30,7 +30,7 @@ module tb_top;
         // Simple stimulus
         for (int i = 0; i < 10; i++) begin
             data_in = $random;
-            @(posedge clk);
+            @(posedge i_clk);
         end
         
         $display("Test completed");
