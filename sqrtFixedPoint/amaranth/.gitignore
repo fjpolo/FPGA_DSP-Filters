@@ -1,0 +1,6 @@
+*.vcd
+*.v
+*.il
+sqrtFixedPoint/
+sqrtFixedPoint_bmc/
+sqrtFixedPoint_cover/
