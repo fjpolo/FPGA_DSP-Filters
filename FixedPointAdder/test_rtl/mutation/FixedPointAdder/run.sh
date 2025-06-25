@@ -15,10 +15,10 @@
     awk '/`timescale 1ps\/1ps/ { print; print "    `define MCY"; next } { print }' FixedPointAdder.v > FixedPointAdder_temp.v
 
     #replace the orginal testbench file with the temp file.
-    cp FixedPointAdder_temp.v FixedPointAdder.v
+    mv FixedPointAdder_temp.v FixedPointAdder.v
 
     # Copy FixedPointAdder here
-    mv ${PWD}/../../simulation/icarus/FixedPointAdder/testbench.v .
+    cp ${PWD}/../../simulation/icarus/FixedPointAdder/testbench.v .
 
     # Append `define MCY after `timescale 1ps/1ps
     sed '/\`timescale 1ps\/1ps/a \
