@@ -1,10 +1,10 @@
 # yosys script for FixedPointAdder.v
 
 # Read the Verilog file
-read_verilog FixedPointAdder.v
+read_verilog -sv FixedPointAdder.v
 
 # Synthesize the design
-synth -top FixedPointAdder
+synth_gowin -top FixedPointAdder -json FixedPointAdder.json
 
 # Generate a simple netlist graph (for visualization)
 # This is done every iteration.
