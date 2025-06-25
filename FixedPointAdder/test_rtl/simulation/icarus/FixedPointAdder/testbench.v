@@ -61,22 +61,37 @@ module testbench;
 
     // Instantiate the Unit Under Test (UUT)
     // Pass parameters to the UUT instance
+`ifdef MCY
+    FixedPointAdder uut (
+            .i_clk      (i_clk),
+            .i_rst      (i_rst),
+            .i_start    (i_start),
+            .i_operandA (i_operandA),
+            .i_operandB (i_operandB),
+            .o_busy     (o_busy),
+            .o_done     (o_done),
+            .o_valid    (o_valid),
+            .o_overflow (o_overflow),
+            .o_val      (o_val)
+        );
+`else
     FixedPointAdder #(
         .WIDTH(WIDTH),
         .FBITS(4) // FBITS is not used in adder logic but kept for consistency
-    ) uut (
-        .i_clk      (i_clk),
-        .i_rst      (i_rst),
-        .i_start    (i_start),
-        .i_operandA (i_operandA),
-        .i_operandB (i_operandB),
-        .o_busy     (o_busy),
-        .o_done     (o_done),
-        .o_valid    (o_valid),
-        .o_overflow (o_overflow),
-        .o_val      (o_val)
-    );
-
+        ) uut (
+            .i_clk      (i_clk),
+            .i_rst      (i_rst),
+            .i_start    (i_start),
+            .i_operandA (i_operandA),
+            .i_operandB (i_operandB),
+            .o_busy     (o_busy),
+            .o_done     (o_done),
+            .o_valid    (o_valid),
+            .o_overflow (o_overflow),
+            .o_val      (o_val)
+        );
+`endif
+            
     // Define constants for WIDTH=8 signed numbers
     localparam signed [WIDTH-1:0] MAX_8_BIT_SIGNED = 8'd127; // 0x7F
     localparam signed [WIDTH-1:0] MIN_8_BIT_SIGNED = 8'h80;  // Represents -128 (using hex for compatibility)
