@@ -67,6 +67,12 @@
 	// o_valid is valid when adder is done and there's no overflow
 	always @(*)
 		assert(o_valid == ((o_done)&&(!o_overflow)));
+	
+    ////////////////////////////////////////////////////
+	//
+	// Contract
+	//
+	////////////////////////////////////////////////////   
 
 	// If o_valid && o_done, then o_val is the sum of the operands
  	always @(posedge i_clk) begin
@@ -74,12 +80,6 @@
 			assert(o_val == $past(i_operandA) + $past(i_operandB));
 		end
 	end
-	
-    ////////////////////////////////////////////////////
-	//
-	// Contract
-	//
-	////////////////////////////////////////////////////   
 
     ////////////////////////////////////////////////////
 	//
@@ -91,7 +91,32 @@
 	//
 	// Cover
 	//
-	////////////////////////////////////////////////////     
+	////////////////////////////////////////////////////
+	always @(posedge i_clk) begin
+		if((f_past_valid)&&(!$past(i_rst))) begin
+			cover(o_valid);
+		end
+	end  
+	always @(posedge i_clk) begin
+		if((f_past_valid)&&(!$past(i_rst))) begin
+			cover(o_busy);
+		end
+	end  
+	always @(posedge i_clk) begin
+		if((f_past_valid)&&(!$past(i_rst))) begin
+			cover(o_overflow);
+		end
+	end   
+	always @(posedge i_clk) begin
+		if((f_past_valid)&&(!$past(i_rst))) begin
+			cover(o_val == ($past(i_operandA) + $past(i_operandB)));
+		end
+	end  
+	always @(posedge i_clk) begin
+		if((f_past_valid)&&(!$past(i_rst))) begin
+			cover(o_val != ($past(i_operandA) + $past(i_operandB)));
+		end
+	end  
            
 `endif
 
