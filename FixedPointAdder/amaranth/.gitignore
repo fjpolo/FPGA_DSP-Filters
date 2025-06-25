@@ -1,0 +1,6 @@
+*.vcd
+*.v
+*.il
+FixedPointAdder/
+FixedPointAdder_bmc/
+FixedPointAdder_cover/
