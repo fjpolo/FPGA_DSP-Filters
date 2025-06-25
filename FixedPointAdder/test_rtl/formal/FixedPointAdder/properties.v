@@ -44,13 +44,19 @@
 	always @(posedge i_clk)
 		f_past_valid <= 1'b1;
 
-
-
     ////////////////////////////////////////////////////
 	//
 	// Reset
 	//
 	////////////////////////////////////////////////////
+
+	always @(posedge i_clk) begin
+        if((f_past_valid)&&($past(i_rst))) begin
+            assert(o_val   == '0);
+            assert(o_done  == 1'b0);
+            assert(o_valid == 1'b0);
+		end
+	end
 
     ////////////////////////////////////////////////////
 	//
@@ -58,6 +64,17 @@
 	//
 	////////////////////////////////////////////////////
 
+	// o_valid is valid when adder is done and there's no overflow
+	always @(*)
+		assert(o_valid == ((o_done)&&(!o_overflow)));
+
+	// If o_valid && o_done, then o_val is the sum of the operands
+ 	always @(posedge i_clk) begin
+		if(($past(f_past_valid))&&(f_past_valid)&&(!$past(i_rst))&&($past(i_start))&&(o_valid)&&(o_done)) begin
+			assert(o_val == $past(i_operandA) + $past(i_operandB));
+		end
+	end
+	
     ////////////////////////////////////////////////////
 	//
 	// Contract

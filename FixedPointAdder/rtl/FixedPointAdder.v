@@ -44,7 +44,7 @@ module FixedPointAdder #(
     output      logic o_overflow,                       // overflow flag
     input wire logic signed [WIDTH-1:0] i_operandA,     // Operand A (Q(WIDTH-FBITS-1).FBITS format)
     input wire logic signed [WIDTH-1:0] i_operandB,     // Operand B (Q(WIDTH-FBITS-1).FBITS format)
-    output      logic signed [WIDTH-1:0] o_val          // result value (Q(WIDTH-FBITS-1).FBITS format)
+    output     logic signed [WIDTH-1:0] o_val           // result value (Q(WIDTH-FBITS-1).FBITS format)
 );
 
 // Internal wire for the sum before saturation.
@@ -64,13 +64,9 @@ assign sum_extended = i_operandA + i_operandB;
         if(i_rst) begin
             o_val <= '0;                                // Reset output value to all zeros
             o_done <= 1'b0;                             // Reset done signal
-            o_valid <= 1'b0;                            // Reset valid signal
-            o_busy <= 1'b0;                             // Reset busy signal
         end else begin
             o_done <= 1'b0;                             // Default to 0
-            o_valid <= 1'b0;                            // Default to 0
-            o_busy <= i_start;                          // Busy while i_start is high (for single-cycle operation)
-            o_overflow <= 1'b0;                     // Reset overflow flag
+            o_overflow <= 1'b0;                         // Reset overflow flag
 
             if(i_start) begin
                 o_overflow <= 1'b0;                     // Reset overflow flag
@@ -82,6 +78,8 @@ assign sum_extended = i_operandA + i_operandB;
                     // Assign the WIDTH-bit version of the max value
                     o_val <= MAX_VAL_EXT[WIDTH-1:0];
                 end else if (sum_extended < MIN_VAL_EXT) begin
+                    // Signal flag
+                    o_overflow <= 1'b1;                // Set overflow flag
                     // Assign the WIDTH-bit version of the min value
                     o_val <= MIN_VAL_EXT[WIDTH-1:0];
                 end else begin
@@ -89,9 +87,11 @@ assign sum_extended = i_operandA + i_operandB;
                     o_val <= $signed(sum_extended[WIDTH-1:0]);
                 end
                 o_done <= 1'b1;                         // Indicate that the operation is done
-                o_valid <= 1'b1;                        // Result is valid
             end
         end
     end
+    
+    assign o_valid = (o_done)&&(!o_overflow);                        // Result is valid
+    assign o_busy = (i_start) || (o_done && !o_valid);               // Busy if start is high or done but not valid
 
 endmodule
