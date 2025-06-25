@@ -41,6 +41,7 @@ module FixedPointAdder #(
     output      logic o_busy,                           // calculation in progress
     output      logic o_done,                           // calculation is complete (high for one tick)
     output      logic o_valid,                          // result is valid
+    output      logic o_overflow,                       // overflow flag
     input wire logic signed [WIDTH-1:0] i_operandA,     // Operand A (Q(WIDTH-FBITS-1).FBITS format)
     input wire logic signed [WIDTH-1:0] i_operandB,     // Operand B (Q(WIDTH-FBITS-1).FBITS format)
     output      logic signed [WIDTH-1:0] o_val          // result value (Q(WIDTH-FBITS-1).FBITS format)
@@ -69,11 +70,15 @@ assign sum_extended = i_operandA + i_operandB;
             o_done <= 1'b0;                             // Default to 0
             o_valid <= 1'b0;                            // Default to 0
             o_busy <= i_start;                          // Busy while i_start is high (for single-cycle operation)
+            o_overflow <= 1'b0;                     // Reset overflow flag
 
             if(i_start) begin
+                o_overflow <= 1'b0;                     // Reset overflow flag
                 // Apply saturation logic based on sum_extended
                 // Compare sum_extended (WIDTH+1 bits) with MAX_VAL_EXT/MIN_VAL_EXT (also WIDTH+1 bits)
                 if (sum_extended > MAX_VAL_EXT) begin
+                    // Signal flag
+                    o_overflow <= 1'b1;                // Set overflow flag
                     // Assign the WIDTH-bit version of the max value
                     o_val <= MAX_VAL_EXT[WIDTH-1:0];
                 end else if (sum_extended < MIN_VAL_EXT) begin
