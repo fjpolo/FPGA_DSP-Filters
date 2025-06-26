@@ -1,0 +1,6 @@
+*.vcd
+*.v
+*.il
+FixedPointAddSub/
+template_bmc/
+template_cover/
