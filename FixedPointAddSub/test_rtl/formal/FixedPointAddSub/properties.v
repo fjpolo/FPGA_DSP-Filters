@@ -44,13 +44,19 @@
 	always @(posedge i_clk)
 		f_past_valid <= 1'b1;
 
-
-
     ////////////////////////////////////////////////////
 	//
 	// Reset
 	//
 	////////////////////////////////////////////////////
+
+	always @(posedge i_clk) begin
+        if((f_past_valid)&&($past(i_rst))) begin
+            assert(o_val   == '0);
+            assert(o_done  == 1'b0);
+            assert(o_valid == 1'b0);
+		end
+	end
 
     ////////////////////////////////////////////////////
 	//
@@ -58,11 +64,30 @@
 	//
 	////////////////////////////////////////////////////
 
+	// ADD: o_valid is valid when adder is done and there's no overflow
+	always @(posedge i_clk)
+		if(($past(f_past_valid))&&(f_past_valid)&&(!$past(i_rst))&&($past(i_sub == 0)))
+			assert(o_valid == ((o_done)&&(!o_overflow)));
+
     ////////////////////////////////////////////////////
 	//
 	// Contract
 	//
 	////////////////////////////////////////////////////   
+
+	// ADD: If o_valid && o_done, then o_val is the sum of the operands
+ 	always @(posedge i_clk) begin
+		if(($past(f_past_valid))&&(f_past_valid)&&(!$past(i_rst))&&($past(i_start))&&(o_valid)&&(o_done)&&($past(i_sub == 0))) begin
+			assert(o_val == $past(i_operandA) + $past(i_operandB));
+		end
+	end
+
+	// SUB: If o_valid && o_done, then o_val is the substraction of OperandA and OperandB
+ 	always @(posedge i_clk) begin
+		if(($past(f_past_valid))&&(f_past_valid)&&(!$past(i_rst))&&($past(i_start))&&(o_valid)&&(o_done)&&($past(i_sub == 1))) begin
+			assert(o_val == $past(i_operandA) - $past(i_operandB));
+		end
+	end
 
     ////////////////////////////////////////////////////
 	//
@@ -74,7 +99,39 @@
 	//
 	// Cover
 	//
-	////////////////////////////////////////////////////     
+	////////////////////////////////////////////////////  
+	
+	// ADD
+	always @(posedge i_clk) begin
+		if((f_past_valid)&&(!$past(i_rst))) begin
+			cover(o_valid);
+		end
+	end  
+	always @(posedge i_clk) begin
+		if((f_past_valid)&&(!$past(i_rst))) begin
+			cover(o_busy);
+		end
+	end  
+	always @(posedge i_clk) begin
+		if((f_past_valid)&&(!$past(i_rst))) begin
+			cover(o_overflow);
+		end
+	end   
+	always @(posedge i_clk) begin
+		if((f_past_valid)&&(!$past(i_rst))) begin
+			cover(o_val == ($past(i_operandA) + $past(i_operandB)));
+		end
+	end  
+	always @(posedge i_clk) begin
+		if((f_past_valid)&&(!$past(i_rst))) begin
+			cover(o_val != ($past(i_operandA) + $past(i_operandB)));
+		end
+	end
+	always @(posedge i_clk) begin
+		if((f_past_valid)&&(!$past(i_rst))) begin
+			cover(o_val == ($past(i_operandA) - $past(i_operandB)));
+		end
+	end 
            
 `endif
 
