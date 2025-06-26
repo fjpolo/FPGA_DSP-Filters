@@ -159,6 +159,53 @@ module testbench;
         end
     endtask
 
+    task do_sub_check;
+        input signed [WIDTH-1:0] opA;
+        input signed [WIDTH-1:0] opB;
+        input signed [WIDTH-1:0] expected_val;
+        input logic expected_overflow;
+        input string test_name;
+        begin
+            $display("\n--------------------------------------------------------------------------------");
+            $display("TEST: %s", test_name);
+            $display("Applying i_operandA = %0d (0x%h), i_operandB = %0d (0x%h)", opA, opA, opB, opB);
+
+            // Apply inputs
+            i_operandA = opA;
+            i_operandB = opB;
+            i_start    = 1'b1; // Assert start for one cycle
+
+            #(10)// Wait for the clock edge where inputs are registered and computation starts
+            i_start    = 1'b0; // De-assert start (pulse i_start)
+
+            // At this point, o_busy should be high (reflecting i_start one cycle ago)
+            // and o_done/o_valid/o_overflow/o_val should be stable and reflect the result of this cycle's operation.
+            // Wait for the next clock edge to sample the registered outputs.
+            // #(10)
+
+            // Check outputs
+            // Verify handshake signals first
+            // Changed o_busy expectation from 0 to 1 as per UUT's 1-cycle latency behavior
+            $display("uut.result_extended: %0d", uut.result_extended);
+            $display("uut.o_val: %0d", uut.o_val);
+            if (uut.o_done === 1'b1 && uut.o_valid === (expected_overflow ? 1'b0 : 1'b1) && uut.o_busy === 1'b1) begin
+                if (uut.o_val === expected_val && uut.o_overflow === expected_overflow) begin
+                    $display("PASS: %s. Result: %0d (0x%h), Overflow: %b. Expected: %0d (0x%h), Overflow: %b",
+                             test_name, uut.o_val, uut.o_val, uut.o_overflow, expected_val, expected_val, expected_overflow);
+                end else begin
+                    $display("FAIL: %s. Mismatch! Result: %0d (0x%h), Overflow: %b. Expected: %0d (0x%h), Overflow: %b",
+                             test_name, uut.o_val, uut.o_val, uut.o_overflow, expected_val, expected_val, expected_overflow);
+                    $finish; // Terminate simulation on failure
+                end
+            end else begin
+                $display("FAIL: %s. Handshake failed! o_done=%b, o_valid=%b, o_busy=%b. Expected 1, 1, 1.",
+                         test_name, uut.o_done, uut.o_valid, uut.o_busy);
+                $finish; // Terminate simulation on failure
+            end
+            #10; // Small delay to let signals settle before next test setup
+        end
+    endtask
+
     // Main test sequence
     initial begin
         // Initialize inputs to safe values
@@ -187,75 +234,152 @@ module testbench;
 
         // Test Cases:
 
-        // Test 1: Normal addition (positive)
-        temp_opA = 8'd5;
-        temp_opB = 8'd3;
-        temp_expected_val = 8'd8;
-        temp_expected_overflow = 1'b0;
-        do_add_check(temp_opA, temp_opB, temp_expected_val, temp_expected_overflow, "Normal Positive Addition (5 + 3)");
+        /* ADD */
 
-        // Test 2: Normal addition (negative)
-        temp_opA = 8'hFB; // -5
-        temp_opB = 8'hFD; // -3
-        temp_expected_val = 8'hF8; // -8
-        temp_expected_overflow = 1'b0;
-        do_add_check(temp_opA, temp_opB, temp_expected_val, temp_expected_overflow, "Normal Negative Addition (-5 + -3)");
+            // Test 1: Normal addition (positive)
+            temp_opA = 8'd5;
+            temp_opB = 8'd3;
+            temp_expected_val = 8'd8;
+            temp_expected_overflow = 1'b0;
+            do_add_check(temp_opA, temp_opB, temp_expected_val, temp_expected_overflow, "Normal Positive Addition (5 + 3)");
 
-        // Test 3: Normal addition (mixed signs)
-        temp_opA = 8'd10;
-        temp_opB = 8'hF1; // -15
-        temp_expected_val = 8'hFB; // -5
-        temp_expected_overflow = 1'b0;
-        do_add_check(temp_opA, temp_opB, temp_expected_val, temp_expected_overflow, "Normal Mixed Sign Addition (10 + -15)");
+            // Test 2: Normal addition (negative)
+            temp_opA = 8'hFB; // -5
+            temp_opB = 8'hFD; // -3
+            temp_expected_val = 8'hF8; // -8
+            temp_expected_overflow = 1'b0;
+            do_add_check(temp_opA, temp_opB, temp_expected_val, temp_expected_overflow, "Normal Negative Addition (-5 + -3)");
 
-        // Test 4: Positive Saturation (MAX_VAL - 1 + 2)
-        temp_opA = MAX_8_BIT_SIGNED - 8'd1;
-        temp_opB = 8'd2;
-        temp_expected_val = MAX_8_BIT_SIGNED;
-        temp_expected_overflow = 1'b1;
-        do_add_check(temp_opA, temp_opB, temp_expected_val, temp_expected_overflow, "Positive Saturation (126 + 2)");
+            // Test 3: Normal addition (mixed signs)
+            temp_opA = 8'd10;
+            temp_opB = 8'hF1; // -15
+            temp_expected_val = 8'hFB; // -5
+            temp_expected_overflow = 1'b0;
+            do_add_check(temp_opA, temp_opB, temp_expected_val, temp_expected_overflow, "Normal Mixed Sign Addition (10 + -15)");
 
-        // Test 5: Positive Saturation (MAX_VAL + MAX_VAL)
-        temp_opA = MAX_8_BIT_SIGNED;
-        temp_opB = MAX_8_BIT_SIGNED;
-        temp_expected_val = MAX_8_BIT_SIGNED;
-        temp_expected_overflow = 1'b1;
-        do_add_check(temp_opA, temp_opB, temp_expected_val, temp_expected_overflow, "Positive Saturation (127 + 127)");
+            // Test 4: Positive Saturation (MAX_VAL - 1 + 2)
+            temp_opA = MAX_8_BIT_SIGNED - 8'd1;
+            temp_opB = 8'd2;
+            temp_expected_val = MAX_8_BIT_SIGNED;
+            temp_expected_overflow = 1'b1;
+            do_add_check(temp_opA, temp_opB, temp_expected_val, temp_expected_overflow, "Positive Saturation (126 + 2)");
 
-        // Test 6: Negative Saturation (MIN_VAL + MIN_VAL)
-        temp_opA = MIN_8_BIT_SIGNED;
-        temp_opB = MIN_8_BIT_SIGNED;
-        temp_expected_val = MIN_8_BIT_SIGNED;
-        temp_expected_overflow = 1'b1;
-        do_add_check(temp_opA, temp_opB, temp_expected_val, temp_expected_overflow, "Negative Saturation (-128 + -128)");
+            // Test 5: Positive Saturation (MAX_VAL + MAX_VAL)
+            temp_opA = MAX_8_BIT_SIGNED;
+            temp_opB = MAX_8_BIT_SIGNED;
+            temp_expected_val = MAX_8_BIT_SIGNED;
+            temp_expected_overflow = 1'b1;
+            do_add_check(temp_opA, temp_opB, temp_expected_val, temp_expected_overflow, "Positive Saturation (127 + 127)");
 
-        // Test 7: Negative Saturation (MIN_VAL + 1 - 2)
-        temp_opA = MIN_8_BIT_SIGNED + 8'd1;
-        temp_opB = 8'hFE; // -2
-        temp_expected_val = MIN_8_BIT_SIGNED;
-        temp_expected_overflow = 1'b1;
-        do_add_check(temp_opA, temp_opB, temp_expected_val, temp_expected_overflow, "Negative Saturation (-127 + -2)");
+            // Test 6: Negative Saturation (MIN_VAL + MIN_VAL)
+            temp_opA = MIN_8_BIT_SIGNED;
+            temp_opB = MIN_8_BIT_SIGNED;
+            temp_expected_val = MIN_8_BIT_SIGNED;
+            temp_expected_overflow = 1'b1;
+            do_add_check(temp_opA, temp_opB, temp_expected_val, temp_expected_overflow, "Negative Saturation (-128 + -128)");
 
-        // Test 8: Specific user case: 0x80 + 0x81 (which is -128 + -127 = -255, saturates to -128 / 0x80)
-        temp_opA = 8'h80;
-        temp_opB = 8'h81;
-        temp_expected_val = 8'h80;
-        temp_expected_overflow = 1'b1;
-        do_add_check(temp_opA, temp_opB, temp_expected_val, temp_expected_overflow, "Specific Saturation Test (0x80 + 0x81)");
+            // Test 7: Negative Saturation (MIN_VAL + 1 - 2)
+            temp_opA = MIN_8_BIT_SIGNED + 8'd1;
+            temp_opB = 8'hFE; // -2
+            temp_expected_val = MIN_8_BIT_SIGNED;
+            temp_expected_overflow = 1'b1;
+            do_add_check(temp_opA, temp_opB, temp_expected_val, temp_expected_overflow, "Negative Saturation (-127 + -2)");
 
-        // Test 9: Zero inputs
-        temp_opA = 8'd0;
-        temp_opB = 8'd0;
-        temp_expected_val = 8'd0;
-        temp_expected_overflow = 1'b0;
-        do_add_check(temp_opA, temp_opB, temp_expected_val, temp_expected_overflow, "Zero Inputs (0 + 0)");
+            // Test 8: Specific user case: 0x80 + 0x81 (which is -128 + -127 = -255, saturates to -128 / 0x80)
+            temp_opA = 8'h80;
+            temp_opB = 8'h81;
+            temp_expected_val = 8'h80;
+            temp_expected_overflow = 1'b1;
+            do_add_check(temp_opA, temp_opB, temp_expected_val, temp_expected_overflow, "Specific Saturation Test (0x80 + 0x81)");
 
-        // Test 10: One positive, one negative, result zero
-        temp_opA = 8'd50;
-        temp_opB = 8'hCE; // -50
-        temp_expected_val = 8'd0;
-        temp_expected_overflow = 1'b0;
-        do_add_check(temp_opA, temp_opB, temp_expected_val, temp_expected_overflow, "Zero Result (50 + -50)");
+            // Test 9: Zero inputs
+            temp_opA = 8'd0;
+            temp_opB = 8'd0;
+            temp_expected_val = 8'd0;
+            temp_expected_overflow = 1'b0;
+            do_add_check(temp_opA, temp_opB, temp_expected_val, temp_expected_overflow, "Zero Inputs (0 + 0)");
+
+            // Test 10: One positive, one negative, result zero
+            temp_opA = 8'd50;
+            temp_opB = 8'hCE; // -50
+            temp_expected_val = 8'd0;
+            temp_expected_overflow = 1'b0;
+            do_add_check(temp_opA, temp_opB, temp_expected_val, temp_expected_overflow, "Zero Result (50 + -50)");
+
+        /* SUB */
+
+            // Test S1: Normal subtraction (positive result)
+            temp_opA = 8'd10; 
+            temp_opB = 8'd3; 
+            temp_expected_val = 8'd7; 
+            temp_expected_overflow = 1'b0;
+            i_sub = 'b1;
+            do_sub_check(temp_opA, temp_opB, temp_expected_val, temp_expected_overflow, "Sub: Normal Positive (10 - 3)");
+
+            // Test S2: Normal subtraction (negative result)
+            temp_opA = 8'd3; 
+            temp_opB = 8'd10; 
+            temp_expected_val = 8'hF9; 
+            temp_expected_overflow = 1'b0;
+            do_sub_check(temp_opA, temp_opB, temp_expected_val, temp_expected_overflow, "Sub: Normal Negative (3 - 10)");
+
+            // Test S3: Subtracting negative numbers (becomes addition)
+            temp_opA = 8'd5; 
+            temp_opB = 8'hFB; // -5
+            temp_expected_val = 8'd10; 
+            temp_expected_overflow = 1'b0; // 5 - (-5) = 10
+            do_sub_check(temp_opA, temp_opB, temp_expected_val, temp_expected_overflow, "Sub: Subtract Negative (5 - (-5))");
+
+            // Test S4: Positive saturation (A - B where B is large negative)
+            temp_opA = MAX_8_BIT_SIGNED - 8'd1; // 126
+            temp_opB = MIN_8_BIT_SIGNED;        // -128
+            // 126 - (-128) = 126 + 128 = 254. Should saturate to 127.
+            temp_expected_val = MAX_8_BIT_SIGNED;
+            temp_expected_overflow = 1'b1;
+            do_sub_check(temp_opA, temp_opB, temp_expected_val, temp_expected_overflow, "Sub: Positive Saturation (126 - (-128))");
+
+            // Test S5: Negative saturation (A - B where B is large positive)
+            temp_opA = MIN_8_BIT_SIGNED + 8'd1; // -127
+            temp_opB = MAX_8_BIT_SIGNED;        // 127
+            // -127 - 127 = -254. Should saturate to -128.
+            temp_expected_val = MIN_8_BIT_SIGNED;
+            temp_expected_overflow = 1'b1;
+            do_sub_check(temp_opA, temp_opB, temp_expected_val, temp_expected_overflow, "Sub: Negative Saturation (-127 - 127)");
+
+            // Test S6: Subtracting zero
+            temp_opA = 8'd42; temp_opB = 8'd0; temp_expected_val = 8'd42; temp_expected_overflow = 1'b0;
+            do_sub_check(temp_opA, temp_opB, temp_expected_val, temp_expected_overflow, "Sub: Subtract Zero (42 - 0)");
+
+            // Test S7: Zero minus a positive number
+            temp_opA = 8'd0; 
+            temp_opB = 8'd25; 
+            temp_expected_val = 8'hE7; 
+            temp_expected_overflow = 1'b0;
+            do_sub_check(temp_opA, temp_opB, temp_expected_val, temp_expected_overflow, "Sub: Zero Minus Positive (0 - 25)");
+
+            // Test S8: Zero minus a negative number
+            temp_opA = 8'd0; 
+            temp_opB = 8'hEB; // -21
+            temp_expected_val = 8'd21; 
+            temp_expected_overflow = 1'b0; // 0 - (-21) = 21
+            do_sub_check(temp_opA, temp_opB, temp_expected_val, temp_expected_overflow, "Sub: Zero Minus Negative (0 - (-21))");
+
+            // Test S9: Subtracting largest positive from smallest negative (Max negative saturation)
+            temp_opA = MIN_8_BIT_SIGNED; // -128
+            temp_opB = MAX_8_BIT_SIGNED; // 127
+            // -128 - 127 = -255. Should saturate to -128 (MIN_8_BIT_SIGNED)
+            temp_expected_val = MIN_8_BIT_SIGNED;
+            temp_expected_overflow = 1'b1;
+            do_sub_check(temp_opA, temp_opB, temp_expected_val, temp_expected_overflow, "Sub: Extreme Negative Saturation (-128 - 127)");
+
+            // Test S10: Subtracting smallest negative from largest positive (Max positive saturation)
+            temp_opA = MAX_8_BIT_SIGNED; // 127
+            temp_opB = MIN_8_BIT_SIGNED; // -128
+            // 127 - (-128) = 127 + 128 = 255. Should saturate to 127 (MAX_8_BIT_SIGNED)
+            temp_expected_val = MAX_8_BIT_SIGNED;
+            temp_expected_overflow = 1'b1;
+            do_sub_check(temp_opA, temp_opB, temp_expected_val, temp_expected_overflow, "Sub: Extreme Positive Saturation (127 - (-128))");
+
 
 
         // If all tests pass

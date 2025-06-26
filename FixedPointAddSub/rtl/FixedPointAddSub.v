@@ -53,68 +53,70 @@ module FixedPointAddSub #(
     output      logic signed [WIDTH-1:0] o_val          // Signed fixed-point result (saturated if overflowed)
 );
 
-// Internal wire for the operand B's value depending on operation (B or -B).
-// This is used to implement A + B or A + (-B) for subtraction.
-wire signed [WIDTH-1:0] b_for_op;
+// Internal wire for the effective operand B (B or -B).
+// This must be WIDTH+1 bits wide to correctly handle the negation of the minimum signed value (e.g., -128 for 8-bit).
+// Negating -128 (8'h80) would result in +128, which requires an extra bit to represent.
+wire signed [WIDTH:0] effective_operandB_extended;
 
-// The intermediate sum/difference before saturation.
+// The intermediate sum/difference result.
 // It needs to be one bit wider than WIDTH to correctly detect both positive and negative overflow.
 wire signed [WIDTH:0] result_extended;
 
 // Calculate the maximum and minimum representable values for a WIDTH-bit signed number.
-// These are extended to WIDTH+1 bits to match 'result_extended' for comparison.
+// These are extended to WIDTH+1 bits to match 'result_extended' for comparison during saturation.
 localparam signed [WIDTH:0] MAX_VAL_EXT = (2**(WIDTH-1)) - 1; // E.g., for WIDTH=8, MAX_VAL=127. Extended: 0_0111_1111
 localparam signed [WIDTH:0] MIN_VAL_EXT = -(2**(WIDTH-1));    // E.g., for WIDTH=8, MIN_VAL=-128. Extended: 1_1000_0000
 
-// Determine 'b_for_op': if i_sub is 0, use i_operandB; if i_sub is 1, use two's complement of i_operandB.
-// The two's complement of X is (~X + 1).
-assign b_for_op = !i_sub ? i_operandB : (~i_operandB + 1);
+// Determine 'effective_operandB_extended': if i_sub is 0, use i_operandB; if i_sub is 1, use two's complement of i_operandB.
+// The $signed() cast combined with implicit widening ensures the negation works correctly even for -MIN_VAL.
+// E.g., for 8-bit: $signed(8'h80) is -128. -($signed(8'h80)) is +128. This +128 will fit in 9 bits.
+assign effective_operandB_extended = i_sub ? -($signed(i_operandB)) : $signed(i_operandB);
 
 // Perform the addition or subtraction combinatorially.
-// This result is WIDTH+1 bits to hold potential overflow.
-assign result_extended = i_operandA + b_for_op;
+// Both operands are explicitly $signed() to ensure they are treated as signed and sign-extended
+// to the width of result_extended (WIDTH+1 bits) before the addition.
+assign result_extended = $signed(i_operandA) + effective_operandB_extended;
 
-    always @(posedge i_clk) begin
-        if(i_rst) begin
-            // Reset all outputs
-            o_val      <= '0;
-            o_done     <= 1'b0;
-            o_valid    <= 1'b0; // Reset valid signal
-            o_overflow <= 1'b0;
-            o_busy     <= 1'b0;
-        end else begin
-            // Default de-assertion for pulse-type outputs
-            o_done     <= 1'b0;
-            o_valid    <= 1'b0; // Default to 0
-            o_overflow <= 1'b0; // Default to no overflow
+always @(posedge i_clk) begin
+    if(i_rst) begin
+        // Reset all outputs asynchronously
+        o_val      <= '0;
+        o_done     <= 1'b0;
+        o_valid    <= 1'b0;
+        o_overflow <= 1'b0;
+        o_busy     <= 1'b0;
+    end else begin
+        // Default de-assertion for pulse-type outputs (unless re-asserted by i_start)
+        o_done     <= 1'b0;
+        o_valid    <= 1'b0;
+        o_overflow <= 1'b0; // Default to no overflow
 
-            // Busy remains high for the cycle 'i_start' is high, then low.
-            // This assumes a 1-cycle latency from 'i_start' to 'o_done'/'o_valid'.
-            o_busy <= i_start;
+        // o_busy indicates that a calculation is in progress or its result is pending.
+        // It's a registered version of i_start, reflecting the 1-cycle latency.
+        o_busy <= i_start;
 
-            if(i_start) begin
-                // Apply saturation logic based on result_extended
-                // Compare result_extended (WIDTH+1 bits) with MAX_VAL_EXT/MIN_VAL_EXT (also WIDTH+1 bits)
-                if (result_extended > MAX_VAL_EXT) begin
-                    // Positive saturation
-                    o_val      <= MAX_VAL_EXT[WIDTH-1:0]; // Clip to max positive value (original WIDTH)
-                    o_overflow <= 1'b1;                   // Set overflow flag
-                    o_valid <= 1'b0;
-                end else if (result_extended < MIN_VAL_EXT) begin
-                    // Negative saturation
-                    o_val      <= MIN_VAL_EXT[WIDTH-1:0];    // Clip to min negative value (original WIDTH)
-                    o_overflow <= 1'b1;                   // Set overflow flag
-                    o_valid <= 1'b0;
-                end else begin
-                    // No saturation
-                    o_val      <= $signed(result_extended[WIDTH-1:0]); // Take the lower WIDTH bits, preserving signedness
-                    // o_overflow remains 1'b0 as set by default at the beginning of the else branch
-                    o_valid <= 1'b1;
-                end
-                // Signal completion and validity on the next cycle
-                o_done  <= 1'b1;
+        if(i_start) begin
+            // Apply saturation logic based on result_extended
+            // Compare result_extended (WIDTH+1 bits) with MAX_VAL_EXT/MIN_VAL_EXT (also WIDTH+1 bits)
+            o_valid <= 1'b0;
+            if (result_extended > MAX_VAL_EXT) begin
+                // Positive saturation detected
+                o_val      <= MAX_VAL_EXT[WIDTH-1:0]; // Clip result to max positive value (WIDTH bits)
+                o_overflow <= 1'b1;                   // Set overflow flag
+            end else if (result_extended < MIN_VAL_EXT) begin
+                // Negative saturation detected
+                o_val      <= MIN_VAL_EXT[WIDTH-1:0];    // Clip result to min negative value (WIDTH bits)
+                o_overflow <= 1'b1;                   // Set overflow flag
+            end else begin
+                // No saturation needed, result fits within WIDTH bits
+                o_val      <= $signed(result_extended[WIDTH-1:0]); // Take the lower WIDTH bits, preserving signedness
+                // o_overflow remains 1'b0 (default value from the beginning of this 'else' branch)
+                o_valid <= 1'b1;
             end
+            // Signal completion and validity on the next cycle, synchronous to clock
+            o_done  <= 1'b1;
         end
     end
-    
+end
+
 endmodule
