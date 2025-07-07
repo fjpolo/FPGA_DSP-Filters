@@ -1,0 +1,6 @@
+*.vcd
+*.v
+*.il
+FeedbackSupressor/
+template_bmc/
+template_cover/
