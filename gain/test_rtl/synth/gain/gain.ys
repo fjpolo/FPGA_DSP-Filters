@@ -3,6 +3,19 @@
 # Read the Verilog file
 read_verilog gain.v
 
+# Synthesize the design for Gowin FPs
+# The 'synth_gowin' command is a high-level script that includes
+# technology mapping, DSP inference, and packing for Gowin devices.
+# It automatically handles many of the passes needed for optimal synthesis.
+# The -family GW2A is for the Tang Nano 20K (GW2A-18C).
+# The -device GW2A-18C specifies the exact device.
+synth_gowin -top gain -family GW2A -json gain_synth.json
+
+# If you want to see the netlist before and after packing (optional, for debugging)
+# show -prefix pre_pack
+# gowin_pack -dsp # This would be used if you were doing manual passes
+
+
 # Synthesize the design
 synth -top gain
 
