@@ -44,13 +44,20 @@
 	always @(posedge i_clk)
 		f_past_valid <= 1'b1;
 
-
-
     ////////////////////////////////////////////////////
 	//
 	// Reset
 	//
 	////////////////////////////////////////////////////
+
+	always @(posedge i_clk) begin
+		if(($past(f_past_valid))&&(f_past_valid)&&(!$past(i_reset_n))&&(i_reset_n)) begin
+			assert(product_reg == 'h0);
+			assert(o_ce_reg == 'h0);
+			assert(pos_clip_reg == 'h0);
+			assert(neg_clip_reg == 'h0);
+		end
+	end
 
     ////////////////////////////////////////////////////
 	//
