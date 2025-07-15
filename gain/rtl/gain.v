@@ -45,7 +45,7 @@ module gain #(
 );
 
     // Internal registers
-    reg signed [DATA_WIDTH + 16:0] product_reg;
+    reg signed [(2*DATA_WIDTH):0] product_reg;
     reg o_ce_reg;
     reg pos_clip_reg;
     reg neg_clip_reg;
@@ -55,7 +55,6 @@ module gain #(
     localparam signed [DATA_WIDTH-1:0] MIN_AUDIO_VAL = -(1 << (DATA_WIDTH - 1));
     localparam PRODUCT_WIDTH = DATA_WIDTH + 16;
 
-    // Scaled thresholds (Q3.13 * Q1.15 = Q4.28)
     localparam signed [PRODUCT_WIDTH-1:0] SCALED_MAX = MAX_AUDIO_VAL * (1 << FRAC_BITS);
     localparam signed [PRODUCT_WIDTH-1:0] SCALED_MIN = MIN_AUDIO_VAL * (1 << FRAC_BITS);
 
