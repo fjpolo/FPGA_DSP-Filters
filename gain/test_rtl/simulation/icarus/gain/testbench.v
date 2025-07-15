@@ -427,6 +427,44 @@ module testbench; // Changed module name from tb_gain to testbench
             i_ce = 0;
         end
 
+        // Test Case 10: Negative clipping (-2.0 * 2.0 = -4.0)
+        // Input: -2.0 (-16384), Gain: 2.0 (16384)
+        // Expected Output: -4.0 (-32768) with negative clipping flag
+    begin : test_case_10
+        input_real = -2.1;
+        gain_real = 2.0;
+        expected_output_real = -4.0;
+        expected_output_fixed = MIN_AUDIO_VAL_FIXED; // -32768
+        test_id = 10;
+
+        $display("\n--- Test Case %0d: Negative clipping (-2.0 * 2.0) ---", test_id);
+        i_data       = real_to_fixed(input_real);     // -2.0 in Q3.13
+        i_gain_coeff = 17'd16384;                    // 2.0 in Q1.15
+        i_ce = 1;
+        #10; // Wait for one clock cycle
+
+        if (o_ce) begin
+            $display("  Input: %f (0x%h), Gain: %f (0x%h)", 
+                    input_real, i_data, fixed_to_gain_real(i_gain_coeff), i_gain_coeff);
+            $display("  Output: %f (0x%h)", fixed_to_real(o_data), o_data);
+            $display("  Expected: %f (0x%h)", expected_output_real, expected_output_fixed);
+            $display("  Clipping: Pos=%b, Neg=%b", o_pos_clip, o_neg_clip);
+
+            if ($signed(o_data) === $signed(expected_output_fixed)) begin
+                if (o_neg_clip && !o_pos_clip) begin
+                    $display("  PASS: Test Case %0d - Correct negative clipping", test_id);
+                end else begin
+                    $display("  FAIL: Test Case %0d - Wrong clipping flags (expected Neg=1)", test_id);
+                end
+            end else begin
+                $display("  FAIL: Test Case %0d - Output value mismatch", test_id);
+            end
+        end else begin
+            $display("  ERROR: Test Case %0d - o_ce not high", test_id);
+        end
+        i_ce = 0;
+    end
+
         $display("\n-------------------------------------------------------");
         $display("Testbench finished.");
         $finish; // End simulation
