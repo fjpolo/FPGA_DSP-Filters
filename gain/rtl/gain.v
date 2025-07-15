@@ -73,7 +73,7 @@ module gain #(
     // Output data with saturation
     assign o_data = pos_clip_reg ? MAX_AUDIO_VAL :
                    neg_clip_reg ? MIN_AUDIO_VAL :
-                   product_reg >>> FRAC_BITS;
+                   (product_reg >>> FRAC_BITS);
 
     always @(posedge i_clk) begin
         if (!i_reset_n) begin
@@ -83,11 +83,9 @@ module gain #(
             neg_clip_reg <= 0;
         end else begin
             o_ce_reg <= i_ce;
-            
             if (i_ce) begin
                 // Register the product
                 product_reg <= immediate_product;
-                
                 // Register clipping flags
                 pos_clip_reg <= immediate_pos_clip;
                 neg_clip_reg <= immediate_neg_clip;
@@ -97,13 +95,4 @@ module gain #(
             end
         end
     end
-
-    // Debug output
-    always @(posedge i_clk) begin
-        if (i_ce) begin
-            $display("[%0t] Product: 0x%h >? SCALED_MAX: 0x%h → Clip: %b (Output: 0x%h)",
-                     $time, immediate_product, SCALED_MAX, immediate_pos_clip, o_data);
-        end
-    end
-
 endmodule
