@@ -105,6 +105,12 @@ module testbench; // Changed module name from tb_gain to testbench
         fixed_to_gain_real = $itor($signed(fixed_val)) / REAL_ONE;
     endfunction
 
+    // Add waveform dumping
+    initial begin
+        $dumpfile("dump.vcd");
+        $dumpvars(0, testbench);
+    end
+
     // Test sequence
     initial begin
         $display("-------------------------------------------------------");
