@@ -53,7 +53,7 @@ module gain #(
     // Constants
     localparam signed [DATA_WIDTH-1:0] MAX_AUDIO_VAL = (1 << (DATA_WIDTH - 1)) - 1;
     localparam signed [DATA_WIDTH-1:0] MIN_AUDIO_VAL = -(1 << (DATA_WIDTH - 1));
-    localparam PRODUCT_WIDTH = DATA_WIDTH + 16;
+    localparam PRODUCT_WIDTH = (2*DATA_WIDTH);
 
     localparam signed [PRODUCT_WIDTH-1:0] SCALED_MAX = MAX_AUDIO_VAL * (1 << FRAC_BITS);
     localparam signed [PRODUCT_WIDTH-1:0] SCALED_MIN = MIN_AUDIO_VAL * (1 << FRAC_BITS);
