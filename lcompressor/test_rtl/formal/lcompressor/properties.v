@@ -108,17 +108,17 @@
 	//
 	////////////////////////////////////////////////////
 
-	// Output must never exceed the maximum positive value (No Clipping/Overflow).
+	// Output must never exceed the maximum positive value (No Clipping/Overflow)
     always @(posedge i_clk) begin
         if ((f_past_valid) && (i_reset_n) && (o_ce)) begin
             assert($signed(o_data) <= (1 << (W_TOTAL - 1)) - 1);
         end
     end
 
-	// Output must never exceed the maximum negative value (No Clipping/Overflow).
+	// Output must never exceed the maximum negative value (No Clipping/Overflow)
     always @(posedge i_clk) begin
         if ((f_past_valid) && (i_reset_n) && (o_ce)) begin
-            `ASSERT($signed(o_data) >= -(1 << (W_TOTAL - 1)));
+            assert($signed(o_data) >= -(1 << (W_TOTAL - 1)));
         end
     end
     
