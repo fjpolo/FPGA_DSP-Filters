@@ -219,7 +219,7 @@ end
 
 // r_ce_45
 always @(posedge i_clk) begin
-    r_ce_3 <= r_ce_45;
+    r_ce45 <= r_ce_3;
     if(!i_reset_n)
         r_ce_45 <= 1'b0;
 end
