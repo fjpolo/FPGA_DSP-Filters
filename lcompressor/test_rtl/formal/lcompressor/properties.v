@@ -45,12 +45,26 @@
 		f_past_valid <= 1'b1;
 
 
-
     ////////////////////////////////////////////////////
 	//
 	// Reset
 	//
 	////////////////////////////////////////////////////
+
+	// o_data: Output must be zero immediately after reset
+    always @(posedge i_clk) begin
+        if (($past(!i_reset_n)&&(f_past_valid))) begin
+            assert(o_data == 'h0);
+        end
+    end
+
+	// r_lin_env_2: Envelope state must be zero after reset
+    always @(posedge i_clk) begin
+        if (($past(!i_reset_n)&&(f_past_valid))) begin
+            // r_lin_env_2 is the key internal state for the envelope.
+            assert(r_lin_env_2 == 'h0);
+        end
+    end
 
     ////////////////////////////////////////////////////
 	//
