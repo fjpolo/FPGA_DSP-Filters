@@ -19,3 +19,5 @@
 ## PLL
 
 ## dcompressor: Dynamic Compressor
+
+## lcompressor: Linear Compressor
