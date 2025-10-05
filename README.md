@@ -17,3 +17,5 @@
 ## gain
 
 ## PLL
+
+## dcompressor: Dynamic Compressor
