@@ -2,7 +2,7 @@
 // File        : Formal Properties for lcompressor.v
 // Author      : @fjpolo
 // email       : fjpolo@gmail.com
-// Description : <Brief description of the module or file>
+// Description : Basic linear compressor - Formal Properties
 // License     : MIT License
 //
 // Copyright (c) 2025 | @fjpolo
@@ -64,6 +64,20 @@
 	//
 	////////////////////////////////////////////////////   
 
+	// o_ce: must be high 4 clocks after i_ce is high
+	always @(posedge i_clk) begin
+		if(
+			($past(f_past_valid,4))&&($past(i_reset_n,4))&&
+			($past(f_past_valid,3))&&($past(i_reset_n,3))&&
+			($past(f_past_valid,2))&&($past(i_reset_n,2))&&
+			($past(f_past_valid))&&($past(i_reset_n))&&
+			(f_past_valid)&&(i_reset_n)
+		) begin
+			if($past(i_ce, 4))
+				assert(o_ce);
+		end
+	end
+
     ////////////////////////////////////////////////////
 	//
 	// Induction
@@ -75,6 +89,12 @@
 	// Cover
 	//
 	////////////////////////////////////////////////////     
+	
+	// o_ce
+	always @(posedge i_clk) begin
+		if((f_past_valid)&&(i_reset_n)&&(i_ce))
+			cover(o_ce);
+	end
            
 `endif
 
