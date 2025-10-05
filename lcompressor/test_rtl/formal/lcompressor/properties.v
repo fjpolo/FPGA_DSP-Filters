@@ -64,7 +64,7 @@
 	// r_lin_env_2: Envelope state must be zero after reset
     always @(posedge i_clk) begin
         if (($past(!i_reset_n)&&(f_past_valid))) begin
-            // r_lin_env_2 is the key internal state for the envelope.
+            // r_lin_env_2 is the key internal state for the envelope
             assert(r_lin_env_2 == 'h0);
         end
     end
@@ -95,11 +95,32 @@
 		end
 	end
 
+	// i_data must not exceed full scale
+    // The design handles saturation, but this assumes valid input
+    always @(*)
+		assert($signed(i_data) >= -(1 << (W_TOTAL - 1)));
+    always @(*)
+    	assert($signed(i_data) <= (1 << (W_TOTAL - 1)) - 1);	
+
     ////////////////////////////////////////////////////
 	//
 	// Induction
 	//
 	////////////////////////////////////////////////////
+
+	// Output must never exceed the maximum positive value (No Clipping/Overflow).
+    always @(posedge i_clk) begin
+        if ((f_past_valid) && (i_reset_n) && (o_ce)) begin
+            assert($signed(o_data) <= (1 << (W_TOTAL - 1)) - 1);
+        end
+    end
+
+	// Output must never exceed the maximum negative value (No Clipping/Overflow).
+    always @(posedge i_clk) begin
+        if ((f_past_valid) && (i_reset_n) && (o_ce)) begin
+            `ASSERT($signed(o_data) >= -(1 << (W_TOTAL - 1)));
+        end
+    end
     
 	////////////////////////////////////////////////////
 	//
