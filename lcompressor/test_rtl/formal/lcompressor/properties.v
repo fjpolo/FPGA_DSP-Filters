@@ -98,14 +98,19 @@
     always @(*)
     	assert($signed(i_data) <= (1 << (W_TOTAL - 1)) - 1);	
 
-	//
+	// o_data
 	always @(posedge i_clk) begin
 		if(
 			($past(f_past_valid))&&($past(i_reset_n))&&
 			(f_past_valid)&&(i_reset_n)
 		) begin
-			if((o_ce)&&($past(i_data) > THRESHOLD_LIN))
-				assert(o_data == THRESHOLD_LIN);
+			if(o_ce)
+				if($past(i_data) > THRESHOLD_LIN)
+					assert(o_data == THRESHOLD_LIN);
+				else if($past(i_data) < NEG_THRESHOLD_LIN)
+					assert(o_data == NEG_THRESHOLD_LIN);
+				else
+					assert(o_data == $past(i_data));
 		end
 	end
 
