@@ -60,13 +60,14 @@ assign o_ce = o_ce_reg;
 //
 wire signed [W_TOTAL-1:0] clipped_data;
 
-// Clipping Logic: Operates directly on i_data
+// Clipping Logic: Operates directly on i_data (restoring the correct combinatorial logic)
 // If data exceeds positive threshold, clamp to positive threshold.
 // Else if data is below negative threshold, clamp to negative threshold.
 // Else, pass through.
 assign clipped_data = (i_data > THRESHOLD_LIN) ? THRESHOLD_LIN :
                       (i_data < NEG_THRESHOLD_LIN) ? NEG_THRESHOLD_LIN :
                       i_data;
+
 
 //
 // --- Stage 1 (Register): Output Registration ---
@@ -79,12 +80,12 @@ always @(posedge i_clk) begin
         o_ce_reg <= 1'b0;
 end
 
-// Register the clipped data to the output
+// Register the final, correctly clipped data to the output
 always @(posedge i_clk) begin
     if (!i_reset_n) begin
         o_data <= {W_TOTAL{1'b0}};
     end else if (i_ce) begin // Gate registration using the input CE
-        o_data <= clipped_data;
+        o_data <= clipped_data; // Register the result of the combinatorial logic
     end
 end
 

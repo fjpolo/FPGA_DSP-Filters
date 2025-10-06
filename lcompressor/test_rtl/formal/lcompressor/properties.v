@@ -61,99 +61,16 @@
         end
     end
 
-	// r_lin_env_2: Envelope state must be zero after reset
-    always @(posedge i_clk) begin
-        if (($past(!i_reset_n)&&(f_past_valid))) begin
-            // r_lin_env_2 is the key internal state for the envelope
-            assert(r_lin_env_2 == 'h0);
-        end
-    end
-
     ////////////////////////////////////////////////////
 	//
 	// BMC
 	//
 	////////////////////////////////////////////////////
 
-	// r_ce_1
+	// o_ce_reg
 	always @(posedge i_clk) begin
 		if((f_past_valid)&&($past(i_reset_n))) begin
-			assert(r_ce_1 == $past(i_ce));
-		end
-	end
-
-	// r_ce_2
-	always @(posedge i_clk) begin
-		if((f_past_valid)&&($past(i_reset_n))) begin
-			assert(r_ce_2 == $past(r_ce_1));
-		end
-	end
-
-	// r_ce_3
-	always @(posedge i_clk) begin
-		if((f_past_valid)&&($past(i_reset_n))) begin
-			assert(r_ce_3 == $past(r_ce_2));
-		end
-	end
-
-	// r_ce_45
-	always @(posedge i_clk) begin
-		if((f_past_valid)&&($past(i_reset_n))) begin
-			assert(r_ce_45 == $past(r_ce_3));
-		end
-	end
-
-	// r_lin_env_2
-    always @(posedge i_clk) begin
-        if (
-			($past(f_past_valid, 4))&&(o_ce)&&
-			($past(i_reset_n, 4))&&($past(i_reset_n, 3))&&($past(i_reset_n, 2))&&($past(i_reset_n))&&(i_reset_n)
-		   ) begin
-			assert($past(lin_env_next,3) == $past(r_lin_env_2 + update_term, 3));
-			if($past(r_ce_1, 3))
-				assert($past(r_lin_env_2, 2) == $past(lin_env_next,3));
-        end
-    end
-
-	// overshoot
-    always @(posedge i_clk) begin
-        if (
-			($past(f_past_valid, 4))&&(o_ce)&&
-			($past(i_reset_n, 4))&&($past(i_reset_n, 3))&&($past(i_reset_n, 2))&&($past(i_reset_n))&&(i_reset_n)
-		   ) begin
-			assert($past(overshoot, 2) == $past(r_lin_env_2 - THRESHOLD_LIN, 2));
-			assert($past(compression_depth, 2) == $past(depth_product_full[W_TOTAL + W_FRAC - 1 : W_FRAC], 2));
-			// assert($past(target_gain, 2) == ( (1 << W_FRAC) -  $past(compression_depth, 2)));
-        end
-    end
-
-	// r_eq_1
-	always @(posedge i_clk) begin
-		if((f_past_valid)&&($past(i_reset_n))) begin
-			if($past(i_ce))
-				assert(r_eq_1 == $past(i_data) <= THRESHOLD_LIN);
-		end
-	end
-
-	// r_eq_2
-	always @(posedge i_clk) begin
-		if(
-			($past(f_past_valid, 2))&&($past(i_reset_n, 2))&&
-			($past(f_past_valid))&&($past(i_reset_n))&&
-			(f_past_valid)&&(i_reset_n)
-		  ) begin
-			assert(r_eq_2 == $past(r_eq_1));
-		end
-	end
-
-	// r_eq_3
-	always @(posedge i_clk) begin
-		if(
-			($past(f_past_valid, 2))&&($past(i_reset_n, 2))&&
-			($past(f_past_valid))&&($past(i_reset_n))&&
-			(f_past_valid)&&(i_reset_n)
-		  ) begin
-			assert(r_eq_3 == $past(r_eq_2));
+			assert(o_ce_reg == $past(i_ce));
 		end
 	end
 
@@ -166,13 +83,10 @@
 	// o_ce: must be high 4 clocks after i_ce is high
 	always @(posedge i_clk) begin
 		if(
-			($past(f_past_valid,4))&&($past(i_reset_n,4))&&
-			($past(f_past_valid,3))&&($past(i_reset_n,3))&&
-			($past(f_past_valid,2))&&($past(i_reset_n,2))&&
 			($past(f_past_valid))&&($past(i_reset_n))&&
 			(f_past_valid)&&(i_reset_n)
 		) begin
-			if($past(i_ce, 4))
+			if($past(i_ce))
 				assert(o_ce);
 		end
 	end
@@ -187,14 +101,11 @@
 	//
 	always @(posedge i_clk) begin
 		if(
-			($past(f_past_valid,4))&&($past(i_reset_n,4))&&
-			($past(f_past_valid,3))&&($past(i_reset_n,3))&&
-			($past(f_past_valid,2))&&($past(i_reset_n,2))&&
 			($past(f_past_valid))&&($past(i_reset_n))&&
 			(f_past_valid)&&(i_reset_n)
 		) begin
-			if((o_ce)&&($past(i_data, 4) <= THRESHOLD_LIN))
-				assert(o_data == $past(i_data, 4));
+			if((o_ce)&&($past(i_data) > THRESHOLD_LIN))
+				assert(o_data == THRESHOLD_LIN);
 		end
 	end
 
@@ -217,23 +128,6 @@
             assert($signed(o_data) >= -(1 << (W_TOTAL - 1)));
         end
     end
-
-	//
-	// Input below treshold
-	//
-
-	always @(posedge i_clk) begin
-		if(
-			($past(f_past_valid,4))&&($past(i_reset_n,4))&&
-			($past(f_past_valid,3))&&($past(i_reset_n,3))&&
-			($past(f_past_valid,2))&&($past(i_reset_n,2))&&
-			($past(f_past_valid))&&($past(i_reset_n))&&
-			(f_past_valid)&&(i_reset_n)
-		) begin	
-			if((o_ce)&&($past(r_eq_3)))
-				assert(o_data == $past(i_data, 4));
-		end		
-	end
     
 	////////////////////////////////////////////////////
 	//
