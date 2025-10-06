@@ -65,6 +65,20 @@ initial r_ce_3 = 1'b0;
 initial r_ce_45 = 1'b0;
 assign  o_ce = r_ce_45;
 
+// output should be equal to input
+reg r_eq_1, r_eq_2, r_eq_3;
+initial r_eq_1 = 1'b0;
+initial r_eq_2 = 1'b0;
+initial r_eq_3 = 1'b0;
+
+// output when threshold not superado
+reg [W_TOTAL-1:0] r_eq_data_1;
+reg [W_TOTAL-1:0] r_eq_data_2;
+reg [W_TOTAL-1:0] r_eq_data_3;
+initial r_eq_data_1 = 'h0;
+initial r_eq_data_2 = 'h0;
+initial r_eq_data_3 = 'h0;
+
 //
 // --- Stage 1: Input Conditioning ---
 //
@@ -94,6 +108,20 @@ always @(posedge i_clk) begin
     if(!i_reset_n)
         r_ce_1 <= 1'b0;
 end
+
+// threshold check
+always @(posedge i_clk) begin
+    r_eq_1 <= 1'b0;
+    if(i_ce)
+        if(i_data <= THRESHOLD_LIN)
+            r_eq_1 <= 1'b1;
+end
+always @(posedge i_clk) begin
+    r_eq_data_1 <= 'h0;
+    if(i_data <= THRESHOLD_LIN)
+        r_eq_data_1 <= i_data;
+end
+
 
 //
 // --- Stage 2: Envelope Detection (One-Pole IIR on Linear Magnitude) ---
@@ -136,10 +164,20 @@ always @(posedge i_clk) begin
         r_ce_2 <= 1'b0;
 end
 
+// threshold check
+always @(posedge i_clk)
+    r_eq_2 <= r_eq_1;
+always @(posedge i_clk) begin
+    r_eq_data_2 <= 'h0;
+    if(r_eq_1)
+        r_eq_data_2 <= r_eq_data_1;
+end
+
 //
 // --- Stage 3: Static Gain Calculation ---
 //
-reg signed [W_TOTAL-1:0] linear_gain_reg3; // Q1.15 gain multiplier
+reg signed [W_TOTAL-1:0] r_lin_gain_3; // Q1.15 gain multiplier
+initial r_lin_gain_3 = (1 << W_FRAC);
 reg signed [W_TOTAL-1:0] data_reg3;
 
 // The linear gain is calculated as: Gain = (Threshold / Envelope)^(1 - 1/Ratio) * 1/Ratio
@@ -179,7 +217,7 @@ wire signed [W_TOTAL-1:0] target_gain = (1 << W_FRAC) - compression_depth; // 1.
 always @(posedge i_clk) begin
     if (r_ce_2) begin
         // Only apply gain reduction if the signal is above threshold and overshoot > 0
-        linear_gain_reg3 <= (r_lin_env_2 > THRESHOLD_LIN) ? target_gain : (1 << W_FRAC); // 1.0
+        r_lin_gain_3 <= (r_lin_env_2 > THRESHOLD_LIN) ? target_gain : (1 << W_FRAC); // 1.0
         data_reg3 <= r_data_2;
     end
 end
@@ -189,6 +227,15 @@ always @(posedge i_clk) begin
     r_ce_3 <= r_ce_2;
     if(!i_reset_n)
         r_ce_3 <= 1'b0;
+end
+
+// threshold check
+always @(posedge i_clk)
+    r_eq_3 <= r_eq_2;
+always @(posedge i_clk) begin
+    r_eq_data_3 <= 'h0;
+    if(r_eq_2)
+        r_eq_data_3 <= r_eq_data_2;
 end
 
 //
@@ -205,7 +252,7 @@ end
 // Final Multiplier: Output = Data * Linear_Gain
 // Q1.15 * Q1.15 = Q2.30 -> shift to Q1.15
 // verilator lint_off UNUSEDSIGNAL
-wire signed [W_TOTAL + W_TOTAL - 1:0] final_product = $signed(data_reg4) * $signed(linear_gain_reg3);
+wire signed [W_TOTAL + W_TOTAL - 1:0] final_product = $signed(data_reg4) * $signed(r_lin_gain_3);
 // verilator lint_on UNUSEDSIGNAL
 wire signed [W_TOTAL-1:0] output_data = final_product[W_TOTAL + W_FRAC - 1 : W_FRAC];
 
@@ -214,6 +261,8 @@ always @(posedge i_clk) begin
         o_data <= {W_TOTAL{1'b0}};
     end else if (r_ce_3) begin
         o_data <= output_data;
+        if(r_eq_3)
+            o_data <= r_eq_data_3;
     end
 end
 
