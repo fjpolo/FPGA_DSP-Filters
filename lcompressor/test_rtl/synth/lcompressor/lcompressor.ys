@@ -8,7 +8,7 @@ synth_gowin -top lcompressor -json lcompressor.json
 
 # Generate a simple netlist graph (for visualization)
 # This is done every iteration.
-show -prefix maf_iter_01
+# show -prefix maf_iter_01
 
 # Clean up unused cells and wires
 clean
