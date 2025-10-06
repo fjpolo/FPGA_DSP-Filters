@@ -50,7 +50,7 @@ clean
 clean
 
 # Generate a final netlist graph (after all optimizations)
-#show -prefix maf_final
+show -prefix maf_final
 
 # Write the synthesized netlist to a file (optional)
 write_verilog template_synth.v
