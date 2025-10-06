@@ -145,6 +145,20 @@
 		if((f_past_valid)&&(i_reset_n)&&(i_ce))
 			cover(o_ce);
 	end
+
+	// o_data
+	always @(posedge i_clk) begin
+		if((f_past_valid)&&(i_reset_n)&&(i_ce))
+			cover(o_data == $past(i_data));
+	end
+	always @(posedge i_clk) begin
+		if((f_past_valid)&&(i_reset_n)&&(i_ce))
+			cover(o_data == THRESHOLD_LIN);
+	end
+	always @(posedge i_clk) begin
+		if((f_past_valid)&&(i_reset_n)&&(i_ce))
+			cover(o_data == NEG_THRESHOLD_LIN);
+	end
            
 `endif
 
