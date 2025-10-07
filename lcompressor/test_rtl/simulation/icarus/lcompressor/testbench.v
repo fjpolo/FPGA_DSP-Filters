@@ -41,14 +41,14 @@ module testbench;
     // --- UUT Parameters ---
     localparam W_TOTAL = 16;
     localparam W_FRAC = 15;
-    localparam THRESHOLD_LIN = 16'h4000; // 0.5 in Q1.15
-    localparam NEG_THRESHOLD_LIN = -(THRESHOLD_LIN); // -0.5
 
     // --- Testbench Signals (Inputs to UUT) ---
     reg  i_clk;
     reg  i_reset_n;
     reg  i_ce;
     reg  signed [W_TOTAL-1:0] i_data;
+    reg  signed   [W_TOTAL-1:0] i_threshold_pos = 'h4000;
+    reg  signed   [W_TOTAL-1:0] i_threshold_neg = 'hb000;
 
     // --- Testbench Signals (Outputs from UUT) ---
     wire signed [W_TOTAL-1:0] o_data;
@@ -59,17 +59,31 @@ module testbench;
     integer errors = 0;
 
     // Instantiate the Unit Under Test (UUT)
+`ifdef MCY
+    lcompressor uut (
+        .i_clk      (i_clk),
+        .i_reset_n  (i_reset_n),
+        .i_ce       (i_ce),
+        .i_data     (i_data),
+        .i_threshold_pos(i_threshold_pos),
+        .i_threshold_neg(i_threshold_neg),
+        .o_data     (o_data),
+        .o_ce       (o_ce)
+    );
+`else
     lcompressor #(
-        .W_TOTAL(W_TOTAL),
-        .THRESHOLD_LIN(THRESHOLD_LIN)
+        .W_TOTAL(W_TOTAL)
     ) uut (
         .i_clk      (i_clk),
         .i_reset_n  (i_reset_n),
         .i_ce       (i_ce),
         .i_data     (i_data),
         .o_data     (o_data),
+        .i_threshold_pos(i_threshold_pos),
+        .i_threshold_neg(i_threshold_neg),
         .o_ce       (o_ce)
     );
+`endif
 
     // Clock generation
     initial begin
@@ -87,7 +101,7 @@ module testbench;
     initial begin
         $display("-------------------------------------------------------");
         $display("Starting Self-Checking Testbench for hclipper (1-Stage)");
-        $display("Threshold = %h (Q1.15)", THRESHOLD_LIN);
+        $display("Threshold = %h (Q1.15)", i_threshold_pos);
         $display("-------------------------------------------------------");
 
         // --- 1. Reset Test (Test 1) ---
@@ -118,8 +132,8 @@ module testbench;
         test_count = test_count + 1;
         i_ce = 0;
         #CLK_FULL;
-        if ((o_ce)&&(o_data !== THRESHOLD_LIN)) begin
-            $display("FAIL: Test %d failed. o_data=%h should be %h, o_ce=%b", test_count, o_data, THRESHOLD_LIN, o_ce);
+        if ((o_ce)&&(o_data !== i_threshold_pos)) begin
+            $display("FAIL: Test %d failed. o_data=%h should be %h, o_ce=%b", test_count, o_data, i_threshold_pos, o_ce);
             errors = errors + 1;
         end else begin
             $display("PASS: Test %d (upper bounds) successful.", test_count);
@@ -131,8 +145,8 @@ module testbench;
         #CLK_FULL;
         i_ce = 0;
         #CLK_FULL;
-        if ((o_ce)&&(o_data !== NEG_THRESHOLD_LIN)) begin
-            $display("FAIL: Test %d failed. o_data=%h should be %h, o_ce=%b", test_count, o_data, NEG_THRESHOLD_LIN, o_ce);
+        if ((o_ce)&&(o_data !== i_threshold_neg)) begin
+            $display("FAIL: Test %d failed. o_data=%h should be %h, o_ce=%b", test_count, o_data, i_threshold_neg, o_ce);
             errors = errors + 1;
         end else begin
             $display("PASS: Test %d (lower bounds) successful.", test_count);
@@ -157,7 +171,7 @@ module testbench;
             $display("PASS: All %0d tests passed.", test_count);
         end else begin
             $display("FAIL: %0d / %0d tests failed.", errors, test_count);
-            $display("ERROR: The simulation encountered %0d errors.", errors);
+            $display("FAIL: The simulation encountered %0d errors.", errors);
         end
         $display("-------------------------------------------------------");
         

@@ -74,6 +74,11 @@
 		end
 	end
 
+	always @(posedge i_clk) begin
+		assume($stable(i_threshold_pos));
+		assume($stable(i_threshold_neg));
+	end
+
     ////////////////////////////////////////////////////
 	//
 	// Contract
@@ -105,10 +110,10 @@
 			(f_past_valid)&&(i_reset_n)
 		) begin
 			if(o_ce)
-				if($past(i_data) > THRESHOLD_LIN)
-					assert(o_data == THRESHOLD_LIN);
-				else if($past(i_data) < NEG_THRESHOLD_LIN)
-					assert(o_data == NEG_THRESHOLD_LIN);
+				if($past(i_data) > i_threshold_pos)
+					assert(o_data == i_threshold_pos);
+				else if($past(i_data) < i_threshold_neg)
+					assert(o_data == i_threshold_neg);
 				else
 					assert(o_data == $past(i_data));
 		end
@@ -153,11 +158,11 @@
 	end
 	always @(posedge i_clk) begin
 		if((f_past_valid)&&(i_reset_n)&&(i_ce))
-			cover(o_data == THRESHOLD_LIN);
+			cover(o_data == i_threshold_pos);
 	end
 	always @(posedge i_clk) begin
 		if((f_past_valid)&&(i_reset_n)&&(i_ce))
-			cover(o_data == NEG_THRESHOLD_LIN);
+			cover(o_data == i_threshold_neg);
 	end
            
 `endif

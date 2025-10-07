@@ -31,22 +31,17 @@
 
 module lcompressor #(
     // --- Format Parameters ---
-    parameter W_TOTAL = 16,      // Total bit width (Q1.15)
-    
-    // --- Control Parameters (Linear Fixed-Point) ---
-    // Threshold is a linear magnitude (e.g., 0.5 for -6dB)
-    parameter THRESHOLD_LIN = 16'h4000 // Q1.15(0.5)
+    parameter W_TOTAL = 16      // Total bit width (Q1.15)
 ) (
     input  wire           [0:0]         i_clk,
     input  wire           [0:0]         i_reset_n,
     input  wire           [0:0]         i_ce,           
-    input  wire  signed   [W_TOTAL-1:0] i_data, // Q1.15 signed audio input
-    output reg   signed   [W_TOTAL-1:0] o_data, // Q1.15 signed audio output
+    input  wire  signed   [W_TOTAL-1:0] i_data,             // Q1.15 signed audio input
+    input  wire  signed   [W_TOTAL-1:0] i_threshold_pos,    // Q1.15 signed threshold - positive
+    input  wire  signed   [W_TOTAL-1:0] i_threshold_neg,    // Q1.15 signed threshold - negative
+    output reg   signed   [W_TOTAL-1:0] o_data,             // Q1.15 signed audio output
     output wire           [0:0]         o_ce            
 );
-
-// --- Constants ---
-localparam NEG_THRESHOLD_LIN = -(THRESHOLD_LIN);
 
 // --- Clock Enable (CE) Register (1 cycle of latency) ---
 // o_ce_reg is the registered version of i_ce, giving 1 cycle latency
@@ -64,8 +59,8 @@ wire signed [W_TOTAL-1:0] clipped_data;
 // If data exceeds positive threshold, clamp to positive threshold.
 // Else if data is below negative threshold, clamp to negative threshold.
 // Else, pass through.
-assign clipped_data = (i_data > THRESHOLD_LIN) ? THRESHOLD_LIN :
-                      (i_data < NEG_THRESHOLD_LIN) ? NEG_THRESHOLD_LIN :
+assign clipped_data = (i_data > i_threshold_pos) ? i_threshold_pos :
+                      (i_data < i_threshold_neg) ? i_threshold_neg :
                       i_data;
 
 
