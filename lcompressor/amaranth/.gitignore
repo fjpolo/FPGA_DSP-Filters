@@ -1,0 +1,6 @@
+*.vcd
+*.v
+*.il
+lcompressor/
+template_bmc/
+template_cover/

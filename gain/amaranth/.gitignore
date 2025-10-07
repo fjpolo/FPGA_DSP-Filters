@@ -1,0 +1,6 @@
+*.vcd
+*.v
+*.il
+gain/
+template_bmc/
+template_cover/
