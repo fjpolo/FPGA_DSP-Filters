@@ -70,7 +70,9 @@ localparam signed [WIDTH:0] MIN_VAL_EXT = -(2**(WIDTH-1));    // E.g., for WIDTH
 // Determine 'effective_operandB_extended': if i_sub is 0, use i_operandB; if i_sub is 1, use two's complement of i_operandB.
 // The $signed() cast combined with implicit widening ensures the negation works correctly even for -MIN_VAL.
 // E.g., for 8-bit: $signed(8'h80) is -128. -($signed(8'h80)) is +128. This +128 will fit in 9 bits.
+/* verilator lint_off WIDTHEXPAND */
 assign effective_operandB_extended = i_sub ? -($signed(i_operandB)) : $signed(i_operandB);
+/* verilator lint_on WIDTHEXPAND */
 
 // Perform the addition or subtraction combinatorially.
 // Both operands are explicitly $signed() to ensure they are treated as signed and sign-extended

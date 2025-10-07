@@ -1,7 +1,7 @@
 # yosys script for FixedPointAddSub.v
 
 # Read the Verilog file
-read_verilog FixedPointAddSub.v
+read_verilog -sv FixedPointAddSub.v
 
 # Synthesize the design
 synth_gowin -top FixedPointAddSub -json FixedPointAddSub.json
