@@ -52,7 +52,7 @@
 
 	always @(posedge i_clk) begin
         if((f_past_valid)&&($past(i_rst))) begin
-            assert(o_val   == '0);
+            assert(o_data   == '0);
             assert(o_done  == 1'b0);
             assert(o_valid == 1'b0);
 		end
@@ -75,17 +75,17 @@
 	//
 	////////////////////////////////////////////////////   
 
-	// ADD: If o_valid && o_done, then o_val is the sum of the operands
+	// ADD: If o_valid && o_done, then o_data is the sum of the operands
  	always @(posedge i_clk) begin
 		if(($past(f_past_valid))&&(f_past_valid)&&(!$past(i_rst))&&($past(i_start))&&(o_valid)&&(o_done)&&($past(i_sub == 0))) begin
-			assert(o_val == $past(i_operandA) + $past(i_operandB));
+			assert(o_data == $past(i_operandA) + $past(i_operandB));
 		end
 	end
 
-	// SUB: If o_valid && o_done, then o_val is the substraction of OperandA and OperandB
+	// SUB: If o_valid && o_done, then o_data is the substraction of OperandA and OperandB
  	always @(posedge i_clk) begin
 		if(($past(f_past_valid))&&(f_past_valid)&&(!$past(i_rst))&&($past(i_start))&&(o_valid)&&(o_done)&&($past(i_sub == 1))) begin
-			assert(o_val == $past(i_operandA) - $past(i_operandB));
+			assert(o_data == $past(i_operandA) - $past(i_operandB));
 		end
 	end
 
@@ -119,17 +119,17 @@
 	end   
 	always @(posedge i_clk) begin
 		if((f_past_valid)&&(!$past(i_rst))) begin
-			cover(o_val == ($past(i_operandA) + $past(i_operandB)));
+			cover(o_data == ($past(i_operandA) + $past(i_operandB)));
 		end
 	end  
 	always @(posedge i_clk) begin
 		if((f_past_valid)&&(!$past(i_rst))) begin
-			cover(o_val != ($past(i_operandA) + $past(i_operandB)));
+			cover(o_data != ($past(i_operandA) + $past(i_operandB)));
 		end
 	end
 	always @(posedge i_clk) begin
 		if((f_past_valid)&&(!$past(i_rst))) begin
-			cover(o_val == ($past(i_operandA) - $past(i_operandB)));
+			cover(o_data == ($past(i_operandA) - $past(i_operandB)));
 		end
 	end 
            

@@ -44,13 +44,13 @@ module FixedPointAddSub #(
 
     output      logic o_busy,                           // High when operation is in progress (registered)
     output      logic o_done,                           // High for one clock cycle when calculation is complete (registered)
-    output      logic o_valid,                          // High for one clock cycle when o_val contains a valid result (registered)
-                                                        // This implies o_val is ready, regardless of saturation.
+    output      logic o_valid,                          // High for one clock cycle when o_data contains a valid result (registered)
+                                                        // This implies o_data is ready, regardless of saturation.
     output      logic o_overflow,                       // High for one clock cycle if saturation occurred (registered)
 
     input wire logic signed [WIDTH-1:0] i_operandA,     // Signed fixed-point Operand A
     input wire logic signed [WIDTH-1:0] i_operandB,     // Signed fixed-point Operand B
-    output      logic signed [WIDTH-1:0] o_val          // Signed fixed-point result (saturated if overflowed)
+    output      logic signed [WIDTH-1:0] o_data          // Signed fixed-point result (saturated if overflowed)
 );
 
 // Internal wire for the effective operand B (B or -B).
@@ -82,7 +82,7 @@ assign result_extended = $signed(i_operandA) + effective_operandB_extended;
 always @(posedge i_clk) begin
     if(i_rst) begin
         // Reset all outputs asynchronously
-        o_val      <= '0;
+        o_data      <= '0;
         o_done     <= 1'b0;
         o_valid    <= 1'b0;
         o_overflow <= 1'b0;
@@ -103,15 +103,15 @@ always @(posedge i_clk) begin
             o_valid <= 1'b0;
             if (result_extended > MAX_VAL_EXT) begin
                 // Positive saturation detected
-                o_val      <= MAX_VAL_EXT[WIDTH-1:0]; // Clip result to max positive value (WIDTH bits)
+                o_data      <= MAX_VAL_EXT[WIDTH-1:0]; // Clip result to max positive value (WIDTH bits)
                 o_overflow <= 1'b1;                   // Set overflow flag
             end else if (result_extended < MIN_VAL_EXT) begin
                 // Negative saturation detected
-                o_val      <= MIN_VAL_EXT[WIDTH-1:0];    // Clip result to min negative value (WIDTH bits)
+                o_data      <= MIN_VAL_EXT[WIDTH-1:0];    // Clip result to min negative value (WIDTH bits)
                 o_overflow <= 1'b1;                   // Set overflow flag
             end else begin
                 // No saturation needed, result fits within WIDTH bits
-                o_val      <= $signed(result_extended[WIDTH-1:0]); // Take the lower WIDTH bits, preserving signedness
+                o_data      <= $signed(result_extended[WIDTH-1:0]); // Take the lower WIDTH bits, preserving signedness
                 // o_overflow remains 1'b0 (default value from the beginning of this 'else' branch)
                 o_valid <= 1'b1;
             end

@@ -52,7 +52,7 @@ module testbench;
     wire        o_done;
     wire        o_valid;
     wire        o_overflow;
-    wire signed [WIDTH-1:0] o_val;
+    wire signed [WIDTH-1:0] o_data;
 
     // Temporary variables for task arguments, declared at the module level for broader compatibility
     reg signed [WIDTH-1:0] temp_opA;
@@ -74,7 +74,7 @@ module testbench;
             .o_done     (o_done),
             .o_valid    (o_valid),
             .o_overflow (o_overflow),
-            .o_val      (o_val)
+            .o_data      (o_data)
         );
 `else
     FixedPointAddSub #(
@@ -91,7 +91,7 @@ module testbench;
             .o_done     (o_done),
             .o_valid    (o_valid),
             .o_overflow (o_overflow),
-            .o_val      (o_val)
+            .o_data      (o_data)
         );
 `endif
             
@@ -134,7 +134,7 @@ module testbench;
             i_start    = 1'b0; // De-assert start (pulse i_start)
 
             // At this point, o_busy should be high (reflecting i_start one cycle ago)
-            // and o_done/o_valid/o_overflow/o_val should be stable and reflect the result of this cycle's operation.
+            // and o_done/o_valid/o_overflow/o_data should be stable and reflect the result of this cycle's operation.
             // Wait for the next clock edge to sample the registered outputs.
             // #(10)
 
@@ -142,12 +142,12 @@ module testbench;
             // Verify handshake signals first
             // Changed o_busy expectation from 0 to 1 as per UUT's 1-cycle latency behavior
             if (uut.o_done === 1'b1 && uut.o_valid === (expected_overflow ? 1'b0 : 1'b1) && uut.o_busy === 1'b1) begin
-                if (uut.o_val === expected_val && uut.o_overflow === expected_overflow) begin
+                if (uut.o_data === expected_val && uut.o_overflow === expected_overflow) begin
                     $display("PASS: %s. Result: %0d (0x%h), Overflow: %b. Expected: %0d (0x%h), Overflow: %b",
-                             test_name, uut.o_val, uut.o_val, uut.o_overflow, expected_val, expected_val, expected_overflow);
+                             test_name, uut.o_data, uut.o_data, uut.o_overflow, expected_val, expected_val, expected_overflow);
                 end else begin
                     $display("FAIL: %s. Mismatch! Result: %0d (0x%h), Overflow: %b. Expected: %0d (0x%h), Overflow: %b",
-                             test_name, uut.o_val, uut.o_val, uut.o_overflow, expected_val, expected_val, expected_overflow);
+                             test_name, uut.o_data, uut.o_data, uut.o_overflow, expected_val, expected_val, expected_overflow);
                     $finish; // Terminate simulation on failure
                 end
             end else begin
@@ -179,7 +179,7 @@ module testbench;
             i_start    = 1'b0; // De-assert start (pulse i_start)
 
             // At this point, o_busy should be high (reflecting i_start one cycle ago)
-            // and o_done/o_valid/o_overflow/o_val should be stable and reflect the result of this cycle's operation.
+            // and o_done/o_valid/o_overflow/o_data should be stable and reflect the result of this cycle's operation.
             // Wait for the next clock edge to sample the registered outputs.
             // #(10)
 
@@ -187,14 +187,14 @@ module testbench;
             // Verify handshake signals first
             // Changed o_busy expectation from 0 to 1 as per UUT's 1-cycle latency behavior
             $display("uut.result_extended: %0d", uut.result_extended);
-            $display("uut.o_val: %0d", uut.o_val);
+            $display("uut.o_data: %0d", uut.o_data);
             if (uut.o_done === 1'b1 && uut.o_valid === (expected_overflow ? 1'b0 : 1'b1) && uut.o_busy === 1'b1) begin
-                if (uut.o_val === expected_val && uut.o_overflow === expected_overflow) begin
+                if (uut.o_data === expected_val && uut.o_overflow === expected_overflow) begin
                     $display("PASS: %s. Result: %0d (0x%h), Overflow: %b. Expected: %0d (0x%h), Overflow: %b",
-                             test_name, uut.o_val, uut.o_val, uut.o_overflow, expected_val, expected_val, expected_overflow);
+                             test_name, uut.o_data, uut.o_data, uut.o_overflow, expected_val, expected_val, expected_overflow);
                 end else begin
                     $display("FAIL: %s. Mismatch! Result: %0d (0x%h), Overflow: %b. Expected: %0d (0x%h), Overflow: %b",
-                             test_name, uut.o_val, uut.o_val, uut.o_overflow, expected_val, expected_val, expected_overflow);
+                             test_name, uut.o_data, uut.o_data, uut.o_overflow, expected_val, expected_val, expected_overflow);
                     $finish; // Terminate simulation on failure
                 end
             end else begin
@@ -223,10 +223,10 @@ module testbench;
         $display("Reset De-asserted.");
 
         // Check reset state (should be all zeros for outputs)
-        if (uut.o_val !== '0 || uut.o_done !== 1'b0 || uut.o_valid !== 1'b0 ||
+        if (uut.o_data !== '0 || uut.o_done !== 1'b0 || uut.o_valid !== 1'b0 ||
             uut.o_overflow !== 1'b0 || uut.o_busy !== 1'b0) begin
-            $display("FAIL: Reset state incorrect. o_val=0x%h, o_done=%b, o_valid=%b, o_overflow=%b, o_busy=%b",
-                     uut.o_val, uut.o_done, uut.o_valid, uut.o_overflow, uut.o_busy);
+            $display("FAIL: Reset state incorrect. o_data=0x%h, o_done=%b, o_valid=%b, o_overflow=%b, o_busy=%b",
+                     uut.o_data, uut.o_done, uut.o_valid, uut.o_overflow, uut.o_busy);
             $finish;
         end else begin
             $display("PASS: Initial reset state is correct.");
