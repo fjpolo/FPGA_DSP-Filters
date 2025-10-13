@@ -31,7 +31,7 @@
 `timescale 1ps/1ps
 
 module longDivision #(
-        parameter WIDTH=32                   // width of numbers in bits
+        parameter WIDTH=33                   // width of numbers in bits
     ) ( 
         input wire logic i_clk,              // clock
         input wire logic i_rst,              // reset
