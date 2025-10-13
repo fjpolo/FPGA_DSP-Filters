@@ -117,7 +117,8 @@
 	localparam MAX_REM = 9;
 	generate
 		genvar rem_val;
-		for (rem_val = MIN_REM; rem_val <= MAX_REM; rem_val = rem_val + 1) begin : cover_rem_loop        always @(posedge i_clk) begin
+		for (rem_val = MIN_REM; rem_val <= MAX_REM; rem_val = rem_val + 1) begin : cover_rem_loop        
+			always @(posedge i_clk) begin
 				if (
 					(f_past_valid) && (!i_rst) &&
 					(i_start)
