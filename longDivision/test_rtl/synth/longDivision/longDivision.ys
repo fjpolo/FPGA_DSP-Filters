@@ -1,7 +1,7 @@
 # yosys script for longDivision.v
 
 # Read the Verilog file
-read_verilog longDivision.v
+read_verilog -sv longDivision.v
 
 # Synthesize the design
 synth_gowin -top longDivision -json longDivision.json
