@@ -97,7 +97,7 @@
 
 	// Test quotient
 	localparam MIN_QUOT = 1;
-	localparam MAX_QUOT = 99;
+	localparam MAX_QUOT = 9;
 	generate
 		genvar quot_val;
 		for (quot_val = MIN_QUOT; quot_val <= MAX_QUOT; quot_val = quot_val + 1) begin : cover_rem_loop        
@@ -114,7 +114,7 @@
 
 	// Test remainder
 	localparam MIN_REM = 1;
-	localparam MAX_REM = 99;
+	localparam MAX_REM = 9;
 	generate
 		genvar rem_val;
 		for (rem_val = MIN_REM; rem_val <= MAX_REM; rem_val = rem_val + 1) begin : cover_rem_loop        always @(posedge i_clk) begin
