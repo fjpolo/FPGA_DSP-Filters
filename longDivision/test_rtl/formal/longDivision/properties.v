@@ -45,12 +45,15 @@
 		f_past_valid <= 1'b1;
 
 
-
     ////////////////////////////////////////////////////
 	//
 	// Reset
 	//
 	////////////////////////////////////////////////////
+
+	// always @(posedge i_clk)
+	// 	if(!f_past_valid)
+	// 		assume($past(i_rst));
 
     ////////////////////////////////////////////////////
 	//
@@ -62,7 +65,23 @@
 	//
 	// Contract
 	//
-	////////////////////////////////////////////////////   
+	////////////////////////////////////////////////////
+	
+	// Test 4/2 = 2
+	always @(posedge i_clk)
+		if(
+			($past(f_past_valid,2))&&(!$past(i_rst,2))&&
+			($past(f_past_valid))&&(!$past(i_rst))&&
+			(f_past_valid)&&(!i_rst)&&
+			($past(i_start, 2))&&
+			($past(i_a, 2) == 4)&&($past(i_b, 2) == 2)&&
+			($stable(f_past_valid))&&($stable(i_rst))&&
+			($stable(i_a))&&
+			(!o_busy)&&(o_valid)&&(o_done)
+		) begin
+			assert(o_quot == 2);
+			assert(o_rem == 0);
+		end
 
     ////////////////////////////////////////////////////
 	//
@@ -74,7 +93,40 @@
 	//
 	// Cover
 	//
-	////////////////////////////////////////////////////     
-           
+	////////////////////////////////////////////////////  
+
+	// Test quotient
+	localparam MIN_QUOT = 1;
+	localparam MAX_QUOT = 99;
+	generate
+		genvar quot_val;
+		for (quot_val = MIN_QUOT; quot_val <= MAX_QUOT; quot_val = quot_val + 1) begin : cover_rem_loop        
+			always @(posedge i_clk) begin
+				if (
+					(f_past_valid) && (!i_rst) &&
+					(i_start)
+				) begin
+					cover(o_quot == (quot_val)&&(o_valid)&&(o_done));
+				end
+			end
+		end
+	endgenerate 
+
+	// Test remainder
+	localparam MIN_REM = 1;
+	localparam MAX_REM = 99;
+	generate
+		genvar rem_val;
+		for (rem_val = MIN_REM; rem_val <= MAX_REM; rem_val = rem_val + 1) begin : cover_rem_loop        always @(posedge i_clk) begin
+				if (
+					(f_past_valid) && (!i_rst) &&
+					(i_start)
+				) begin
+					cover(o_rem == ((rem_val)&&(o_valid)&&(o_done)));
+				end
+			end
+		end
+	endgenerate
+
 `endif
 

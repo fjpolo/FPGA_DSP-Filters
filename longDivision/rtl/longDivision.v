@@ -31,7 +31,7 @@
 `timescale 1ps/1ps
 
 module longDivision #(
-        parameter WIDTH=32                    // width of numbers in bits
+        parameter WIDTH=32                   // width of numbers in bits
     ) ( 
         input wire logic i_clk,              // clock
         input wire logic i_rst,              // reset
@@ -41,8 +41,8 @@ module longDivision #(
         output     logic o_valid,            // result is o_valid
         output     logic o_dbz,              // divide by zero
         input wire logic [WIDTH-1:0] i_a,    // dividend (numerator)
-        input wire logic [WIDTH-1:0] i_b,    // divisor (denominator)
-        output     logic [WIDTH-1:0] o_val,  // result value: quotient
+        input wire logic [WIDTH-1:0] i_b,    // divisor  (denominator)
+        output     logic [WIDTH-1:0] o_quot,  // result value: quotient
         output     logic [WIDTH-1:0] o_rem   // result: remainder
     );
 
@@ -82,7 +82,7 @@ module longDivision #(
                 o_busy <= 0;
                 o_done <= 1;
                 o_valid <= 1;
-                o_val <= quo_next;
+                o_quot <= quo_next;
                 o_rem <= acc_next[WIDTH:1];  // undo final shift
             end else begin  // next iteration
                 i <= i + 1;
@@ -95,7 +95,7 @@ module longDivision #(
             o_done <= 0;
             o_valid <= 0;
             o_dbz <= 0;
-            o_val <= 0;
+            o_quot <= 0;
             o_rem <= 0;
         end
     end
