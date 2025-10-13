@@ -42,7 +42,7 @@ module longDivision #(
         output     logic o_dbz,              // divide by zero
         input wire logic [WIDTH-1:0] i_a,    // dividend (numerator)
         input wire logic [WIDTH-1:0] i_b,    // divisor  (denominator)
-        output     logic [WIDTH-1:0] o_quot,  // result value: quotient
+        output     logic [WIDTH-1:0] o_quot, // result value: quotient
         output     logic [WIDTH-1:0] o_rem   // result: remainder
     );
 
