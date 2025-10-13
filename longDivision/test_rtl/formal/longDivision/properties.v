@@ -103,7 +103,7 @@
 		for (quot_val = MIN_QUOT; quot_val <= MAX_QUOT; quot_val = quot_val + 1) begin : cover_rem_loop        
 			always @(posedge i_clk) begin
 				if (
-					(f_past_valid) && (!i_rst) &&
+					(f_past_valid)&&(!i_rst)&&
 					(i_start)
 				) begin
 					cover(o_quot == (quot_val)&&(o_valid)&&(o_done));
@@ -120,7 +120,7 @@
 		for (rem_val = MIN_REM; rem_val <= MAX_REM; rem_val = rem_val + 1) begin : cover_rem_loop        
 			always @(posedge i_clk) begin
 				if (
-					(f_past_valid) && (!i_rst) &&
+					(f_past_valid)&&(!i_rst)&&
 					(i_start)
 				) begin
 					cover(o_rem == ((rem_val)&&(o_valid)&&(o_done)));
@@ -128,6 +128,16 @@
 			end
 		end
 	endgenerate
+
+	// Test division by zero
+	always @(posedge i_clk) begin
+		if (
+			(f_past_valid)&&(!i_rst)&&
+			(i_start)
+		) begin
+			cover(o_dbz);
+		end
+	end
 
 `endif
 
