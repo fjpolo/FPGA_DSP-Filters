@@ -1,0 +1,17 @@
+Elapsed clock time [H:MM:SS (secs)]: 0:00:01 (1)
+Elapsed process time [H:MM:SS (secs)]: 0:00:01 (1)
+engine_0 (smtbmc) returned pass
+cover trace: engine_0/trace0.vcd
+cover trace: engine_0/trace0.yw
+  reached cover statement FixedPointAddSub._witness_.check_cover_template_formal_v_250_124 at template_formal.v:250.4-250.60 step 2
+cover trace: engine_0/trace1.vcd
+cover trace: engine_0/trace1.yw
+  reached cover statement FixedPointAddSub._witness_.check_cover_template_formal_v_245_115 at template_formal.v:245.4-245.60 step 2
+  reached cover statement FixedPointAddSub._witness_.check_cover_template_formal_v_255_133 at template_formal.v:255.4-255.60 step 2
+cover trace: engine_0/trace2.vcd
+cover trace: engine_0/trace2.yw
+  reached cover statement FixedPointAddSub._witness_.check_cover_template_formal_v_230_98 at template_formal.v:230.4-230.18 step 2
+  reached cover statement FixedPointAddSub._witness_.check_cover_template_formal_v_235_103 at template_formal.v:235.4-235.17 step 2
+cover trace: engine_0/trace3.vcd
+cover trace: engine_0/trace3.yw
+  reached cover statement FixedPointAddSub._witness_.check_cover_template_formal_v_240_108 at template_formal.v:240.4-240.21 step 2

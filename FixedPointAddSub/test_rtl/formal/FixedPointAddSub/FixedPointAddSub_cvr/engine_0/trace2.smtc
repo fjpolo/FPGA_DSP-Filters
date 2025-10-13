@@ -1,0 +1,215 @@
+initial
+assume (= [$auto$async2sync.cc:107:execute$272] false)
+assume (= [$auto$async2sync.cc:107:execute$278] false)
+assume (= [$auto$async2sync.cc:107:execute$284] false)
+assume (= [$auto$async2sync.cc:107:execute$290] false)
+assume (= [$auto$async2sync.cc:107:execute$296] false)
+assume (= [$auto$async2sync.cc:107:execute$302] false)
+assume (= [$auto$async2sync.cc:116:execute$276] true)
+assume (= [$auto$async2sync.cc:116:execute$282] true)
+assume (= [$auto$async2sync.cc:116:execute$288] true)
+assume (= [$auto$async2sync.cc:116:execute$294] true)
+assume (= [$auto$async2sync.cc:116:execute$300] true)
+assume (= [$auto$async2sync.cc:116:execute$306] true)
+assume (= [_witness_.anyinit_procdff_202] false)
+assume (= [_witness_.anyinit_procdff_203] #b00000000)
+assume (= [_witness_.anyinit_procdff_204] #b00000000)
+assume (= [_witness_.anyinit_procdff_205] false)
+assume (= [_witness_.anyinit_procdff_206] #b00000000)
+assume (= [_witness_.anyinit_procdff_207] #b00000000)
+assume (= [_witness_.anyinit_procdff_208] false)
+assume (= [_witness_.anyinit_procdff_209] #b00000000)
+assume (= [_witness_.anyinit_procdff_210] #b00000000)
+assume (= [_witness_.anyinit_procdff_211] false)
+assume (= [_witness_.anyinit_procdff_212] false)
+assume (= [_witness_.anyinit_procdff_213] false)
+assume (= [f_past_valid] false)
+assume (= [o_busy] false)
+assume (= [o_data] #b00000000)
+assume (= [o_done] false)
+assume (= [o_overflow] false)
+assume (= [o_valid] false)
+
+state 0
+assume (= [i_clk] false)
+assume (= [i_operandA] #b00000000)
+assume (= [i_operandB] #b00000000)
+assume (= [i_rst] false)
+assume (= [i_start] true)
+assume (= [i_sub] false)
+
+state 1
+assume (= [i_clk] false)
+assume (= [i_operandA] #b00000000)
+assume (= [i_operandB] #b00000000)
+assume (= [i_rst] false)
+assume (= [i_start] false)
+assume (= [i_sub] false)
+
+state 2
+assume (= [i_clk] false)
+assume (= [i_operandA] #b00000000)
+assume (= [i_operandB] #b00000000)
+assume (= [i_rst] false)
+assume (= [i_start] false)
+assume (= [i_sub] false)
+
+state 3
+assume (= [i_clk] false)
+assume (= [i_operandA] #b00000000)
+assume (= [i_operandB] #b00000000)
+assume (= [i_rst] false)
+assume (= [i_start] false)
+assume (= [i_sub] false)
+
+state 4
+assume (= [i_clk] false)
+assume (= [i_operandA] #b00000000)
+assume (= [i_operandB] #b00000000)
+assume (= [i_rst] false)
+assume (= [i_start] false)
+assume (= [i_sub] false)
+
+state 5
+assume (= [i_clk] false)
+assume (= [i_operandA] #b00000000)
+assume (= [i_operandB] #b00000000)
+assume (= [i_rst] false)
+assume (= [i_start] false)
+assume (= [i_sub] false)
+
+state 6
+assume (= [i_clk] false)
+assume (= [i_operandA] #b00000000)
+assume (= [i_operandB] #b00000000)
+assume (= [i_rst] false)
+assume (= [i_start] false)
+assume (= [i_sub] false)
+
+state 7
+assume (= [i_clk] false)
+assume (= [i_operandA] #b00000000)
+assume (= [i_operandB] #b00000000)
+assume (= [i_rst] false)
+assume (= [i_start] false)
+assume (= [i_sub] false)
+
+state 8
+assume (= [i_clk] false)
+assume (= [i_operandA] #b00000000)
+assume (= [i_operandB] #b00000000)
+assume (= [i_rst] false)
+assume (= [i_start] false)
+assume (= [i_sub] false)
+
+state 9
+assume (= [i_clk] false)
+assume (= [i_operandA] #b00000000)
+assume (= [i_operandB] #b00000000)
+assume (= [i_rst] false)
+assume (= [i_start] false)
+assume (= [i_sub] false)
+
+state 10
+assume (= [i_clk] false)
+assume (= [i_operandA] #b00000000)
+assume (= [i_operandB] #b00000000)
+assume (= [i_rst] false)
+assume (= [i_start] false)
+assume (= [i_sub] false)
+
+state 11
+assume (= [i_clk] false)
+assume (= [i_operandA] #b00000000)
+assume (= [i_operandB] #b00000000)
+assume (= [i_rst] false)
+assume (= [i_start] false)
+assume (= [i_sub] false)
+
+state 12
+assume (= [i_clk] false)
+assume (= [i_operandA] #b00000000)
+assume (= [i_operandB] #b00000000)
+assume (= [i_rst] false)
+assume (= [i_start] false)
+assume (= [i_sub] false)
+
+state 13
+assume (= [i_clk] false)
+assume (= [i_operandA] #b00000000)
+assume (= [i_operandB] #b00000000)
+assume (= [i_rst] false)
+assume (= [i_start] false)
+assume (= [i_sub] false)
+
+state 14
+assume (= [i_clk] false)
+assume (= [i_operandA] #b00000000)
+assume (= [i_operandB] #b00000000)
+assume (= [i_rst] false)
+assume (= [i_start] false)
+assume (= [i_sub] false)
+
+state 15
+assume (= [i_clk] false)
+assume (= [i_operandA] #b00000000)
+assume (= [i_operandB] #b00000000)
+assume (= [i_rst] false)
+assume (= [i_start] false)
+assume (= [i_sub] false)
+
+state 16
+assume (= [i_clk] false)
+assume (= [i_operandA] #b00000000)
+assume (= [i_operandB] #b00000000)
+assume (= [i_rst] false)
+assume (= [i_start] false)
+assume (= [i_sub] false)
+
+state 17
+assume (= [i_clk] false)
+assume (= [i_operandA] #b00000000)
+assume (= [i_operandB] #b00000000)
+assume (= [i_rst] false)
+assume (= [i_start] false)
+assume (= [i_sub] false)
+
+state 18
+assume (= [i_clk] false)
+assume (= [i_operandA] #b00000000)
+assume (= [i_operandB] #b00000000)
+assume (= [i_rst] false)
+assume (= [i_start] false)
+assume (= [i_sub] false)
+
+state 19
+assume (= [i_clk] false)
+assume (= [i_operandA] #b00000000)
+assume (= [i_operandB] #b00000000)
+assume (= [i_rst] false)
+assume (= [i_start] false)
+assume (= [i_sub] false)
+
+state 20
+assume (= [i_clk] false)
+assume (= [i_operandA] #b00000000)
+assume (= [i_operandB] #b00000000)
+assume (= [i_rst] false)
+assume (= [i_start] false)
+assume (= [i_sub] false)
+
+state 21
+assume (= [i_clk] false)
+assume (= [i_operandA] #b00000000)
+assume (= [i_operandB] #b00000000)
+assume (= [i_rst] false)
+assume (= [i_start] false)
+assume (= [i_sub] false)
+
+state 22
+assume (= [i_clk] false)
+assume (= [i_operandA] #b00000000)
+assume (= [i_operandB] #b00000000)
+assume (= [i_rst] false)
+assume (= [i_start] false)
+assume (= [i_sub] false)

@@ -1,0 +1,15 @@
+[options]
+mode cover
+depth 64
+append 20
+
+
+[engines]
+smtbmc
+
+[script]
+read_verilog -sv -DFIXEDPOINTADDSUB -formal template_formal.v
+prep -top FixedPointAddSub
+
+[files]
+template_formal.v

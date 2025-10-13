@@ -1,0 +1,8 @@
+# running in FixedPointAddSub_cvr/src/
+read_verilog -sv -DFIXEDPOINTADDSUB -formal template_formal.v
+prep -top FixedPointAddSub
+
+hierarchy -smtcheck
+rename -witness
+write_jny -no-connections ../model/design.json
+write_rtlil ../model/design.il

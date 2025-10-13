@@ -1,0 +1,6 @@
+*.vcd
+*.v
+*.il
+longDivision/
+template_bmc/
+template_cover/
