@@ -52,7 +52,7 @@ module longDivision #(
     logic [$clog2(WIDTH)-1:0] i;      // iteration counter
 
     // division algorithm iteration
-    always_comb begin
+    always @(*) begin
         if (acc >= {1'b0, b1}) begin
             acc_next = acc - b1;
             {acc_next, quo_next} = {acc_next[WIDTH-1:0], quo, 1'b1};
@@ -62,7 +62,7 @@ module longDivision #(
     end
 
     // calculation control
-    always_ff @(posedge i_clk) begin
+    always @(posedge i_clk) begin
         o_done <= 0;
         if (i_start) begin
             o_valid <= 0;
