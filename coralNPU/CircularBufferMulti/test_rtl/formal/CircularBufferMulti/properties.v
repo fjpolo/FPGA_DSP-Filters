@@ -122,27 +122,99 @@
 	//
 	////////////////////////////////////////////////////     
 
-	// The buffer becomes completely full (nEnqueued == 8)
-	always @(posedge clock) begin
-		if (!reset) begin
-			cover (io_nEnqueued == 'h8);
-		end
-	end
+	// // The buffer becomes completely full (nEnqueued == 8)
+	// always @(posedge clock) begin
+	// 	if (!reset) begin
+	// 		cover (io_nEnqueued == 'h8);
+	// 	end
+	// end
 
-	// The buffer is completely empty (nEnqueued == 0)
-	// Note: This is usually covered by reset, but good to cover during run-time.
-	always @(posedge clock) begin
-		if (!reset) begin
-			cover (io_nEnqueued == 4'h0);
-		end
-	end
+	// // The buffer is completely empty (nEnqueued == 0)
+	// // Note: This is usually covered by reset, but good to cover during run-time.
+	// always @(posedge clock) begin
+	// 	if (!reset) begin
+	// 		cover (io_nEnqueued == 4'h0);
+	// 	end
+	// end
 
-	// The buffer is half-full (nEnqueued == 4)
-	always @(posedge clock) begin
-		if (!reset) begin
-			cover (io_nEnqueued == 4'h4);
-		end
-	end
+	// // The buffer is half-full (nEnqueued == 4)
+	// always @(posedge clock) begin
+	// 	if (!reset) begin
+	// 		cover (io_nEnqueued == 4'h4);
+	// 	end
+	// end
+
+	// DATA0 instruction integrity
+	always @(posedge clock)
+		if (!reset)
+			if(io_enqData_0_inst != 0)
+				cover(io_dataOut_0_inst);
+
+	// DATA1 instruction integrity
+	always @(posedge clock)
+		if (!reset)
+			if(io_enqData_1_inst != 0)
+				cover(io_dataOut_1_inst);
+
+	// DATA2 instruction integrity
+	always @(posedge clock)
+		if (!reset)
+			if(io_enqData_2_inst != 0)
+				cover(io_dataOut_2_inst);
+
+	// DATA3 instruction integrity
+	always @(posedge clock)
+		if (!reset)
+			if(io_enqData_3_inst != 0)
+				cover(io_dataOut_3_inst);
+
+	// DATA0 address integrity
+	always @(posedge clock)
+		if (!reset)
+			if(io_enqData_0_addr != 0)
+				cover(io_dataOut_0_addr);
+
+	// DATA1 address integrity
+	always @(posedge clock)
+		if (!reset)
+			if(io_enqData_1_addr != 0)
+				cover(io_dataOut_1_addr);
+
+	// DATA2 address integrity
+	always @(posedge clock)
+		if (!reset)
+			if(io_enqData_2_addr != 0)
+				cover(io_dataOut_2_addr);
+
+	// DATA3 address integrity
+	always @(posedge clock)
+		if (!reset)
+			if(io_enqData_3_addr != 0)
+				cover(io_dataOut_3_addr);
+
+	// DATA0 branch integrity
+	always @(posedge clock)
+		if (!reset)
+			if(io_enqData_0_brchFwd != 0)
+				cover(io_dataOut_0_brchFwd);
+
+	// DATA1 branch integrity
+	always @(posedge clock)
+		if (!reset)
+			if(io_enqData_1_brchFwd != 0)
+				cover(io_dataOut_1_brchFwd);
+
+	// DATA2 branch integrity
+	always @(posedge clock)
+		if (!reset)
+			if(io_enqData_2_brchFwd != 0)
+				cover(io_dataOut_2_brchFwd);
+
+	// DATA3 branch integrity
+	always @(posedge clock)
+		if (!reset)
+			if(io_enqData_3_brchFwd != 0)
+				cover(io_dataOut_3_brchFwd);
            
 `endif
 
