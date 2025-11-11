@@ -1,0 +1,15 @@
+[options]
+mode cover
+depth 64
+append 20
+
+
+[engines]
+smtbmc
+
+[script]
+read_verilog -sv -DCIRCULARBUFFERMULTI -formal template_formal.v
+prep -top CircularBufferMulti
+
+[files]
+template_formal.v

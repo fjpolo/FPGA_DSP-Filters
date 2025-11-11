@@ -1,0 +1,8 @@
+# running in CircularBufferMulti_cvr/src/
+read_verilog -sv -DCIRCULARBUFFERMULTI -formal template_formal.v
+prep -top CircularBufferMulti
+
+hierarchy -smtcheck
+rename -witness
+write_jny -no-connections ../model/design.json
+write_rtlil ../model/design.il

@@ -1,0 +1,1535 @@
+{
+  "$schema": "https://raw.githubusercontent.com/YosysHQ/yosys/main/misc/jny.schema.json",
+  "generator": "Yosys 0.57+263 (git sha1 637665c9d, clang++ 18.1.8 -fPIC -O3)",
+  "version": "0.0.1",
+  "invocation": "write_jny -no-connections ../model/design.json ",
+  "features": ["attributes", "properties"],
+  "modules": [
+      {
+        "name": "CircularBufferMulti",
+        "cell_sorts": [
+          {
+            "type": "$sub",
+            "ports": [
+                {
+                  "name": "A",
+                  "direction": "io",
+                  "range": [4, 0]
+                },
+                {
+                  "name": "B",
+                  "direction": "io",
+                  "range": [3, 0]
+                },
+                {
+                  "name": "Y",
+                  "direction": "",
+                  "range": [4, 0]
+                }
+            ],
+            "cells": [
+                {
+                  "name": "$sub$template_formal.v:300$38",
+                  "attributes": {
+                    "src": "template_formal.v:300.27-300.80"
+                  },
+                  "parameters": {
+                    "A_SIGNED": "00000000000000000000000000000000",
+                    "A_WIDTH": "00000000000000000000000000000100",
+                    "B_SIGNED": "00000000000000000000000000000000",
+                    "B_WIDTH": "00000000000000000000000000000011",
+                    "Y_WIDTH": "00000000000000000000000000000100"
+                  }
+                },
+                {
+                  "name": "$sub$template_formal.v:379$40",
+                  "attributes": {
+                    "src": "template_formal.v:379.22-379.38"
+                  },
+                  "parameters": {
+                    "A_SIGNED": "00000000000000000000000000000000",
+                    "A_WIDTH": "00000000000000000000000000000100",
+                    "B_SIGNED": "00000000000000000000000000000000",
+                    "B_WIDTH": "00000000000000000000000000000100",
+                    "Y_WIDTH": "00000000000000000000000000000100"
+                  }
+                }
+            ]
+          },
+          {
+            "type": "$reduce_or",
+            "ports": [
+                {
+                  "name": "A",
+                  "direction": "io",
+                  "range": [2, 0]
+                },
+                {
+                  "name": "Y",
+                  "direction": "",
+                  "range": [0, 0]
+                }
+            ],
+            "cells": [
+                {
+                  "name": "$reduce_or$template_formal.v:164$19",
+                  "attributes": {
+                    "src": "template_formal.v:164.10-164.29"
+                  },
+                  "parameters": {
+                    "A_SIGNED": "00000000000000000000000000000000",
+                    "A_WIDTH": "00000000000000000000000000000010",
+                    "Y_WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "$reduce_or$template_formal.v:168$18",
+                  "attributes": {
+                    "src": "template_formal.v:168.10-168.22"
+                  },
+                  "parameters": {
+                    "A_SIGNED": "00000000000000000000000000000000",
+                    "A_WIDTH": "00000000000000000000000000000011",
+                    "Y_WIDTH": "00000000000000000000000000000001"
+                  }
+                }
+            ]
+          },
+          {
+            "type": "$mux",
+            "ports": [
+                {
+                  "name": "A",
+                  "direction": "io",
+                  "range": [32, 0]
+                },
+                {
+                  "name": "B",
+                  "direction": "io",
+                  "range": [32, 0]
+                },
+                {
+                  "name": "S",
+                  "direction": "io",
+                  "range": [0, 0]
+                },
+                {
+                  "name": "Y",
+                  "direction": "",
+                  "range": [32, 0]
+                }
+            ],
+            "cells": [
+                {
+                  "name": "$procmux$100",
+                  "attributes": {
+                    "src": "template_formal.v:287.11-287.36|template_formal.v:287.7-291.10"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000000100000"
+                  }
+                },
+                {
+                  "name": "$procmux$102",
+                  "attributes": {
+                    "src": "template_formal.v:287.11-287.36|template_formal.v:287.7-291.10"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000000100000"
+                  }
+                },
+                {
+                  "name": "$procmux$104",
+                  "attributes": {
+                    "src": "template_formal.v:282.11-282.36|template_formal.v:282.7-286.10"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "$procmux$106",
+                  "attributes": {
+                    "src": "template_formal.v:282.11-282.36|template_formal.v:282.7-286.10"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000000100000"
+                  }
+                },
+                {
+                  "name": "$procmux$108",
+                  "attributes": {
+                    "src": "template_formal.v:282.11-282.36|template_formal.v:282.7-286.10"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000000100000"
+                  }
+                },
+                {
+                  "name": "$procmux$110",
+                  "attributes": {
+                    "src": "template_formal.v:277.11-277.36|template_formal.v:277.7-281.10"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "$procmux$112",
+                  "attributes": {
+                    "src": "template_formal.v:277.11-277.36|template_formal.v:277.7-281.10"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000000100000"
+                  }
+                },
+                {
+                  "name": "$procmux$114",
+                  "attributes": {
+                    "src": "template_formal.v:277.11-277.36|template_formal.v:277.7-281.10"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000000100000"
+                  }
+                },
+                {
+                  "name": "$procmux$116",
+                  "attributes": {
+                    "src": "template_formal.v:272.11-272.36|template_formal.v:272.7-276.10"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "$procmux$118",
+                  "attributes": {
+                    "src": "template_formal.v:272.11-272.36|template_formal.v:272.7-276.10"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000000100000"
+                  }
+                },
+                {
+                  "name": "$procmux$120",
+                  "attributes": {
+                    "src": "template_formal.v:272.11-272.36|template_formal.v:272.7-276.10"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000000100000"
+                  }
+                },
+                {
+                  "name": "$procmux$122",
+                  "attributes": {
+                    "src": "template_formal.v:267.11-267.36|template_formal.v:267.7-271.10"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "$procmux$124",
+                  "attributes": {
+                    "src": "template_formal.v:267.11-267.36|template_formal.v:267.7-271.10"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000000100000"
+                  }
+                },
+                {
+                  "name": "$procmux$126",
+                  "attributes": {
+                    "src": "template_formal.v:267.11-267.36|template_formal.v:267.7-271.10"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000000100000"
+                  }
+                },
+                {
+                  "name": "$procmux$128",
+                  "attributes": {
+                    "src": "template_formal.v:262.11-262.36|template_formal.v:262.7-266.10"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "$procmux$130",
+                  "attributes": {
+                    "src": "template_formal.v:262.11-262.36|template_formal.v:262.7-266.10"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000000100000"
+                  }
+                },
+                {
+                  "name": "$procmux$132",
+                  "attributes": {
+                    "src": "template_formal.v:262.11-262.36|template_formal.v:262.7-266.10"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000000100000"
+                  }
+                },
+                {
+                  "name": "$procmux$134",
+                  "attributes": {
+                    "src": "template_formal.v:257.11-257.35|template_formal.v:257.7-261.10"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "$procmux$136",
+                  "attributes": {
+                    "src": "template_formal.v:257.11-257.35|template_formal.v:257.7-261.10"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000000100000"
+                  }
+                },
+                {
+                  "name": "$procmux$138",
+                  "attributes": {
+                    "src": "template_formal.v:257.11-257.35|template_formal.v:257.7-261.10"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000000100000"
+                  }
+                },
+                {
+                  "name": "$procmux$80",
+                  "attributes": {
+                    "src": "template_formal.v:500.8-500.28|template_formal.v:500.4-501.32"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "$procmux$82",
+                  "attributes": {
+                    "src": "template_formal.v:497.8-497.28|template_formal.v:497.4-498.32"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "$procmux$84",
+                  "attributes": {
+                    "src": "template_formal.v:495.6-495.70|template_formal.v:495.3-498.32"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "$procmux$86",
+                  "attributes": {
+                    "src": "template_formal.v:452.8-452.16|template_formal.v:452.4-454.7"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "$procmux$88",
+                  "attributes": {
+                    "src": "template_formal.v:451.6-451.69|template_formal.v:451.3-454.7"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "$procmux$90",
+                  "attributes": {
+                    "src": "template_formal.v:438.6-438.19|template_formal.v:438.3-439.18"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "$procmux$92",
+                  "attributes": {
+                    "src": "template_formal.v:292.11-292.36|template_formal.v:292.7-296.10"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "$procmux$94",
+                  "attributes": {
+                    "src": "template_formal.v:292.11-292.36|template_formal.v:292.7-296.10"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000000100000"
+                  }
+                },
+                {
+                  "name": "$procmux$96",
+                  "attributes": {
+                    "src": "template_formal.v:292.11-292.36|template_formal.v:292.7-296.10"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000000100000"
+                  }
+                },
+                {
+                  "name": "$procmux$98",
+                  "attributes": {
+                    "src": "template_formal.v:287.11-287.36|template_formal.v:287.7-291.10"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "$ternary$template_formal.v:116$7",
+                  "attributes": {
+                    "src": "template_formal.v:116.5-118.39"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000001000001000"
+                  }
+                },
+                {
+                  "name": "$ternary$template_formal.v:120$8",
+                  "attributes": {
+                    "src": "template_formal.v:120.5-122.39"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000001000001000"
+                  }
+                },
+                {
+                  "name": "$ternary$template_formal.v:124$9",
+                  "attributes": {
+                    "src": "template_formal.v:124.5-126.39"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000001000001000"
+                  }
+                },
+                {
+                  "name": "$ternary$template_formal.v:128$10",
+                  "attributes": {
+                    "src": "template_formal.v:128.5-130.39"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000001000001000"
+                  }
+                },
+                {
+                  "name": "$ternary$template_formal.v:132$11",
+                  "attributes": {
+                    "src": "template_formal.v:132.5-134.39"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000001000001000"
+                  }
+                },
+                {
+                  "name": "$ternary$template_formal.v:136$12",
+                  "attributes": {
+                    "src": "template_formal.v:136.5-138.39"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000001000001000"
+                  }
+                },
+                {
+                  "name": "$ternary$template_formal.v:140$13",
+                  "attributes": {
+                    "src": "template_formal.v:140.5-142.39"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000001000001000"
+                  }
+                },
+                {
+                  "name": "$ternary$template_formal.v:144$14",
+                  "attributes": {
+                    "src": "template_formal.v:144.5-146.39"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000001000001000"
+                  }
+                },
+                {
+                  "name": "$ternary$template_formal.v:148$15",
+                  "attributes": {
+                    "src": "template_formal.v:148.5-150.46"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000100000100"
+                  }
+                },
+                {
+                  "name": "$ternary$template_formal.v:154$22",
+                  "attributes": {
+                    "src": "template_formal.v:154.5-189.31"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000100001001"
+                  }
+                },
+                {
+                  "name": "$ternary$template_formal.v:191$23",
+                  "attributes": {
+                    "src": "template_formal.v:191.5-193.35"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000100001011"
+                  }
+                },
+                {
+                  "name": "$ternary$template_formal.v:195$24",
+                  "attributes": {
+                    "src": "template_formal.v:195.5-197.35"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000100001111"
+                  }
+                },
+                {
+                  "name": "$ternary$template_formal.v:199$25",
+                  "attributes": {
+                    "src": "template_formal.v:199.5-201.35"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000100010111"
+                  }
+                },
+                {
+                  "name": "$ternary$template_formal.v:203$26",
+                  "attributes": {
+                    "src": "template_formal.v:203.5-205.35"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000100100111"
+                  }
+                },
+                {
+                  "name": "$ternary$template_formal.v:207$27",
+                  "attributes": {
+                    "src": "template_formal.v:207.5-209.35"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000101000111"
+                  }
+                },
+                {
+                  "name": "$ternary$template_formal.v:211$28",
+                  "attributes": {
+                    "src": "template_formal.v:211.5-213.35"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000110000111"
+                  }
+                },
+                {
+                  "name": "$ternary$template_formal.v:215$29",
+                  "attributes": {
+                    "src": "template_formal.v:215.5-217.35"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000001000000111"
+                  }
+                },
+                {
+                  "name": "$ternary$template_formal.v:219$30",
+                  "attributes": {
+                    "src": "template_formal.v:219.5-221.35"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000001000010000"
+                  }
+                },
+                {
+                  "name": "$ternary$template_formal.v:223$31",
+                  "attributes": {
+                    "src": "template_formal.v:223.5-225.35"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000001000010000"
+                  }
+                },
+                {
+                  "name": "$ternary$template_formal.v:297$34",
+                  "attributes": {
+                    "src": "template_formal.v:297.17-297.55"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000000000011"
+                  }
+                },
+                {
+                  "name": "$ternary$template_formal.v:298$36",
+                  "attributes": {
+                    "src": "template_formal.v:298.17-298.55"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000000000011"
+                  }
+                },
+                {
+                  "name": "$ternary$template_formal.v:300$39",
+                  "attributes": {
+                    "src": "template_formal.v:300.9-300.80"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000000000000100"
+                  }
+                },
+                {
+                  "name": "$ternary$template_formal.v:66$6",
+                  "attributes": {
+                    "src": "template_formal.v:66.5-114.27"
+                  },
+                  "parameters": {
+                    "WIDTH": "00000000000000000000001000001000"
+                  }
+                }
+            ]
+          },
+          {
+            "type": "$adff",
+            "ports": [
+                {
+                  "name": "ARST",
+                  "direction": "io",
+                  "range": [0, 0]
+                },
+                {
+                  "name": "CLK",
+                  "direction": "io",
+                  "range": [0, 0]
+                },
+                {
+                  "name": "D",
+                  "direction": "io",
+                  "range": [32, 0]
+                },
+                {
+                  "name": "Q",
+                  "direction": "",
+                  "range": [32, 0]
+                }
+            ],
+            "cells": [
+                {
+                  "name": "$procdff$147",
+                  "attributes": {
+                    "src": "template_formal.v:226.3-302.6"
+                  },
+                  "parameters": {
+                    "ARST_POLARITY": "1",
+                    "ARST_VALUE": "00000000000000000000000000000000",
+                    "CLK_POLARITY": "1",
+                    "WIDTH": "00000000000000000000000000100000"
+                  }
+                },
+                {
+                  "name": "$procdff$150",
+                  "attributes": {
+                    "src": "template_formal.v:226.3-302.6"
+                  },
+                  "parameters": {
+                    "ARST_POLARITY": "1",
+                    "ARST_VALUE": "00000000000000000000000000000000",
+                    "CLK_POLARITY": "1",
+                    "WIDTH": "00000000000000000000000000100000"
+                  }
+                },
+                {
+                  "name": "$procdff$153",
+                  "attributes": {
+                    "src": "template_formal.v:226.3-302.6"
+                  },
+                  "parameters": {
+                    "ARST_POLARITY": "1",
+                    "ARST_VALUE": "0",
+                    "CLK_POLARITY": "1",
+                    "WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "$procdff$156",
+                  "attributes": {
+                    "src": "template_formal.v:226.3-302.6"
+                  },
+                  "parameters": {
+                    "ARST_POLARITY": "1",
+                    "ARST_VALUE": "00000000000000000000000000000000",
+                    "CLK_POLARITY": "1",
+                    "WIDTH": "00000000000000000000000000100000"
+                  }
+                },
+                {
+                  "name": "$procdff$159",
+                  "attributes": {
+                    "src": "template_formal.v:226.3-302.6"
+                  },
+                  "parameters": {
+                    "ARST_POLARITY": "1",
+                    "ARST_VALUE": "00000000000000000000000000000000",
+                    "CLK_POLARITY": "1",
+                    "WIDTH": "00000000000000000000000000100000"
+                  }
+                },
+                {
+                  "name": "$procdff$162",
+                  "attributes": {
+                    "src": "template_formal.v:226.3-302.6"
+                  },
+                  "parameters": {
+                    "ARST_POLARITY": "1",
+                    "ARST_VALUE": "0",
+                    "CLK_POLARITY": "1",
+                    "WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "$procdff$165",
+                  "attributes": {
+                    "src": "template_formal.v:226.3-302.6"
+                  },
+                  "parameters": {
+                    "ARST_POLARITY": "1",
+                    "ARST_VALUE": "00000000000000000000000000000000",
+                    "CLK_POLARITY": "1",
+                    "WIDTH": "00000000000000000000000000100000"
+                  }
+                },
+                {
+                  "name": "$procdff$168",
+                  "attributes": {
+                    "src": "template_formal.v:226.3-302.6"
+                  },
+                  "parameters": {
+                    "ARST_POLARITY": "1",
+                    "ARST_VALUE": "00000000000000000000000000000000",
+                    "CLK_POLARITY": "1",
+                    "WIDTH": "00000000000000000000000000100000"
+                  }
+                },
+                {
+                  "name": "$procdff$171",
+                  "attributes": {
+                    "src": "template_formal.v:226.3-302.6"
+                  },
+                  "parameters": {
+                    "ARST_POLARITY": "1",
+                    "ARST_VALUE": "0",
+                    "CLK_POLARITY": "1",
+                    "WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "$procdff$174",
+                  "attributes": {
+                    "src": "template_formal.v:226.3-302.6"
+                  },
+                  "parameters": {
+                    "ARST_POLARITY": "1",
+                    "ARST_VALUE": "00000000000000000000000000000000",
+                    "CLK_POLARITY": "1",
+                    "WIDTH": "00000000000000000000000000100000"
+                  }
+                },
+                {
+                  "name": "$procdff$177",
+                  "attributes": {
+                    "src": "template_formal.v:226.3-302.6"
+                  },
+                  "parameters": {
+                    "ARST_POLARITY": "1",
+                    "ARST_VALUE": "00000000000000000000000000000000",
+                    "CLK_POLARITY": "1",
+                    "WIDTH": "00000000000000000000000000100000"
+                  }
+                },
+                {
+                  "name": "$procdff$180",
+                  "attributes": {
+                    "src": "template_formal.v:226.3-302.6"
+                  },
+                  "parameters": {
+                    "ARST_POLARITY": "1",
+                    "ARST_VALUE": "0",
+                    "CLK_POLARITY": "1",
+                    "WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "$procdff$183",
+                  "attributes": {
+                    "src": "template_formal.v:226.3-302.6"
+                  },
+                  "parameters": {
+                    "ARST_POLARITY": "1",
+                    "ARST_VALUE": "00000000000000000000000000000000",
+                    "CLK_POLARITY": "1",
+                    "WIDTH": "00000000000000000000000000100000"
+                  }
+                },
+                {
+                  "name": "$procdff$186",
+                  "attributes": {
+                    "src": "template_formal.v:226.3-302.6"
+                  },
+                  "parameters": {
+                    "ARST_POLARITY": "1",
+                    "ARST_VALUE": "00000000000000000000000000000000",
+                    "CLK_POLARITY": "1",
+                    "WIDTH": "00000000000000000000000000100000"
+                  }
+                },
+                {
+                  "name": "$procdff$189",
+                  "attributes": {
+                    "src": "template_formal.v:226.3-302.6"
+                  },
+                  "parameters": {
+                    "ARST_POLARITY": "1",
+                    "ARST_VALUE": "0",
+                    "CLK_POLARITY": "1",
+                    "WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "$procdff$192",
+                  "attributes": {
+                    "src": "template_formal.v:226.3-302.6"
+                  },
+                  "parameters": {
+                    "ARST_POLARITY": "1",
+                    "ARST_VALUE": "00000000000000000000000000000000",
+                    "CLK_POLARITY": "1",
+                    "WIDTH": "00000000000000000000000000100000"
+                  }
+                },
+                {
+                  "name": "$procdff$195",
+                  "attributes": {
+                    "src": "template_formal.v:226.3-302.6"
+                  },
+                  "parameters": {
+                    "ARST_POLARITY": "1",
+                    "ARST_VALUE": "00000000000000000000000000000000",
+                    "CLK_POLARITY": "1",
+                    "WIDTH": "00000000000000000000000000100000"
+                  }
+                },
+                {
+                  "name": "$procdff$198",
+                  "attributes": {
+                    "src": "template_formal.v:226.3-302.6"
+                  },
+                  "parameters": {
+                    "ARST_POLARITY": "1",
+                    "ARST_VALUE": "0",
+                    "CLK_POLARITY": "1",
+                    "WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "$procdff$201",
+                  "attributes": {
+                    "src": "template_formal.v:226.3-302.6"
+                  },
+                  "parameters": {
+                    "ARST_POLARITY": "1",
+                    "ARST_VALUE": "00000000000000000000000000000000",
+                    "CLK_POLARITY": "1",
+                    "WIDTH": "00000000000000000000000000100000"
+                  }
+                },
+                {
+                  "name": "$procdff$204",
+                  "attributes": {
+                    "src": "template_formal.v:226.3-302.6"
+                  },
+                  "parameters": {
+                    "ARST_POLARITY": "1",
+                    "ARST_VALUE": "00000000000000000000000000000000",
+                    "CLK_POLARITY": "1",
+                    "WIDTH": "00000000000000000000000000100000"
+                  }
+                },
+                {
+                  "name": "$procdff$207",
+                  "attributes": {
+                    "src": "template_formal.v:226.3-302.6"
+                  },
+                  "parameters": {
+                    "ARST_POLARITY": "1",
+                    "ARST_VALUE": "0",
+                    "CLK_POLARITY": "1",
+                    "WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "$procdff$210",
+                  "attributes": {
+                    "src": "template_formal.v:226.3-302.6"
+                  },
+                  "parameters": {
+                    "ARST_POLARITY": "1",
+                    "ARST_VALUE": "00000000000000000000000000000000",
+                    "CLK_POLARITY": "1",
+                    "WIDTH": "00000000000000000000000000100000"
+                  }
+                },
+                {
+                  "name": "$procdff$213",
+                  "attributes": {
+                    "src": "template_formal.v:226.3-302.6"
+                  },
+                  "parameters": {
+                    "ARST_POLARITY": "1",
+                    "ARST_VALUE": "00000000000000000000000000000000",
+                    "CLK_POLARITY": "1",
+                    "WIDTH": "00000000000000000000000000100000"
+                  }
+                },
+                {
+                  "name": "$procdff$216",
+                  "attributes": {
+                    "src": "template_formal.v:226.3-302.6"
+                  },
+                  "parameters": {
+                    "ARST_POLARITY": "1",
+                    "ARST_VALUE": "0",
+                    "CLK_POLARITY": "1",
+                    "WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "$procdff$219",
+                  "attributes": {
+                    "src": "template_formal.v:226.3-302.6"
+                  },
+                  "parameters": {
+                    "ARST_POLARITY": "1",
+                    "ARST_VALUE": "000",
+                    "CLK_POLARITY": "1",
+                    "WIDTH": "00000000000000000000000000000011"
+                  }
+                },
+                {
+                  "name": "$procdff$222",
+                  "attributes": {
+                    "src": "template_formal.v:226.3-302.6"
+                  },
+                  "parameters": {
+                    "ARST_POLARITY": "1",
+                    "ARST_VALUE": "000",
+                    "CLK_POLARITY": "1",
+                    "WIDTH": "00000000000000000000000000000011"
+                  }
+                },
+                {
+                  "name": "$procdff$225",
+                  "attributes": {
+                    "src": "template_formal.v:226.3-302.6"
+                  },
+                  "parameters": {
+                    "ARST_POLARITY": "1",
+                    "ARST_VALUE": "0000",
+                    "CLK_POLARITY": "1",
+                    "WIDTH": "00000000000000000000000000000100"
+                  }
+                }
+            ]
+          },
+          {
+            "type": "$dff",
+            "ports": [
+                {
+                  "name": "CLK",
+                  "direction": "io",
+                  "range": [0, 0]
+                },
+                {
+                  "name": "D",
+                  "direction": "io",
+                  "range": [0, 0]
+                },
+                {
+                  "name": "Q",
+                  "direction": "",
+                  "range": [0, 0]
+                }
+            ],
+            "cells": [
+                {
+                  "name": "$procdff$140",
+                  "attributes": {
+                    "src": "template_formal.v:494.2-502.5"
+                  },
+                  "parameters": {
+                    "CLK_POLARITY": "1",
+                    "WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "$procdff$141",
+                  "attributes": {
+                    "src": "template_formal.v:494.2-502.5"
+                  },
+                  "parameters": {
+                    "CLK_POLARITY": "1",
+                    "WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "$procdff$142",
+                  "attributes": {
+                    "src": "template_formal.v:450.2-455.5"
+                  },
+                  "parameters": {
+                    "CLK_POLARITY": "1",
+                    "WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "$procdff$143",
+                  "attributes": {
+                    "src": "template_formal.v:450.2-455.5"
+                  },
+                  "parameters": {
+                    "CLK_POLARITY": "1",
+                    "WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "$procdff$144",
+                  "attributes": {
+                    "src": "template_formal.v:435.2-436.24"
+                  },
+                  "parameters": {
+                    "CLK_POLARITY": "1",
+                    "WIDTH": "00000000000000000000000000000001"
+                  }
+                }
+            ]
+          },
+          {
+            "type": "$check",
+            "ports": [
+                {
+                  "name": "A",
+                  "direction": "io",
+                  "range": [0, 0]
+                },
+                {
+                  "name": "ARGS",
+                  "direction": "io",
+                  "range": [0, 0]
+                },
+                {
+                  "name": "EN",
+                  "direction": "io",
+                  "range": [0, 0]
+                },
+                {
+                  "name": "TRG",
+                  "direction": "io",
+                  "range": [0, 0]
+                }
+            ],
+            "cells": [
+                {
+                  "name": "_witness_.check_assert_template_formal_v_453_52",
+                  "attributes": {
+                    "hdlname": "_witness_ check_assert_template_formal_v_453_52",
+                    "src": "template_formal.v:453.5-453.34"
+                  },
+                  "parameters": {
+                    "ARGS_WIDTH": "00000000000000000000000000000000",
+                    "FLAVOR": "assert",
+                    "FORMAT": true,
+                    "PRIORITY": "11111111111111111111111111111111",
+                    "TRG_ENABLE": "00000000000000000000000000000001",
+                    "TRG_POLARITY": "1",
+                    "TRG_WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "_witness_.check_assert_template_formal_v_487_55",
+                  "attributes": {
+                    "hdlname": "_witness_ check_assert_template_formal_v_487_55",
+                    "src": "template_formal.v:487.4-487.38"
+                  },
+                  "parameters": {
+                    "ARGS_WIDTH": "00000000000000000000000000000000",
+                    "FLAVOR": "assert",
+                    "FORMAT": true,
+                    "PRIORITY": "11111111111111111111111111111111",
+                    "TRG_ENABLE": "00000000000000000000000000000000",
+                    "TRG_POLARITY": true,
+                    "TRG_WIDTH": "00000000000000000000000000000000"
+                  }
+                },
+                {
+                  "name": "_witness_.check_assert_template_formal_v_491_62",
+                  "attributes": {
+                    "hdlname": "_witness_ check_assert_template_formal_v_491_62",
+                    "src": "template_formal.v:491.4-491.47"
+                  },
+                  "parameters": {
+                    "ARGS_WIDTH": "00000000000000000000000000000000",
+                    "FLAVOR": "assert",
+                    "FORMAT": true,
+                    "PRIORITY": "11111111111111111111111111111111",
+                    "TRG_ENABLE": "00000000000000000000000000000000",
+                    "TRG_POLARITY": true,
+                    "TRG_WIDTH": "00000000000000000000000000000000"
+                  }
+                },
+                {
+                  "name": "_witness_.check_assert_template_formal_v_498_74",
+                  "attributes": {
+                    "hdlname": "_witness_ check_assert_template_formal_v_498_74",
+                    "src": "template_formal.v:498.5-498.31"
+                  },
+                  "parameters": {
+                    "ARGS_WIDTH": "00000000000000000000000000000000",
+                    "FLAVOR": "assert",
+                    "FORMAT": true,
+                    "PRIORITY": "11111111111111111111111111111111",
+                    "TRG_ENABLE": "00000000000000000000000000000001",
+                    "TRG_POLARITY": "1",
+                    "TRG_WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "_witness_.check_assert_template_formal_v_501_77",
+                  "attributes": {
+                    "hdlname": "_witness_ check_assert_template_formal_v_501_77",
+                    "src": "template_formal.v:501.5-501.31"
+                  },
+                  "parameters": {
+                    "ARGS_WIDTH": "00000000000000000000000000000000",
+                    "FLAVOR": "assert",
+                    "FORMAT": true,
+                    "PRIORITY": "11111111111111111111111111111110",
+                    "TRG_ENABLE": "00000000000000000000000000000001",
+                    "TRG_POLARITY": "1",
+                    "TRG_WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "_witness_.check_assume_template_formal_v_439_44",
+                  "attributes": {
+                    "hdlname": "_witness_ check_assume_template_formal_v_439_44",
+                    "src": "template_formal.v:439.4-439.17"
+                  },
+                  "parameters": {
+                    "ARGS_WIDTH": "00000000000000000000000000000000",
+                    "FLAVOR": "assume",
+                    "FORMAT": true,
+                    "PRIORITY": "11111111111111111111111111111111",
+                    "TRG_ENABLE": "00000000000000000000000000000001",
+                    "TRG_POLARITY": "1",
+                    "TRG_WIDTH": "00000000000000000000000000000001"
+                  }
+                }
+            ]
+          },
+          {
+            "type": "$logic_and",
+            "ports": [
+                {
+                  "name": "A",
+                  "direction": "io",
+                  "range": [0, 0]
+                },
+                {
+                  "name": "B",
+                  "direction": "io",
+                  "range": [0, 0]
+                },
+                {
+                  "name": "Y",
+                  "direction": "",
+                  "range": [0, 0]
+                }
+            ],
+            "cells": [
+                {
+                  "name": "$logic_and$template_formal.v:451$48",
+                  "attributes": {
+                    "src": "template_formal.v:451.6-451.43"
+                  },
+                  "parameters": {
+                    "A_SIGNED": "00000000000000000000000000000000",
+                    "A_WIDTH": "00000000000000000000000000000001",
+                    "B_SIGNED": "00000000000000000000000000000000",
+                    "B_WIDTH": "00000000000000000000000000000001",
+                    "Y_WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "$logic_and$template_formal.v:451$49",
+                  "attributes": {
+                    "src": "template_formal.v:451.6-451.59"
+                  },
+                  "parameters": {
+                    "A_SIGNED": "00000000000000000000000000000000",
+                    "A_WIDTH": "00000000000000000000000000000001",
+                    "B_SIGNED": "00000000000000000000000000000000",
+                    "B_WIDTH": "00000000000000000000000000000001",
+                    "Y_WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "$logic_and$template_formal.v:451$51",
+                  "attributes": {
+                    "src": "template_formal.v:451.6-451.69"
+                  },
+                  "parameters": {
+                    "A_SIGNED": "00000000000000000000000000000000",
+                    "A_WIDTH": "00000000000000000000000000000001",
+                    "B_SIGNED": "00000000000000000000000000000000",
+                    "B_WIDTH": "00000000000000000000000000000001",
+                    "Y_WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "$logic_and$template_formal.v:495$68",
+                  "attributes": {
+                    "src": "template_formal.v:495.6-495.43"
+                  },
+                  "parameters": {
+                    "A_SIGNED": "00000000000000000000000000000000",
+                    "A_WIDTH": "00000000000000000000000000000001",
+                    "B_SIGNED": "00000000000000000000000000000000",
+                    "B_WIDTH": "00000000000000000000000000000001",
+                    "Y_WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "$logic_and$template_formal.v:495$70",
+                  "attributes": {
+                    "src": "template_formal.v:495.6-495.60"
+                  },
+                  "parameters": {
+                    "A_SIGNED": "00000000000000000000000000000000",
+                    "A_WIDTH": "00000000000000000000000000000001",
+                    "B_SIGNED": "00000000000000000000000000000000",
+                    "B_WIDTH": "00000000000000000000000000000001",
+                    "Y_WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "$logic_and$template_formal.v:495$72",
+                  "attributes": {
+                    "src": "template_formal.v:495.6-495.70"
+                  },
+                  "parameters": {
+                    "A_SIGNED": "00000000000000000000000000000000",
+                    "A_WIDTH": "00000000000000000000000000000001",
+                    "B_SIGNED": "00000000000000000000000000000000",
+                    "B_WIDTH": "00000000000000000000000000000001",
+                    "Y_WIDTH": "00000000000000000000000000000001"
+                  }
+                }
+            ]
+          },
+          {
+            "type": "$mul",
+            "ports": [
+                {
+                  "name": "A",
+                  "direction": "io",
+                  "range": [3, 0]
+                },
+                {
+                  "name": "B",
+                  "direction": "io",
+                  "range": [7, 0]
+                },
+                {
+                  "name": "Y",
+                  "direction": "",
+                  "range": [10, 0]
+                }
+            ],
+            "cells": [
+                {
+                  "name": "$mul$template_formal.v:152$17",
+                  "attributes": {
+                    "src": "template_formal.v:152.45-152.68"
+                  },
+                  "parameters": {
+                    "A_SIGNED": "00000000000000000000000000000000",
+                    "A_WIDTH": "00000000000000000000000000000011",
+                    "B_SIGNED": "00000000000000000000000000000000",
+                    "B_WIDTH": "00000000000000000000000000000111",
+                    "Y_WIDTH": "00000000000000000000000000001010"
+                  }
+                },
+                {
+                  "name": "$mul$template_formal.v:64$5",
+                  "attributes": {
+                    "src": "template_formal.v:64.48-64.71"
+                  },
+                  "parameters": {
+                    "A_SIGNED": "00000000000000000000000000000000",
+                    "A_WIDTH": "00000000000000000000000000000011",
+                    "B_SIGNED": "00000000000000000000000000000000",
+                    "B_WIDTH": "00000000000000000000000000000111",
+                    "Y_WIDTH": "00000000000000000000000000001010"
+                  }
+                }
+            ]
+          },
+          {
+            "type": "$gt",
+            "ports": [
+                {
+                  "name": "A",
+                  "direction": "io",
+                  "range": [3, 0]
+                },
+                {
+                  "name": "B",
+                  "direction": "io",
+                  "range": [2, 0]
+                },
+                {
+                  "name": "Y",
+                  "direction": "",
+                  "range": [0, 0]
+                }
+            ],
+            "cells": [
+                {
+                  "name": "$gt$template_formal.v:151$16",
+                  "attributes": {
+                    "src": "template_formal.v:151.44-151.62"
+                  },
+                  "parameters": {
+                    "A_SIGNED": "00000000000000000000000000000000",
+                    "A_WIDTH": "00000000000000000000000000000011",
+                    "B_SIGNED": "00000000000000000000000000000000",
+                    "B_WIDTH": "00000000000000000000000000000010",
+                    "Y_WIDTH": "00000000000000000000000000000001"
+                  }
+                }
+            ]
+          },
+          {
+            "type": "$eq",
+            "ports": [
+                {
+                  "name": "A",
+                  "direction": "io",
+                  "range": [4, 0]
+                },
+                {
+                  "name": "B",
+                  "direction": "io",
+                  "range": [4, 0]
+                },
+                {
+                  "name": "Y",
+                  "direction": "",
+                  "range": [0, 0]
+                }
+            ],
+            "cells": [
+                {
+                  "name": "$eq$template_formal.v:491$64",
+                  "attributes": {
+                    "src": "template_formal.v:491.12-491.46"
+                  },
+                  "parameters": {
+                    "A_SIGNED": "00000000000000000000000000000000",
+                    "A_WIDTH": "00000000000000000000000000000100",
+                    "B_SIGNED": "00000000000000000000000000000000",
+                    "B_WIDTH": "00000000000000000000000000000100",
+                    "Y_WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "$eq$template_formal.v:498$75",
+                  "attributes": {
+                    "src": "template_formal.v:498.13-498.30"
+                  },
+                  "parameters": {
+                    "A_SIGNED": "00000000000000000000000000000000",
+                    "A_WIDTH": "00000000000000000000000000000100",
+                    "B_SIGNED": "00000000000000000000000000000000",
+                    "B_WIDTH": "00000000000000000000000000000100",
+                    "Y_WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "$eq$template_formal.v:500$76",
+                  "attributes": {
+                    "src": "template_formal.v:500.8-500.28"
+                  },
+                  "parameters": {
+                    "A_SIGNED": "00000000000000000000000000000000",
+                    "A_WIDTH": "00000000000000000000000000000100",
+                    "B_SIGNED": "00000000000000000000000000000000",
+                    "B_WIDTH": "00000000000000000000000000000100",
+                    "Y_WIDTH": "00000000000000000000000000000001"
+                  }
+                }
+            ]
+          },
+          {
+            "type": "$logic_not",
+            "ports": [
+                {
+                  "name": "A",
+                  "direction": "io",
+                  "range": [4, 0]
+                },
+                {
+                  "name": "Y",
+                  "direction": "",
+                  "range": [0, 0]
+                }
+            ],
+            "cells": [
+                {
+                  "name": "$eq$template_formal.v:453$53",
+                  "attributes": {
+                    "src": "template_formal.v:453.13-453.33"
+                  },
+                  "parameters": {
+                    "A_SIGNED": "00000000000000000000000000000000",
+                    "A_WIDTH": "00000000000000000000000000000100",
+                    "Y_WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "$eq$template_formal.v:501$78",
+                  "attributes": {
+                    "src": "template_formal.v:501.13-501.30"
+                  },
+                  "parameters": {
+                    "A_SIGNED": "00000000000000000000000000000000",
+                    "A_WIDTH": "00000000000000000000000000000100",
+                    "Y_WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "$logic_not$template_formal.v:451$50",
+                  "attributes": {
+                    "src": "template_formal.v:451.62-451.68"
+                  },
+                  "parameters": {
+                    "A_SIGNED": "00000000000000000000000000000000",
+                    "A_WIDTH": "00000000000000000000000000000001",
+                    "Y_WIDTH": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "name": "$logic_not$template_formal.v:495$69",
+                  "attributes": {
+                    "src": "template_formal.v:495.46-495.59"
+                  },
+                  "parameters": {
+                    "A_SIGNED": "00000000000000000000000000000000",
+                    "A_WIDTH": "00000000000000000000000000000001",
+                    "Y_WIDTH": "00000000000000000000000000000001"
+                  }
+                }
+            ]
+          },
+          {
+            "type": "$add",
+            "ports": [
+                {
+                  "name": "A",
+                  "direction": "io",
+                  "range": [3, 0]
+                },
+                {
+                  "name": "B",
+                  "direction": "io",
+                  "range": [3, 0]
+                },
+                {
+                  "name": "Y",
+                  "direction": "",
+                  "range": [3, 0]
+                }
+            ],
+            "cells": [
+                {
+                  "name": "$add$template_formal.v:297$33",
+                  "attributes": {
+                    "src": "template_formal.v:297.35-297.55"
+                  },
+                  "parameters": {
+                    "A_SIGNED": "00000000000000000000000000000000",
+                    "A_WIDTH": "00000000000000000000000000000011",
+                    "B_SIGNED": "00000000000000000000000000000000",
+                    "B_WIDTH": "00000000000000000000000000000011",
+                    "Y_WIDTH": "00000000000000000000000000000011"
+                  }
+                },
+                {
+                  "name": "$add$template_formal.v:298$35",
+                  "attributes": {
+                    "src": "template_formal.v:298.35-298.55"
+                  },
+                  "parameters": {
+                    "A_SIGNED": "00000000000000000000000000000000",
+                    "A_WIDTH": "00000000000000000000000000000011",
+                    "B_SIGNED": "00000000000000000000000000000000",
+                    "B_WIDTH": "00000000000000000000000000000011",
+                    "Y_WIDTH": "00000000000000000000000000000011"
+                  }
+                },
+                {
+                  "name": "$add$template_formal.v:300$37",
+                  "attributes": {
+                    "src": "template_formal.v:300.27-300.58"
+                  },
+                  "parameters": {
+                    "A_SIGNED": "00000000000000000000000000000000",
+                    "A_WIDTH": "00000000000000000000000000000100",
+                    "B_SIGNED": "00000000000000000000000000000000",
+                    "B_WIDTH": "00000000000000000000000000000011",
+                    "Y_WIDTH": "00000000000000000000000000000100"
+                  }
+                },
+                {
+                  "name": "$add$template_formal.v:491$63",
+                  "attributes": {
+                    "src": "template_formal.v:491.13-491.37"
+                  },
+                  "parameters": {
+                    "A_SIGNED": "00000000000000000000000000000000",
+                    "A_WIDTH": "00000000000000000000000000000100",
+                    "B_SIGNED": "00000000000000000000000000000000",
+                    "B_WIDTH": "00000000000000000000000000000100",
+                    "Y_WIDTH": "00000000000000000000000000000100"
+                  }
+                }
+            ]
+          }
+        ],
+        "attributes": {
+            "keep": "00000000000000000000000000000001",
+            "top": "00000000000000000000000000000001",
+            "src": "template_formal.v:3.1-524.10"
+        }
+      }
+  ]
+}
