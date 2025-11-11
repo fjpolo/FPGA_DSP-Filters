@@ -167,6 +167,88 @@ end
 	// Temporal/Ordering Integrity
 	// 
 	// If DataIn_A is written befor DataIn_B, then DataOut_A must be read before DataOut
+	reg [31:0] f_inst_A;
+	reg [31:0] f_inst_B;
+	reg [2:0] f_addr_A;        // Address where A was written in the formal memory
+	reg f_captured_A;          // True when A's instruction has been captured
+	reg f_captured_B;          // True when B's instruction has been captured
+	reg f_read_A;              // True when A has been dequeued from the DUT
+	reg f_read_B;              // True when B has been dequeued from the DUT
+	reg [3:0] f_dequeues_count; // Tracks total dequeues since reset/flush (for multi-dequeue tracking)
+
+	// Helper signal to detect a successful dequeue event
+	reg [3:0] f_io_nEnqueued;
+		always@(posedge clock)
+			f_io_nEnqueued <= io_nEnqueued;
+	wire f_dequeue_success = io_nEnqueued < f_io_nEnqueued; // We use a counter to infer how many items have been dequeued since A's capture.
+	wire [3:0] f_items_dequeued_this_cycle = f_io_nEnqueued - io_nEnqueued;
+
+	// -----------------------------------------------------------------------------
+	// A. State Management, Capture Logic, and Read Tracking (SINGLE BLOCK)
+	// -----------------------------------------------------------------------------
+	always @(posedge clock) begin
+		if (reset || io_flush) begin
+			f_captured_A <= 1'b0;
+			f_captured_B <= 1'b0;
+			f_inst_A <= 32'h0;
+			f_inst_B <= 32'h0;
+			f_addr_A <= 3'h0;
+			f_read_A <= 1'b0;
+			f_read_B <= 1'b0;
+			f_dequeues_count <= 4'h0; // Initialize counter
+		end else begin
+			// --- Capture A ---
+			if (io_enqValid >= 3'h1 && !f_captured_A) begin
+				f_captured_A <= 1'b1;
+				f_inst_A <= io_enqData_0_inst;
+				f_addr_A <= f_enqPtr + 3'h0;
+			end
+
+			// --- Capture B ---
+			if (f_captured_A && $past(f_captured_A) && !f_captured_B) begin
+				f_inst_B <= f_data_mem_inst[f_addr_A + 3'h1]; 
+				f_captured_B <= 1'b1;
+			end
+			
+			// --- Dequeue Counter Update ---
+			if (f_dequeue_success) begin
+				f_dequeues_count <= f_dequeues_count + f_items_dequeued_this_cycle;
+			end
+
+			// --- Read Tracking (FIXED for Multi-Dequeue) ---
+			// A is the first item captured. It is read if the total number of dequeues 
+			// since A was captured is 1 or more.
+			if (f_captured_A && !f_read_A && f_dequeues_count >= 4'h1) begin
+				f_read_A <= 1'b1;
+			end 
+			
+			// B is the second item captured. It is read if the total number of dequeues 
+			// since A was captured is 2 or more.
+			if (f_captured_B && !f_read_B && f_dequeues_count >= 4'h2) begin
+				f_read_B <= 1'b1;
+			end
+		end
+	end
+
+
+	// -----------------------------------------------------------------------------
+	// C. Temporal Integrity Assertion (The output check remains the same)
+	// -----------------------------------------------------------------------------
+	always @(posedge clock) begin
+		if (!reset && f_past_valid) begin
+			// Check this property only once both A and B have been written.
+			if (f_captured_A && f_captured_B) begin
+				
+				// CRITICAL ASSERTION: B must not appear at the head of the queue 
+				// if A has not yet been read (f_read_A == 0).
+				if (!f_read_A) begin
+					// Check io_dataOut_0 against f_inst_B, accounting for its combinatorial nature.
+					// We use $past(io_dataOut_0_inst) which is the value *before* the current clock edge.
+					assert($past(io_dataOut_0_inst) !== f_inst_B);
+				end
+			end
+		end
+	end
 
     ////////////////////////////////////////////////////
 	//
