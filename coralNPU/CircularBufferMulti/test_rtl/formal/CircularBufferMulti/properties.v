@@ -99,7 +99,6 @@
 				assert(io_nEnqueued == 4'h0);
 			end else begin
 				// Count must follow the FIFO update logic:	io_nEnqueued (State N+1) must equal next_nEnqueued_expected
-				// assert(io_nEnqueued == next_nEnqueued_expected);
 				assert(io_nEnqueued == $past(io_nEnqueued + {1'b0, io_enqValid} - {1'b0, io_deqReady}));
 			end
 		end
@@ -122,6 +121,28 @@
 	// Cover
 	//
 	////////////////////////////////////////////////////     
+
+	// The buffer becomes completely full (nEnqueued == 8)
+	always @(posedge clock) begin
+		if (!reset) begin
+			cover (io_nEnqueued == 'h8);
+		end
+	end
+
+	// The buffer is completely empty (nEnqueued == 0)
+	// Note: This is usually covered by reset, but good to cover during run-time.
+	always @(posedge clock) begin
+		if (!reset) begin
+			cover (io_nEnqueued == 4'h0);
+		end
+	end
+
+	// The buffer is half-full (nEnqueued == 4)
+	always @(posedge clock) begin
+		if (!reset) begin
+			cover (io_nEnqueued == 4'h4);
+		end
+	end
            
 `endif
 
