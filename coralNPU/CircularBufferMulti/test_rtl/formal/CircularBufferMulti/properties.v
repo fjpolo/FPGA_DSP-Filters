@@ -110,6 +110,64 @@
 	//
 	////////////////////////////////////////////////////   
 
+	//
+	// Data Integrity
+	//
+	// If deque slot X is active, then DataOut_x = DataIn_N
+	// We need:
+	//   1. A formal memory to store all enqueued data
+	//   2. Logic to track the write and read pointers (head_ptr, tail_ptr) within the formal property file, mirroring the DUT's logic
+	//   3. Assertions that compare the output data against the data at the head_ptr in the formal memory
+	reg [31:0] f_data_mem_addr [7:0];
+    reg [31:0] f_data_mem_inst [7:0];
+    reg        f_data_mem_brchFwd [7:0];
+    reg [2:0]  f_enqPtr;
+    reg [2:0]  f_deqPtr;
+	always @(posedge clock) begin
+    if (reset) begin
+        f_enqPtr <= 3'h0;
+        f_deqPtr <= 3'h0;
+        for (integer i = 0; i < 8; i = i + 1) begin
+            f_data_mem_addr[i] <= 32'h0;
+            f_data_mem_inst[i] <= 32'h0;
+            f_data_mem_brchFwd[i] <= 1'b0;
+        end
+    end else if (io_flush) begin
+        f_enqPtr <= 3'h0;
+        f_deqPtr <= 3'h0;
+    end else begin
+        // Pointers update with implicit modulo 8, since they are 3-bit wide
+        f_enqPtr <= f_enqPtr + io_enqValid;
+        f_deqPtr <= f_deqPtr + io_deqReady;
+        
+        // Write parallel data to the formal memory starting at f_enqPtr.
+        // Array indexing uses the 3-bit pointer, ensuring modulo 8 wrap-around.
+        if (io_enqValid >= 3'h1) begin 
+            // Data 0 written to index f_enqPtr + 0
+            f_data_mem_addr[f_enqPtr + 3'h0] <= io_enqData_0_addr;
+            f_data_mem_inst[f_enqPtr + 3'h0] <= io_enqData_0_inst;
+            f_data_mem_brchFwd[f_enqPtr + 3'h0] <= io_enqData_0_brchFwd;
+        end
+        if (io_enqValid >= 3'h2) begin
+            // Data 1 written to index f_enqPtr + 1
+            f_data_mem_addr[f_enqPtr + 3'h1] <= io_enqData_1_addr;
+            f_data_mem_inst[f_enqPtr + 3'h1] <= io_enqData_1_inst;
+            f_data_mem_brchFwd[f_enqPtr + 3'h1] <= io_enqData_1_brchFwd;
+        end
+        if (io_enqValid >= 3'h3) begin
+            // Data 2 written to index f_enqPtr + 2
+            f_data_mem_addr[f_enqPtr + 3'h2] <= io_enqData_2_addr;
+            f_data_mem_inst[f_enqPtr + 3'h2] <= io_enqData_2_inst;
+            f_data_mem_brchFwd[f_enqPtr + 3'h2] <= io_enqData_2_brchFwd;
+        end
+    end
+end
+
+	//
+	// Temporal/Ordering Integrity
+	// 
+	// If DataIn_A is written befor DataIn_B, then DataOut_A must be read before DataOut
+
     ////////////////////////////////////////////////////
 	//
 	// Induction
