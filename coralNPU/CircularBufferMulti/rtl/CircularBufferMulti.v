@@ -34,33 +34,33 @@ module CircularBufferMulti(
   input         io_flush
 ) /*synthesis syn_ramstyle="block_ram"*/;
 
-  reg  [31:0]  buffer_0_addr /*synthesis syn_ramstyle="block_ram"*/;
-  reg  [31:0]  buffer_0_inst /*synthesis syn_ramstyle="block_ram"*/;
+  reg  [31:0]  buffer_0_addr    /*synthesis syn_ramstyle="block_ram"*/;
+  reg  [31:0]  buffer_0_inst    /*synthesis syn_ramstyle="block_ram"*/;
   reg          buffer_0_brchFwd /*synthesis syn_ramstyle="block_ram"*/;
-  reg  [31:0]  buffer_1_addr /*synthesis syn_ramstyle="block_ram"*/;
-  reg  [31:0]  buffer_1_inst /*synthesis syn_ramstyle="block_ram"*/;
+  reg  [31:0]  buffer_1_addr    /*synthesis syn_ramstyle="block_ram"*/;
+  reg  [31:0]  buffer_1_inst    /*synthesis syn_ramstyle="block_ram"*/;
   reg          buffer_1_brchFwd /*synthesis syn_ramstyle="block_ram"*/;
-  reg  [31:0]  buffer_2_addr /*synthesis syn_ramstyle="block_ram"*/;
-  reg  [31:0]  buffer_2_inst /*synthesis syn_ramstyle="block_ram"*/;
+  reg  [31:0]  buffer_2_addr    /*synthesis syn_ramstyle="block_ram"*/;
+  reg  [31:0]  buffer_2_inst    /*synthesis syn_ramstyle="block_ram"*/;
   reg          buffer_2_brchFwd /*synthesis syn_ramstyle="block_ram"*/;
-  reg  [31:0]  buffer_3_addr /*synthesis syn_ramstyle="block_ram"*/;
-  reg  [31:0]  buffer_3_inst /*synthesis syn_ramstyle="block_ram"*/;
+  reg  [31:0]  buffer_3_addr    /*synthesis syn_ramstyle="block_ram"*/;
+  reg  [31:0]  buffer_3_inst    /*synthesis syn_ramstyle="block_ram"*/;
   reg          buffer_3_brchFwd /*synthesis syn_ramstyle="block_ram"*/;
-  reg  [31:0]  buffer_4_addr /*synthesis syn_ramstyle="block_ram"*/;
-  reg  [31:0]  buffer_4_inst /*synthesis syn_ramstyle="block_ram"*/;
+  reg  [31:0]  buffer_4_addr    /*synthesis syn_ramstyle="block_ram"*/;
+  reg  [31:0]  buffer_4_inst    /*synthesis syn_ramstyle="block_ram"*/;
   reg          buffer_4_brchFwd /*synthesis syn_ramstyle="block_ram"*/;
-  reg  [31:0]  buffer_5_addr /*synthesis syn_ramstyle="block_ram"*/;
-  reg  [31:0]  buffer_5_inst /*synthesis syn_ramstyle="block_ram"*/;
+  reg  [31:0]  buffer_5_addr    /*synthesis syn_ramstyle="block_ram"*/;
+  reg  [31:0]  buffer_5_inst    /*synthesis syn_ramstyle="block_ram"*/;
   reg          buffer_5_brchFwd /*synthesis syn_ramstyle="block_ram"*/;
-  reg  [31:0]  buffer_6_addr /*synthesis syn_ramstyle="block_ram"*/;
-  reg  [31:0]  buffer_6_inst /*synthesis syn_ramstyle="block_ram"*/;
+  reg  [31:0]  buffer_6_addr    /*synthesis syn_ramstyle="block_ram"*/;
+  reg  [31:0]  buffer_6_inst    /*synthesis syn_ramstyle="block_ram"*/;
   reg          buffer_6_brchFwd /*synthesis syn_ramstyle="block_ram"*/;
-  reg  [31:0]  buffer_7_addr /*synthesis syn_ramstyle="block_ram"*/;
-  reg  [31:0]  buffer_7_inst /*synthesis syn_ramstyle="block_ram"*/;
+  reg  [31:0]  buffer_7_addr    /*synthesis syn_ramstyle="block_ram"*/;
+  reg  [31:0]  buffer_7_inst    /*synthesis syn_ramstyle="block_ram"*/;
   reg          buffer_7_brchFwd /*synthesis syn_ramstyle="block_ram"*/;
-  reg  [2:0]   enqPtr /*synthesis syn_ramstyle="block_ram"*/;
-  reg  [2:0]   deqPtr /*synthesis syn_ramstyle="block_ram"*/;
-  reg  [3:0]   nEnqueued;
+  reg  [2:0]   enqPtr           /*synthesis syn_ramstyle="block_ram"*/;
+  reg  [2:0]   deqPtr           /*synthesis syn_ramstyle="block_ram"*/;
+  reg  [3:0]   nEnqueued        /*synthesis syn_ramstyle="block_ram"*/;
   wire [9:0]   _outputBufferView_rotated_T_9 = {7'h0, deqPtr} * 10'h41;
   wire [519:0] _outputBufferView_rotated_T_23 =
     _outputBufferView_rotated_T_9[0]
@@ -145,9 +145,9 @@ module CircularBufferMulti(
       ? {_outputBufferView_rotated_T_51[255:0], _outputBufferView_rotated_T_51[519:256]}
       : _outputBufferView_rotated_T_51;
   wire [259:0] outputBufferView_rotated =
-    _outputBufferView_rotated_T_9[9]
-      ? {_outputBufferView_rotated_T_55[251:0], _outputBufferView_rotated_T_55[519:512]}
-      : _outputBufferView_rotated_T_55[259:0];
+                                            _outputBufferView_rotated_T_9[9] ? 
+                                            {_outputBufferView_rotated_T_55[251:0], _outputBufferView_rotated_T_55[519:512]} : 
+                                            _outputBufferView_rotated_T_55[259:0];
   wire         expandedInput_2_ret_valid = io_enqValid > 3'h2;
   wire [9:0]   _rotatedInput_rotated_T_17 = {7'h0, enqPtr} * 10'h42;
   wire [527:0] _rotatedInput_rotated_T_31 =
@@ -253,8 +253,7 @@ module CircularBufferMulti(
       deqPtr <= 3'h0;
       nEnqueued <= 4'h0;
     end
-    else begin
-      if (rotatedInput_rotated[65]) begin
+    else begin if (rotatedInput_rotated[65]) begin
         buffer_0_addr <= rotatedInput_rotated[64:33];
         buffer_0_inst <= rotatedInput_rotated[32:1];
         buffer_0_brchFwd <= rotatedInput_rotated[0];
@@ -461,14 +460,13 @@ module CircularBufferMulti(
   reg [DATA_W-1:0] rdata_0, rdata_1, rdata_2, rdata_3;
 
   // SEQUENTIAL LOGIC (Pointer & Memory Update) 
-  always @(posedge clock or posedge reset) begin
+  always @(posedge clock) begin
     if (reset || io_flush) begin
       enqPtr    <= {ADDR_W{1'b0}};
       deqPtr    <= {ADDR_W{1'b0}};
       nEnqueued <= 4'h0;
       // Initialize memory content to 0, if required (not typical for BRAM inference)
-    end
-    else begin
+    end else begin
       // Write logic: BRAM write happens at enqPtr if valid
       if (write_enable) begin
         buffer_memory[enqPtr] <= enq_data;
