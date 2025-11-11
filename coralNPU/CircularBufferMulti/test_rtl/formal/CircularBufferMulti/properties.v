@@ -122,27 +122,27 @@
 	//
 	////////////////////////////////////////////////////     
 
-	// // The buffer becomes completely full (nEnqueued == 8)
-	// always @(posedge clock) begin
-	// 	if (!reset) begin
-	// 		cover (io_nEnqueued == 'h8);
-	// 	end
-	// end
+	// The buffer becomes completely full (nEnqueued == 8)
+	always @(posedge clock) begin
+		if (!reset) begin
+			cover (io_nEnqueued == 'h8);
+		end
+	end
 
-	// // The buffer is completely empty (nEnqueued == 0)
-	// // Note: This is usually covered by reset, but good to cover during run-time.
-	// always @(posedge clock) begin
-	// 	if (!reset) begin
-	// 		cover (io_nEnqueued == 4'h0);
-	// 	end
-	// end
+	// The buffer is completely empty (nEnqueued == 0)
+	// Note: This is usually covered by reset, but good to cover during run-time.
+	always @(posedge clock) begin
+		if (!reset) begin
+			cover (io_nEnqueued == 4'h0);
+		end
+	end
 
-	// // The buffer is half-full (nEnqueued == 4)
-	// always @(posedge clock) begin
-	// 	if (!reset) begin
-	// 		cover (io_nEnqueued == 4'h4);
-	// 	end
-	// end
+	// The buffer is half-full (nEnqueued == 4)
+	always @(posedge clock) begin
+		if (!reset) begin
+			cover (io_nEnqueued == 4'h4);
+		end
+	end
 
 	// DATA0 instruction integrity
 	always @(posedge clock)
