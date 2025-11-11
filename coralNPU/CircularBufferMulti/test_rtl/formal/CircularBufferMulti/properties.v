@@ -55,49 +55,31 @@
 	//
 	////////////////////////////////////////////////////
 
-	// Flush resets the count to zero
-	always @(posedge clock) begin
-		if(($past(f_past_valid))&&(f_past_valid)&&($past(reset))&&(!reset))
-			if (io_flush) begin
-				assert (io_nEnqueued == 4'h0);
-			end
-	end
-
     ////////////////////////////////////////////////////
 	//
 	// BMC
 	//
 	////////////////////////////////////////////////////
 
-	// // Calculate change in count
-	// wire [3:0] delta_count = {1'b0, io_enqValid} - {1'b0, io_deqReady};
-	// // Expected next count
-	// reg [3:0] nEnqueued_prev;
-	// always @(posedge clock) begin
-	// 	if (reset) begin
-	// 		nEnqueued_prev <= 4'h0;
-	// 	end else begin
-	// 		nEnqueued_prev <= io_nEnqueued; 
-	// 	end
-	// end
-	// wire [3:0] next_nEnqueued_expected = nEnqueued_prev + delta_count;
-	// // Count logic update is correct
-	// always @(posedge clock) begin
-	// 	if(($past(f_past_valid))&&(f_past_valid)&&(!$past(reset))&&(!reset))
-	// 		if ((!$past(init))&&(!reset)&&(!io_flush)) begin
-	// 			assert (io_nEnqueued == next_nEnqueued_expected);
-	// 		end
-	// end
+	// Flush resets the count to zero
+	always @(posedge clock) begin
+		if(($past(f_past_valid))&&(f_past_valid)&&(!$past(reset))&&(!reset))
+			if ($past(io_flush)) begin
+				assert (io_nEnqueued == 4'h0);
+			end
+	end
 
-	// Space is always the complement of count
-  	// assign io_nEnqueued = nEnqueued;
-  	// assign io_nSpace = 4'h8 - nEnqueued;
+	// The output wire must exactly match the internal register.
 	always @(*) 
-			assert (io_nEnqueued == nEnqueued);
+		assert (io_nEnqueued == nEnqueued); // Passed implicitly by assign statement
+
+	// Space must always be the complement of count.
 	always @(*) 
-			assert (io_nSpace == (4'h8 - nEnqueued));
+		assert (io_nSpace == (4'h8 - nEnqueued)); // Passed implicitly by assign statement
+
+	// The sum of io_nEnqueued and io_nSpace must always equal the depth.
 	always @(*) 
-			assert ((io_nEnqueued + io_nSpace) == 4'h8);
+		assert ((io_nEnqueued + io_nSpace) == 4'h8);
 
 	// Empty and Full checks
 	always @(posedge clock) begin
@@ -109,6 +91,46 @@
 			if (io_nEnqueued == 4'h8) 
 				assert (io_nSpace == 4'h0);
 	end
+
+	// // nEnqueued
+	// // nEnqueued <= io_flush ? 4'h0 : nEnqueued + {1'h0, io_enqValid} - {1'h0, io_deqReady};
+	// always @(posedge clock) begin
+	// 	if(($past(f_past_valid, 2))&&($past(f_past_valid))&&(f_past_valid)&&(!$past(reset))&&(!reset))
+	// 		if($past(rotatedInput_rotated[527]))
+	// 			if($past(io_flush))
+	// 				assert(nEnqueued == 4'h0);
+	// 			if(!$past(io_flush))
+	// 				assert($past(nEnqueued) + {1'h0, io_enqValid} - {1'h0, io_deqReady});
+	// end
+
+	// // // FIFO Count Update Correctness
+	// // // 	Next Count = Previous Count + Enqueues - Dequeues
+	// // //  assign io_nEnqueued = nEnqueued;
+	// // // 	nEnqueued <= nEnqueued + {1'h0, io_enqValid} - {1'h0, io_deqReady};
+	// // //	input  [2:0]  io_enqValid
+	// // //	input  [2:0]  io_deqReady
+	// // // 	reg  [3:0]   nEnqueued
+	// // wire [3:0] aux00 = {1'h0, io_enqValid} - {1'h0, io_deqReady};
+	// // wire [3:0] aux01 = nEnqueued + aux00;
+	// // reg  [3:0] f_io_nEnqueued;
+	// // reg  [2:0] f_io_enqValid;
+	// // reg  [2:0] f_io_io_deqReady;
+	// // reg  [3:0] f_nEnqueued;
+	// // always @(posedge clk) begin
+	// // 	f_io_nEnqueued <= io_nEnqueued;
+	// // 	f_io_enqValid <= io_enqValid;
+	// // 	f_io_io_deqReady <= io_io_deqReady;
+	// // 	f_nEnqueued <= nEnqueued;
+	// // end
+	// // always @(posedge clock) begin
+	// // 	if((f_past_valid)&&($past(f_past_valid))) begin
+	// // 		// assert(io_nEnqueued == nEnqueued);
+	// // 		// assert(aux00 == {1'h0, io_enqValid} - {1'h0, io_deqReady});
+	// // 		// assert(aux01 == nEnqueued + aux00);
+	// // 		// assert(io_nEnqueued == aux01);
+	// // 		assert(f_io_nEnqueued == (f_nEnqueued + {1'h0, f_io_enqValid} - {1'h0, f_io_io_deqReady}));
+	// // 	end
+	// // end
 
     ////////////////////////////////////////////////////
 	//
