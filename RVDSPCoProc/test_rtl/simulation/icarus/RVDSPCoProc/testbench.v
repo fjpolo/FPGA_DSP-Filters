@@ -33,8 +33,7 @@ module testbench;
 
     // Inputs
     reg         i_clk;
-    reg         i_reset_n;
-    reg  [7:0]  i_data;
+    reg          i_rst_n;
 
     // Outputs
     wire [7:0]  o_data;
@@ -42,9 +41,7 @@ module testbench;
     // Instantiate the Unit Under Test (UUT)
     RVDSPCoProc uut (
         .i_clk     (i_clk),
-        .i_reset_n (i_reset_n),
-        .i_data    (i_data),
-        .o_data    (o_data)
+        .i_rst_n   (i_rst_n)
     );
 
     // Clock generation
@@ -62,12 +59,11 @@ module testbench;
     // Test sequence
     initial begin
         // Initialize inputs
-        i_reset_n = 0;
-        i_data    = 8'h00;
+         i_rst_n = 0;
 
         // Apply reset
         #10;
-        i_reset_n = 1;
+         i_rst_n = 1;
 
         // // Test 1: Check reset behavior
         // #10;
@@ -91,10 +87,11 @@ module testbench;
         //     $display("FAIL: Data propagation test failed. Expected 8'h3C, got %h", o_data);
         //     $finish;
         // end
+        #1000;
 
-        // If all tests pass
-        $display("PASS: All tests passed.");
-        $finish;
+        // // If all tests pass
+        // $display("PASS: All tests passed.");
+        // $finish;
     end
 
     // Monitor for errors
