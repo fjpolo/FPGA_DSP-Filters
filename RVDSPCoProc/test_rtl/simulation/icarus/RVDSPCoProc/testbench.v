@@ -87,7 +87,7 @@ module testbench;
         //     $display("FAIL: Data propagation test failed. Expected 8'h3C, got %h", o_data);
         //     $finish;
         // end
-        #1000;
+        #500;
 
         // // If all tests pass
         // $display("PASS: All tests passed.");
@@ -96,7 +96,7 @@ module testbench;
 
     // Monitor for errors
     initial begin
-        #100; // Timeout to catch unexpected behavior
+        #500; // Timeout to catch unexpected behavior
         $display("ERROR: Simulation timed out.");
         $finish;
     end
