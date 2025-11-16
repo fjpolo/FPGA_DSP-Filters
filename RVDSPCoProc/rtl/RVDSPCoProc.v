@@ -277,6 +277,24 @@ module RVDSPCoProc(
                     4'b0101: begin 
                         pc_next = {12'h000, instruction[19:0]}; // Override PC for JUMP
                     end
+
+                    // READ_ACCH Rd (Opcode 6) -> Read High 32 bits (95:64)
+                    4'b0110: begin
+                        reg_we    = 1'b1;
+                        reg_wdata = r_mac_accum_96[95:64];
+                    end
+                    
+                    // READ_ACCM Rd (Opcode 7) -> Read Middle 32 bits (63:32)
+                    4'b0111: begin
+                        reg_we    = 1'b1;
+                        reg_wdata = r_mac_accum_96[63:32];
+                    end
+                    
+                    // READ_ACCL Rd (Opcode 8) -> Read Low 32 bits (31:0)
+                    4'b1000: begin
+                        reg_we    = 1'b1;
+                        reg_wdata = r_mac_accum_96[31:0];
+                    end
                     
                     // NOP (Opcode 0)
                     4'b0000: begin
