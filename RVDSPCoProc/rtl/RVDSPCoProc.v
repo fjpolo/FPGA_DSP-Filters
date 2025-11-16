@@ -81,35 +81,26 @@ module RVDSPCoProc(
     reg [31:0] iMEM [0:255] /* syn_ramstyle=block_ram */; 
     
     // Hardcoded iMEM Initialization
+    // --- Generated from program.hex ---
     initial begin
-        // Data Setup 
-        // Instruction format for MOVE: Opcode(31:28)=4'b0100 | Rd(27:24) | Immediate(19:0)
-        
-        // Address 0: MOVE R1, 0x00000005 (Integer 5)
-        // Opcode=4, Rd=1, Imm=0x0005
-        iMEM[0] = 32'h41000005; 
+        iMEM[0] = 32'h41000001;
+        iMEM[1] = 32'h42000002;
+        iMEM[2] = 32'h43000003;
+        iMEM[3] = 32'h90000000;
+        iMEM[4] = 32'hA1230000;
+        iMEM[5] = 32'h64000000;
+        iMEM[6] = 32'h75000000;
+        iMEM[7] = 32'h86000000;
+        iMEM[8] = 32'h10110000;
+        iMEM[9] = 32'h50000005;
 
-        // Address 1: MOVE R2, 0x0000000A (Integer 10)
-        // Opcode=4, Rd=2, Imm=0x000A
-        iMEM[1] = 32'h4200000A;
-        
-        // Infinite MAC Loop 
-        // Address 2: MAC R0, R1, R2 (R0 = Low 32 bits of Acc)
-        // Opcode=1, Rd=0, Rs1=1, Rs2=2 
-        iMEM[2] = 32'h10120000; 
-
-        // Address 3: JUMP 0x002 (JUMP back to the MAC instruction)
-        // Opcode=5, Imm=0x00000002
-        iMEM[3] = 32'h50000002;
-        
         // Initialize the rest of the memory to NOP (0x00000000)
-        for (integer i = 4; i < 256; i++) begin 
+        for (integer i = 10; i < 256; i++) begin 
             iMEM[i] = 32'h00000000;
         end        
-                
-        // Initialize start_flag high for immediate simulation run
         start_flag = 1'b1;
     end
+    // ----------------------------------         
     
     //
     // Data Memory (dMEM) BSRAM 
