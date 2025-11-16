@@ -48,12 +48,12 @@ module RVDSPCoProc(
     reg [REG_ADDR_BITS-1:0]     rd_addr, rs1_addr, rs2_addr; 
     wire [31:0]                 reg_rdata1, reg_rdata2;     
     
-    // Multi-write Register Path Controls (for MUL)
-    reg                         reg_we_mul_high; // Write enable for Rd (High word)
-    reg                         reg_we_mul_low;  // Write enable for Rd+1 (Low word)
-    reg [3:0]                   rd_addr_low;     // Destination address for Low word (Rd+1)
-    reg [31:0]                  reg_wdata_high;  // Data for Rd (High word)
-    reg [31:0]                  reg_wdata_low;   // Data for Rd+1 (Low word)
+    // Multi-write Register Path Controls (for MUL/DIV)
+    reg                         reg_we_mul_high; // Write enable for Rd (High word / Quotient)
+    reg                         reg_we_mul_low;  // Write enable for Rd+1 (Low word / Remainder)
+    reg [3:0]                   rd_addr_low;     // Destination address for Low word/Remainder (Rd+1)
+    reg [31:0]                  reg_wdata_high;  // Data for Rd (High word / Quotient)
+    reg [31:0]                  reg_wdata_low;   // Data for Rd+1 (Low word / Remainder)
     
     // Single-write Register Path Controls (for MAC, LOAD, READ_ACC, MOVE)
     reg                         reg_we_single;
@@ -86,7 +86,7 @@ module RVDSPCoProc(
         STATE_FETCH     = 2'b01,
         STATE_EXECUTE   = 2'b10;
     reg [1:0] state_reg, state_next; 
-    
+        
     //
     // Instruction Memory (iMEM) BSRAM 
     //
@@ -110,17 +110,18 @@ initial begin
     iMEM[11] = 32'h48000003;
     iMEM[12] = 32'h49000003;
     iMEM[13] = 32'hBA890000;
-    iMEM[14] = 32'h50000005;
+    iMEM[14] = 32'h4C00000A;
+    iMEM[15] = 32'h4D000003;
+    iMEM[16] = 32'hCECD0000;
+    iMEM[17] = 32'h50000005;
 
     // Initialize the rest of the memory to NOP (0x00000000)
-    for (i = 15; i < 256; i++) begin 
+    for (i = 18; i < 256; i++) begin 
         iMEM[i] = 32'h00000000;
     end        
-    $display("iMEM loaded.");
     start_flag = 1'b1;
 end
 // ----------------------------------
-
     
     //
     // Data Memory (dMEM) BSRAM 
@@ -161,7 +162,7 @@ end
     wire [31:0] reg_rdata_m = gpr[rs1_addr]; // Rs1 field holds Rs_M
     wire [31:0] reg_rdata_l = gpr[rs2_addr]; // Rs2 field holds Rs_L
     
-    // Register Write - Handles both single (LOAD, READ_ACC, MOVE, MAC) and double (MUL) writes
+    // Register Write - Handles single (LOAD, READ_ACC, MOVE, MAC) and double (MUL/DIV) writes
     always @(posedge  i_clk or negedge  i_rst_n) begin 
         if (! i_rst_n) begin
             gpr[0] <= 32'h0000_0000;
@@ -171,12 +172,12 @@ end
                 gpr[rd_addr_single] <= reg_wdata_single;
             end
             
-            // 2. Double Write for MUL: Write High Word (Rd)
+            // 2. Double Write for MUL/DIV: Write High Word / Quotient (Rd)
             if (reg_we_mul_high) begin
                 gpr[rd_addr] <= reg_wdata_high;
             end
             
-            // 3. Double Write for MUL: Write Low Word (Rd+1). R15 wraps to R0.
+            // 3. Double Write for MUL/DIV: Write Low Word / Remainder (Rd+1). R15 wraps to R0.
             if (reg_we_mul_low) begin
                 gpr[rd_addr_low] <= reg_wdata_low;
             end
@@ -263,6 +264,20 @@ end
         end
     end
 
+    //
+    // Division Unit (Combinatorial)
+    //
+    // Rs1 = Dividend, Rs2 = Divisor
+    // We use the $signed operator to perform signed division.
+    wire [31:0] div_quotient;
+    wire [31:0] div_remainder;
+
+    // Handle division by zero to prevent simulation errors. 
+    // If Rs2 is 0, set quotient to 0 (or maximum/minimum value) and remainder to Rs1.
+    // For simplicity, we just check for non-zero divisor.
+    assign div_quotient = (reg_rdata2 != 32'h0) ? ($signed(reg_rdata1) / $signed(reg_rdata2)) : 32'h0;
+    assign div_remainder = (reg_rdata2 != 32'h0) ? ($signed(reg_rdata1) % $signed(reg_rdata2)) : reg_rdata1;
+    
     //
     // Control Unit (FSM, PC, Decode, Execute) 
     //
@@ -398,6 +413,18 @@ end
                         reg_we_mul_low  = 1'b1;
                         rd_addr_low     = rd_addr + 1; 
                         reg_wdata_low   = r_mul_product_64[31:0]; // Uses dedicated MUL product register
+                    end
+                    
+                    // DIV Rd, Rs1, Rs2 (Opcode C / 12)
+                    4'b1100: begin
+                        // Write 1: Quotient to Rd
+                        reg_we_mul_high = 1'b1;
+                        reg_wdata_high  = div_quotient; 
+                        
+                        // Write 2: Remainder to Rd+1 (R15 wraps to R0)
+                        reg_we_mul_low  = 1'b1;
+                        rd_addr_low     = rd_addr + 1; 
+                        reg_wdata_low   = div_remainder; 
                     end
                     
                     // NOP (Opcode 0)

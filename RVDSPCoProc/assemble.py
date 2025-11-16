@@ -16,6 +16,7 @@ ISA = {
     "CLR_ACC":     (0b1001, "CLR_ACC"),      # Clear Accumulator
     "LOAD_ACCR":   (0b1010, "LOAD_ACCR Rs_H, Rs_M, Rs_L"), # Load Acc from 3 Registers
     "MUL":         (0b1011, "MUL Rd, Rs1, Rs2"), # Multiply 32x32 -> 64 bits (Rd=High, Rd+1=Low)
+    "DIV":         (0b1100, "DIV Rd, Rs1, Rs2"), # Divide 32/32 -> Quotient (Rd), Remainder (Rd+1)
 }
 
 def parse_register(reg_str):
@@ -89,8 +90,8 @@ def assemble_line(line, line_num):
         Addr = parse_immediate(parts[2])
         instr |= (Rs1 << 20) | (Addr & 0xFFFF)
 
-    elif mnemonic == "MAC" or mnemonic == "MUL":
-        # Format: MAC Rd, Rs1, Rs2 / MUL Rd, Rs1, Rs2
+    elif mnemonic == "MAC" or mnemonic == "MUL" or mnemonic == "DIV":
+        # Format: MAC Rd, Rs1, Rs2 / MUL Rd, Rs1, Rs2 / DIV Rd, Rs1, Rs2
         if len(parts) != 4:
             raise ValueError(f"Expected {mnemonic} Rd, Rs1, Rs2")
             

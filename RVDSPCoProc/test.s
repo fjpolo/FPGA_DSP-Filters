@@ -27,5 +27,11 @@
     MOVE R9, 3
     // Address 13: MUL R10, R8, R9. R10 = High (0), R11 = Low (30)
     MUL R10, R8, R9
-    // Address 14: JUMP back to Address 5 to continually read the stable value.
+    // R12 (High): 0x0000000A
+    MOVE R12, 10
+    // R13 (Middle): 0x00000003
+    MOVE R13, 3
+    // Address 15: DIV R14, R12, R13. R14 = Quotient, R15 = Remainder
+    DIV R14, R12, R13
+    // Address 16: JUMP back to Address 5 to continually read the stable value.
     JUMP 5

@@ -41,27 +41,26 @@ All instructions are 32-bits wide. Fields are defined as:
 | **8** | `READ_ACCL` | `8 Rd` | Read Accumulator Low: $\text{Rd} \leftarrow \text{Acc}[31:0]$ (Low Word). |
 | **9** | `CLR_ACC` | `9` | **Clear Accumulator: $\text{Acc} \leftarrow 96'h0$.** |
 | **A (10)** | `LOAD_ACCR`| `A Rs_H, Rs_M, Rs_L` | **Load Accumulator from Registers: $\text{Acc} \leftarrow \{\text{Rs\_H}, \text{Rs\_M}, \text{Rs\_L}\}$.** |
+| **B (11)** | `MUL` | `B Rd, Rs1, Rs2` | **Multiply: $\{\text{Rd}, \text{Rd}+1\} \leftarrow \text{Rs1} \times \text{Rs2}$. Writes product $\text{High}[63:32]$ to $\text{Rd}$ and $\text{Low}[31:0]$ to $\text{Rd}+1$.** |
+| **C (12)** | `DIV` | `C Rd, Rs1, Rs2` | **Divide: $\{\text{Rd}, \text{Rd}+1\} \leftarrow \text{Rs1} / \text{Rs2}$. Writes Quotient to $\text{Rd}$ and Remainder to $\text{Rd}+1$.** |
 
 ---
 
 ## Detailed Instruction Descriptions (New)
 
-### 9. `CLR_ACC` (Opcode 9)
+... (Existing descriptions for 9, 10, 11)
 
-Resets the entire 96-bit Accumulator register to zero in a single cycle.
+### 12. `DIV Rd, Rs1, Rs2` (Opcode C)
 
-**Operation:**
-$\text{Acc96} \leftarrow 96'h000000000000000000000000$
+Performs a 32-bit signed division ($\text{Rs1} / \text{Rs2}$) and stores the 32-bit quotient into $\text{Rd}$ and the 32-bit remainder into $\text{Rd}+1$.
 
-### 10. `LOAD_ACCR Rs_H, Rs_M, Rs_L` (Opcode A)
-
-Loads the 96-bit Accumulator from three General Purpose Registers (GPRs) in a single cycle.
-
-* **Rs\_H** (Register High) is taken from the **Rd** field (`[27:24]`).
-* **Rs\_M** (Register Middle) is taken from the **Rs1** field (`[23:20]`).
-* **Rs\_L** (Register Low) is taken from the **Rs2** field (`[19:16]`).
+* $\text{Rs1}$ is the Dividend.
+* $\text{Rs2}$ is the Divisor.
+* The quotient is written to $\text{Rd}$.
+* The remainder is written to $\text{Rd}+1$.
 
 **Operation:**
-$\text{Acc96}[95:64] \leftarrow \text{Rs\_H}$
-$\text{Acc96}[63:32] \leftarrow \text{Rs\_M}$
-$\text{Acc96}[31:0] \leftarrow \text{Rs\_L}$
+$\text{Quotient} \leftarrow \text{Rs1} / \text{Rs2}$
+$\text{Remainder} \leftarrow \text{Rs1} \pmod{\text{Rs2}}$
+$\text{Rd} \leftarrow \text{Quotient}$
+$\text{Rd}+1 \leftarrow \text{Remainder}$
