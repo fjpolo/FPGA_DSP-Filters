@@ -1,61 +1,79 @@
-## 💻 DSP Coprocessor Documentation
+# RVDSP Co-Processor Instruction Set Architecture (ISA)
 
-### 1. Instruction Set Architecture (ISA)
+This document describes the Instruction Set Architecture (ISA) for the RVDSP Co-Processor. The processor uses a 32-bit fixed-length instruction format and operates on a 16-entry, 32-bit General Purpose Register (GPR) file.
 
-The coprocessor uses a 32-bit register-based ISA.
+## Key Data Path Widths
 
-#### Fixed-Point Format
-* **Format:** **Q15.16** (1 Sign Bit, 15 Integer Bits, 16 Fractional Bits).
-* **Data Size:** 32 bits.
-* **Accumulator:** 64 bits (for internal MAC results).
+| Component | Width | Notes |
+| :----- | :----- | :----- |
+| **GPRs (Registers)** | 32-bit | General purpose data registers (R0-R15). |
+| **Product Register** | 64-bit | Intermediate register for 32x32 $\rightarrow$ 64-bit multiplication result. |
+| **Accumulator Register** | 96-bit | Register for Multiply-Accumulate (MAC) operations. Accessed in three 32-bit segments. |
+| **Instruction/Data Memory** | 32-bit | Word width for both iMEM and dMEM. |
+| **Addresses** | 8-bit (256 words) | Address space for iMEM and dMEM. |
 
-#### Registers
-* **Register File (GPRs):** 16 General Purpose Registers (R0-R15), 32-bits wide.
+## Instruction Format
 
-#### Instruction Format
-A single 32-bit instruction word:
+All instructions are 32-bits wide. Fields are defined as:
 
-| Bits [31:28] | Bits [27:24] | Bits [23:20] | Bits [19:0] |
-| :--- | :--- | :--- | :--- |
-| **Opcode** (4b) | **Rd** (4b) | **Rs1/Rs** (4b) | **Rs2/Addr/Imm** (20b) |
+| Bits | Field | Description |
+| :----- | :----- | :----- |
+| **\[31:28\]** | **Opcode** | Primary operation code (4 bits). |
+| **\[27:24\]** | **Rd** | Destination Register address (4 bits). |
+| **\[23:20\]** | **Rs1** | Source Register 1 address (4 bits). |
+| **\[19:16\]** | **Rs2** | Source Register 2 address (4 bits). |
+| **\[19:0\]** | **Imm/Addr** | 20-bit Immediate value or Jump/Memory Address. |
 
-| Field | Description |
-| :--- | :--- |
-| **Opcode** | Specifies the operation. |
-| **Rd** | Destination Register address (Write to). |
-| **Rs1** | Source Register 1 address (Read from). |
-| **Rs2** | Source Register 2 address (Read from). |
-| **Addr/Imm** | Immediate value or Memory/Jump Address. |
+## Instruction Set Table
 
-#### Instruction Set
+| Opcode | Mnemonic | Format | Description |
+| :---: | :--- | :--- | :--- |
+| **0** | `NOP` | `0xxx xxxx xxxx xxxx xxxx xxxx xxxx` | No Operation. |
+| **1** | `MAC` | `1 Rd, Rs1, Rs2` | Multiply-Accumulate: $\text{Acc} \leftarrow \text{Acc} + (\text{Rs1} \times \text{Rs2})$. Writes $\text{Acc}[31:0]$ (Low Word) to Rd. |
+| **2** | `LOAD` | `2 Rd, Addr` | Load Word: $\text{Rd} \leftarrow \text{dMEM}[\text{Addr}]$. |
+| **3** | `STORE` | `3 Rs, Addr` | Store Word: $\text{dMEM}[\text{Addr}] \leftarrow \text{Rs}$. |
+| **4** | `MOVE` | `4 Rd, Imm` | Move Immediate: $\text{Rd} \leftarrow \text{SignExtend}(\text{Imm}[19:0])$. |
+| **5** | `JUMP` | `5 Addr` | Unconditional Jump: $\text{PC} \leftarrow \text{Addr}[7:0]$ (20-bit field truncated to 8-bit address). |
+| **6** | `READ_ACCH` | `6 Rd` | Read Accumulator High: $\text{Rd} \leftarrow \text{Acc}[95:64]$ (High Word). |
+| **7** | `READ_ACCM` | `7 Rd` | Read Accumulator Middle: $\text{Rd} \leftarrow \text{Acc}[63:32]$ (Middle Word). |
+| **8** | `READ_ACCL` | `8 Rd` | Read Accumulator Low: $\text{Rd} \leftarrow \text{Acc}[31:0]$ (Low Word). |
 
-| Instruction | Opcode (4b) | Format | Description |
-| :--- | :--- | :--- | :--- |
-| **NOP** | `4'b0000` | - | No Operation. |
-| **MAC** | `4'b0001` | `Rd, Rs1, Rs2` | $R_{d} \leftarrow R_{d} + (R_{s1} \times R_{s2})$ (32x32 $\rightarrow$ 64-bit Accumulation, result truncated to 32 bits if written out). |
-| **LOAD** | `4'b0010` | `Rd, Addr` | $R_{d} \leftarrow \text{dMEM}[\text{Addr}]$ (Load word from Data Memory). |
-| **STORE** | `4'b0011` | `Rs, Addr` | $\text{dMEM}[\text{Addr}] \leftarrow R_{s}$ (Store word to Data Memory). |
-| **MOVE** | `4'b0100` | `Rd, Imm` | $R_{d} \leftarrow \text{Imm}$ (Load 20-bit immediate value, sign-extended if needed, into $R_d$). |
-| **JUMP** | `4'b0101` | `Addr` | $\text{PC} \leftarrow \text{Addr}$ (Unconditional jump to 20-bit address). |
+## Detailed Instruction Descriptions
 
----
+### 1. `MAC Rd, Rs1, Rs2` (Opcode 1)
 
-### 2. Coprocessor Memory Map (Wishbone Access)
+This is the core DSP instruction. It performs a 32-bit signed multiplication of $\text{Rs1}$ and $\text{Rs2}$, stores the 64-bit result in the Product Register, and then adds the 64-bit Product Register (sign-extended to 96 bits) to the 96-bit Accumulator.
 
-The coprocessor acts as a **Wishbone Slave**. All addresses are 32-bit word addresses (`WBS_ADR_I` points to a 4-byte word).
+**Operation:**
 
-| Base Address (Hex) | End Address (Hex) | Size (Words) | Size (Bytes) | Component | Purpose |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **`0x0000_0000`** | `0x0000_00FF` | 256 | 1024 | **Program BSRAM (iMEM)** | Stores the DSP Instruction sequence. |
-| **`0x0000_0100`** | `0x0000_01FF` | 256 | 1024 | **Data BSRAM (dMEM)** | Stores input data, coefficients, and results. |
-| **`0x0000_0200`** | `0x0000_020F` | 16 | 64 | **Register File (GPRs)** | External peek/poke access to the 16 GPRs (R0-R15). |
-| **`0x0000_0210`** | `0x0000_0213` | 4 | 16 | **Control & Status Registers** | Interface for the host CPU to manage the coprocessor. |
+1. $\text{Product64} \leftarrow \text{Rs1} \times \text{Rs2}$
 
-#### Control & Status Registers
+2. $\text{Acc96} \leftarrow \text{Acc96} + \text{Product64}_{extended}$
 
-| Address Offset (from Base) | Name | Type | Description |
-| :--- | :--- | :--- | :--- |
-| `0x0000_0210` | **`CONTROL`** | R/W | **Bit 0 (START/STOP):** `1` starts execution, `0` halts. |
-| `0x0000_0211` | **`STATUS`** | R/O | **Bit 0 (DONE):** `1` if execution is halted/finished. |
-| `0x0000_0212` | **`PC_LATCH`** | R/O | Read-only view of the current **Program Counter**. |
-| `0x0000_0213` | **`INT_ENABLE`** | R/W | Enable different interrupt sources (e.g., overflow). |
+3. $\text{Rd} \leftarrow \text{Acc96}[31:0]$
+
+### 2. `LOAD Rd, Addr` (Opcode 2)
+
+Reads a 32-bit word from the Data Memory (dMEM) at the 8-bit address specified by the lower bits of the instruction's address field and writes it to the destination register $\text{Rd}$.
+
+### 3. `STORE Rs, Addr` (Opcode 3)
+
+Writes the 32-bit content of $\text{Rs1}$ to the Data Memory (dMEM) at the 8-bit address specified by the lower bits of the instruction's address field.
+
+### 4. `MOVE Rd, Imm` (Opcode 4)
+
+Writes the 20-bit Immediate value, sign-extended to 32 bits, into the destination register $\text{Rd}$.
+
+### 5. `JUMP Addr` (Opcode 5)
+
+Sets the Program Counter ($\text{PC}$) to the 8-bit address specified by the lower bits of the instruction's address field, causing an unconditional jump.
+
+### Accumulator Read Instructions
+
+These instructions allow the programmer to access the full 96-bit result stored in the accumulator register (`r_mac_accum_96`) by reading it out in three 32-bit segments.
+
+| Mnemonic | Opcode | Segment Accessed |
+| :----- | :---: | :----- |
+| **`READ_ACCH`** | 6 | $\text{Rd} \leftarrow \text{Acc96}[95:64]$ (High Word) |
+| **`READ_ACCM`** | 7 | $\text{Rd} \leftarrow \text{Acc96}[63:32]$ (Middle Word) |
+| **`READ_ACCL`** | 8 | $\text{Rd} \leftarrow \text{Acc96}[31:0]$ (Low Word) |
