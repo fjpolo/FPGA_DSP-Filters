@@ -17,7 +17,7 @@
 // The above copyright notice and this permission notice shall be included in all
 // copies or substantial portions of the Software.
 //
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// THE SOFTWARE IS PROVIDED "AS IS"
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 // AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
@@ -50,14 +50,9 @@ module RVDSPCoProc(
     reg [31:0]                  reg_wdata;                  
     reg                         reg_we;                     
     
-    // MAC Unit Signals
+    // MAC Unit Signals (Simplified to Non-Accumulating 32-bit Add)
     wire [31:0] mac_op1, mac_op2; 
-    wire [63:0] mac_product_64; 
-    reg [63:0]  mac_sum_64; 
-    wire [31:0] mac_result_32; 
-    /* verilator lint_off UNUSEDSIGNAL */
-    reg                         mac_en;  
-    /* verilator lint_on UNUSEDSIGNAL */
+    wire [31:0] mac_sum_32; // R1 + R2 result
     
     // Data Memory Signals
     reg [ADDR_BITS-1:0] dmem_addr;  
@@ -86,24 +81,23 @@ module RVDSPCoProc(
     
     // Hardcoded iMEM Initialization
     initial begin
-        // --- Data Setup ---
+        // Data Setup 
         // Instruction format for MOVE: Opcode(31:28)=4'b0100 | Rd(27:24) | Immediate(19:0)
         
-        // Address 0: MOVE R1, 0x00008000 (0.5 fixed point Q15.16)
-        // Opcode=4, Rd=1, Imm=0x8000
-        iMEM[0] = 32'h41008000; 
+        // Address 0: MOVE R1, 0x00000005 (Integer 5)
+        // Opcode=4, Rd=1, Imm=0x0005
+        iMEM[0] = 32'h41000005; 
 
-        // Address 1: MOVE R2, 0x00004000 (0.25 fixed point Q15.16)
-        // Opcode=4, Rd=2, Imm=0x4000
-        iMEM[1] = 32'h42004000;
+        // Address 1: MOVE R2, 0x0000000A (Integer 10)
+        // Opcode=4, Rd=2, Imm=0x000A
+        iMEM[1] = 32'h4200000A;
         
-        // --- Infinite MAC Loop ---
-        // Address 2: MAC R0, R1, R2 (0x10120000)
+        // Infinite ADD Loop 
+        // Address 2: MAC R0, R1, R2 (R0 = R1 + R2, i.e., R0 = 5 + 10. Expected R0 sequence: 15, 15, 15...)
         // Opcode=1, Rd=0, Rs1=1, Rs2=2 
-        // iMEM[2] = 32'h10120000; 
-        iMEM[2] = 32'h41008000; 
+        iMEM[2] = 32'h10120000; 
 
-        // Address 3: JUMP 0x002 (JUMP back to the MAC instruction)
+        // Address 3: JUMP 0x002 (JUMP back to the MAC/ADD instruction)
         // Opcode=5, Imm=0x00000002
         iMEM[3] = 32'h50000002;
         
@@ -112,7 +106,7 @@ module RVDSPCoProc(
             iMEM[i] = 32'h00000000;
         end        
         
-        $display("iMEM loaded with MAC loop setup.");
+        $display("iMEM loaded with non-accumulating ADD loop setup (R0 should be 15).");
         
         // Initialize start_flag high for immediate simulation run
         start_flag = 1'b1;
@@ -152,63 +146,44 @@ module RVDSPCoProc(
     assign reg_rdata1 = gpr[rs1_addr];
     assign reg_rdata2 = gpr[rs2_addr];
     
-    // Register Write
+    // Register Write - Registered write from the execution result (reg_wdata)
     always @(posedge  i_clk or negedge  i_rst_n) begin 
         if (! i_rst_n) begin
             // Initialize R0 to zero
             gpr[0] <= 32'h0000_0000;
         end else if (reg_we) begin
-            // Write only if R0 is not the destination (implied by design for MAC)
-            if (rd_addr != 4'b0000) begin
-                gpr[rd_addr] <= reg_wdata;
-            end
-        end
-        
-        // Special Case: R0 is the MAC accumulator, update it regardless of explicit reg_we (handled by MAC logic)
-        // Re-adding the R0 write for MAC (Opcode 1) is handled in the `reg_wdata` path during EXECUTE.
-        // For simplicity, we assume R0 is allowed to be written via reg_we, but the MAC result is
-        // handled differently in the GPR definition (not explicitly done here, relying on reg_wdata path).
-        // Let's rely on the explicit MAC logic in the combinational block to set reg_wdata.
-        // Note: MAC updates R0 (rd_addr=0) but uses it for accumulator input.
-        // We ensure R0 can be written here:
-        if (reg_we && (rd_addr == 4'b0000)) begin
-            gpr[0] <= reg_wdata;
+            // Write to any register specified by rd_addr, including R0 (Opcode 1 sets rd_addr=0)
+            gpr[rd_addr] <= reg_wdata;
         end
     end
-
-    //
-    // Fixed-Point MAC Unit - 32x32 -> 64-bit Accumulation
-    //
     
-    // MAC Operands are R1 and R2
+    //
+    // Core MAC/DSP Unit - Non-Accumulating 32-bit Addition
+    //
+
+    // MAC accum
+    wire mac_store_enable = (state_reg == STATE_EXECUTE)&&(opcode == 4'b0001);
+    reg [31:0] r_mac_sum_32;
+    reg [31:0] r_mac_accum;
+    always @(posedge i_clk) begin
+        if(!i_rst_n) begin
+            r_mac_accum <= 'h0;
+            r_mac_sum_32 <= 'h0;
+        end else begin
+            r_mac_accum <= r_mac_sum_32;
+            if(mac_store_enable)
+                r_mac_sum_32 <= mac_sum_32;
+        end
+    end
+    
+    // Operands are R1 and R2
     assign mac_op1 = gpr[1]; // Explicitly use R1
     assign mac_op2 = gpr[2]; // Explicitly use R2
+    
+    // Combinatorial 32-bit addition (R1 + R2)
+    assign mac_sum_32 = r_mac_accum + mac_op1 + mac_op2;
+    // Note: This is the final 32-bit result written to R0 via reg_wdata.
 
-    // 32x32 Multiplication -> 64-bit product (Combinational)
-    assign mac_product_64 = mac_op1 * mac_op2;
-    
-    // Accumulation Input Calculation (Combinational)
-    // The accumulator value (R0) is used as the current sum.
-    // The MAC instruction Rd is 0, but we need to check if we are reading it back for accumulation.
-    // Assuming R0 is the destination register for the MAC result.
-    wire [31:0] current_sum_32;
-    assign current_sum_32 = gpr[rd_addr]; // This will be R0 if rd_addr is 0
-
-    // Manual sign extension of the current 32-bit sum to 64-bit
-    wire [63:0] current_sum_64_ext;
-    assign current_sum_64_ext = { {32{current_sum_32[31]}}, current_sum_32 };
-
-    // New sum is (current_sum_64_ext + mac_product_64)
-    wire [63:0] mac_acc_in;
-    assign mac_acc_in = current_sum_64_ext + mac_product_64;
-    
-    // 64-bit Accumulation Register (Not needed if we use R0 as the accumulator state)
-    // Since R0 is the state, we don't need mac_sum_64 register. 
-    // Commenting out the unused mac_sum_64 register logic and signal.
-    
-    // Final 32-bit result (Q15.16) - This is the top 32 bits of the 64-bit intermediate sum
-    assign mac_result_32 = mac_acc_in[63:32]; 
-    
     //
     // Control Unit (FSM, PC, Decode, Execute) 
     //
@@ -235,9 +210,8 @@ module RVDSPCoProc(
     // Next State Logic (Combinational Block)
     always @* begin 
         state_next = state_reg;
-        pc_next    = pc_reg;    // Default to stall (no change) unless explicitly updated
+        pc_next    = pc_reg;    // Default to stall (no change) unless explicitly updated (e.g., FETCH or JUMP)
         reg_we     = 1'b0;
-        mac_en     = 1'b0;
         dmem_we    = 1'b0;
         dmem_re    = 1'b0;
         dmem_addr  = instruction[ADDR_BITS-1:0]; 
@@ -263,15 +237,15 @@ module RVDSPCoProc(
             end
             
             STATE_EXECUTE: begin
-                // pc_next    = pc_reg + 1; // Default sequential increment during execute
+                // PC advancement is now exclusively handled in STATE_FETCH and JUMP.
+                // pc_next defaults to pc_reg (hold) for sequential execution flow.
                 
                 // Control Signal and Data Path Assignment based on Opcode
                 case (opcode)
-                    // MAC R0, R1, R2 (Opcode 1)
+                    // MAC/ADD R0, R1, R2 (Opcode 1) -> R0 = R1 + R2
                     4'b0001: begin 
-                        // mac_en is not explicitly used as the MAC logic is combinational/uses R0 as state
                         reg_we    = 1'b1;         // Enable write to Rd (R0)
-                        reg_wdata = mac_result_32; // Write the accumulated result
+                        reg_wdata = mac_sum_32;   // Write the 32-bit sum
                     end
                     
                     // LOAD Rd, Addr (Opcode 2)
@@ -289,18 +263,18 @@ module RVDSPCoProc(
                     
                     // MOVE Rd, Imm (Opcode 4)
                     4'b0100: begin 
-                        reg_we    = 1'b1; // **FIXED: Enable write for MOVE**
+                        reg_we    = 1'b1; 
                         reg_wdata = {{12{instruction[19]}}, instruction[19:0]}; 
                     end
                     
                     // JUMP Addr (Opcode 5)
                     4'b0101: begin 
-                        pc_next = {12'h000, instruction[19:0]}; // **FIXED: Override PC for JUMP**
+                        pc_next = {12'h000, instruction[19:0]}; // Override PC for JUMP
                     end
                     
                     // NOP (Opcode 0)
                     4'b0000: begin
-                        // Default PC increment handles this
+                        // No control signals
                     end
                     
                     default: begin
@@ -308,7 +282,7 @@ module RVDSPCoProc(
                     end
                 endcase
                 
-                // --- State Transition Logic ---
+                // State Transition Logic 
                 if (!start_flag) begin
                     state_next = STATE_IDLE;
                 end else begin
