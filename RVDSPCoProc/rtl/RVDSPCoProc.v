@@ -47,9 +47,19 @@ module RVDSPCoProc(
     reg [3:0]                   opcode;       
     reg [REG_ADDR_BITS-1:0]     rd_addr, rs1_addr, rs2_addr; 
     wire [31:0]                 reg_rdata1, reg_rdata2;     
-    reg [31:0]                  reg_wdata;                  
-    reg                         reg_we;                     
     
+    // Multi-write Register Path Controls (for MUL)
+    reg                         reg_we_mul_high; // Write enable for Rd (High word)
+    reg                         reg_we_mul_low;  // Write enable for Rd+1 (Low word)
+    reg [3:0]                   rd_addr_low;     // Destination address for Low word (Rd+1)
+    reg [31:0]                  reg_wdata_high;  // Data for Rd (High word)
+    reg [31:0]                  reg_wdata_low;   // Data for Rd+1 (Low word)
+    
+    // Single-write Register Path Controls (for MAC, LOAD, READ_ACC, MOVE)
+    reg                         reg_we_single;
+    reg [3:0]                   rd_addr_single;
+    reg [31:0]                  reg_wdata_single;
+
     // MAC Unit Signals (Dedicated 96-bit Accumulator)
     wire [31:0] mac_op1, mac_op2; 
     wire [95:0] mac_mul_96; // Combinatorial Accumulation Result (96-bit, used for next state if MAC)
@@ -81,27 +91,30 @@ module RVDSPCoProc(
     reg [31:0] iMEM [0:255] /* syn_ramstyle=block_ram */; 
     
     // Hardcoded iMEM Initialization
-    // --- Generated from program.hex ---
-    initial begin
-        iMEM[0] = 32'h41000001;
-        iMEM[1] = 32'h42000002;
-        iMEM[2] = 32'h43000003;
-        iMEM[3] = 32'h90000000;
-        iMEM[4] = 32'hA1230000;
-        iMEM[5] = 32'h64000000;
-        iMEM[6] = 32'h75000000;
-        iMEM[7] = 32'h86000000;
-        iMEM[8] = 32'h10110000;
-        iMEM[9] = 32'h50000005;
+// --- Generated from program.hex ---
+initial begin
+    iMEM[0] = 32'h41000000;
+    iMEM[1] = 32'h42000000;
+    iMEM[2] = 32'h43000002;
+    iMEM[3] = 32'h90000000;
+    iMEM[4] = 32'hA1230000;
+    iMEM[5] = 32'h64000000;
+    iMEM[6] = 32'h75000000;
+    iMEM[7] = 32'h86000000;
+    iMEM[8] = 32'h41000002;
+    iMEM[9] = 32'h42000002;
+    iMEM[10] = 32'h43000000;
+    iMEM[11] = 32'h10110000;
+    iMEM[12] = 32'h50000005;
 
-        // Initialize the rest of the memory to NOP (0x00000000)
-        for (integer i = 10; i < 256; i++) begin 
-            iMEM[i] = 32'h00000000;
-        end        
-        start_flag = 1'b1;
-    end
-    // ----------------------------------         
-    
+    // Initialize the rest of the memory to NOP (0x00000000)
+    for (integer i = 13; i < 256; i++) begin 
+        iMEM[i] = 32'h00000000;
+    end        
+    start_flag = 1'b1;
+end
+// ----------------------------------
+
     //
     // Data Memory (dMEM) BSRAM 
     //
@@ -141,20 +154,35 @@ module RVDSPCoProc(
     wire [31:0] reg_rdata_m = gpr[rs1_addr]; // Rs1 field holds Rs_M
     wire [31:0] reg_rdata_l = gpr[rs2_addr]; // Rs2 field holds Rs_L
     
-    // Register Write - Registered write from the execution result (reg_wdata)
+    // Register Write - Handles both single (LOAD, READ_ACC, MOVE, MAC) and double (MUL) writes
     always @(posedge  i_clk or negedge  i_rst_n) begin 
         if (! i_rst_n) begin
-            // Initialize R0 to zero
             gpr[0] <= 32'h0000_0000;
-        end else if (reg_we) begin
-            // Write to any register specified by rd_addr, including R0 (Opcode 1 sets rd_addr=0)
-            gpr[rd_addr] <= reg_wdata;
+        end else begin
+            // 1. Single Write (MAC, LOAD, READ_ACC, MOVE)
+            if (reg_we_single) begin
+                gpr[rd_addr_single] <= reg_wdata_single;
+            end
+            
+            // 2. Double Write for MUL: Write High Word (Rd)
+            if (reg_we_mul_high) begin
+                gpr[rd_addr] <= reg_wdata_high;
+            end
+            
+            // 3. Double Write for MUL: Write Low Word (Rd+1). R15 wraps to R0.
+            if (reg_we_mul_low) begin
+                gpr[rd_addr_low] <= reg_wdata_low;
+            end
         end
     end
     
     //
     // Core MAC/DSP Unit - 96-bit Multiply-Accumulate
     //
+    
+    // Operands for the Multiplier are R1 and R2
+    assign mac_op1 = reg_rdata1; // Use Rs1 (from instruction)
+    assign mac_op2 = reg_rdata2; // Use Rs2 (from instruction)
 
     // MAC accum Control Signals
     wire mac_accum_write = (state_reg == STATE_EXECUTE) && (
@@ -170,24 +198,22 @@ module RVDSPCoProc(
     // Sequential block for Product and Accumulator
     always @(posedge i_clk or negedge i_rst_n) begin
         if(!i_rst_n) begin
-            r_mac_accum_96 <= 96'h0; // Initialize 96-bit accum
-            r_mac_mul_64 <= 64'h0;   // Initialize 64-bit product
+            r_mac_accum_96 <= 96'h0; 
+            r_mac_mul_64 <= 64'h0;   
         end else begin
             // Accumulator Update: Only write if MAC, CLR, or LOAD instruction is active
             if (mac_accum_write) begin
                 r_mac_accum_96 <= r_mac_accum_next_96;
             end
             
-            // Product Update: Only calculate and store product if it's a MAC instruction
-            if((state_reg == STATE_EXECUTE) && (opcode == 4'b0001)) begin
+            // Product Update: Calculate and store product if it's a MAC or MUL instruction
+            // THIS IS WHERE THE MULTIPLIER IS REUSED
+            if((state_reg == STATE_EXECUTE) && (opcode == 4'b0001 || opcode == 4'b1011)) begin
                 r_mac_mul_64 <= $signed(mac_op1) * $signed(mac_op2); // Store 32x32 signed product
             end
         end
     end
     
-    // Operands for the Multiplier are R1 and R2
-    assign mac_op1 = reg_rdata1; // Use Rs1 (from instruction)
-    assign mac_op2 = reg_rdata2; // Use Rs2 (from instruction)
     
     // Combinatorial Accumulation
     // The 64-bit registered product (r_mac_mul_64) is sign-extended to 96 bits for addition.
@@ -205,7 +231,6 @@ module RVDSPCoProc(
                 4'b1001: // CLR_ACC
                     r_mac_accum_next_96 = 96'h0;
                 4'b1010: // LOAD_ACCR
-                    // Concatenate the three GPRs (Rs_H, Rs_M, Rs_L) into the 96-bit accumulator
                     r_mac_accum_next_96 = {reg_rdata_h, reg_rdata_m, reg_rdata_l};
                 default:
                     r_mac_accum_next_96 = r_mac_accum_96;
@@ -227,11 +252,9 @@ module RVDSPCoProc(
         end else begin
             state_reg <= state_next;
             pc_reg    <= pc_next;
-            // Register the instruction here, after fetching
             if (state_reg == STATE_FETCH) begin
                 instruction <= iMEM[pc_reg[ADDR_BITS-1:0]];
             end 
-            // Only flag done when transitioning from EXECUTE to IDLE
             done_flag <= (state_reg == STATE_EXECUTE) && (state_next == STATE_IDLE);
         end
     end
@@ -239,14 +262,22 @@ module RVDSPCoProc(
     // Next State Logic (Combinational Block)
     always @* begin 
         state_next = state_reg;
-        pc_next    = pc_reg;    // Default to stall (no change) unless explicitly updated (e.g., FETCH or JUMP)
-        reg_we     = 1'b0;
+        pc_next    = pc_reg;    
         dmem_we    = 1'b0;
         dmem_re    = 1'b0;
         dmem_addr  = instruction[ADDR_BITS-1:0]; 
-        reg_wdata  = 32'h0;
         
-        // Instruction Decode (Combinational) - Always decode based on registered instruction
+        // Reset register write paths
+        reg_we_single = 1'b0;
+        rd_addr_single = 4'b0;
+        reg_wdata_single = 32'h0;
+        reg_we_mul_high = 1'b0;
+        reg_we_mul_low = 1'b0;
+        rd_addr_low = 4'b0;
+        reg_wdata_high = 32'h0;
+        reg_wdata_low = 32'h0;
+        
+        // Instruction Decode 
         opcode   = instruction[31:28];
         rd_addr  = instruction[27:24];
         rs1_addr = instruction[23:20];
@@ -256,32 +287,31 @@ module RVDSPCoProc(
             STATE_IDLE: begin
                 if (start_flag) begin
                     state_next = STATE_FETCH;
-                    pc_next    = 32'h0000_0000; // Start at address 0
+                    pc_next    = 32'h0000_0000; 
                 end
             end
             
             STATE_FETCH: begin
-                pc_next    = pc_reg + 1; // Explicitly set increment for fetch
+                pc_next    = pc_reg + 1; 
                 state_next = STATE_EXECUTE;
             end
             
             STATE_EXECUTE: begin
-                // PC advancement is now exclusively handled in STATE_FETCH and JUMP.
                 
-                // Control Signal and Data Path Assignment based on Opcode
                 case (opcode)
-                    // MAC R0, R1, R2 (Opcode 1) -> R0 = Low 32 bits of Acc
+                    // MAC Rd, Rs1, Rs2 (Opcode 1)
                     4'b0001: begin 
-                        // Write the low 32 bits back to R0 for compatibility.
-                        reg_we    = 1'b1;               // Enable write to Rd (R0)
-                        reg_wdata = mac_mul_96[31:0];   // Write the Low 32 bits of the Accumulator
+                        reg_we_single    = 1'b1;
+                        rd_addr_single   = rd_addr;
+                        reg_wdata_single = mac_mul_96[31:0]; // Write Low Acc word
                     end
                     
                     // LOAD Rd, Addr (Opcode 2)
                     4'b0010: begin 
-                        dmem_re   = 1'b1;
-                        reg_we    = 1'b1;
-                        reg_wdata = dmem_rdata; 
+                        dmem_re        = 1'b1;
+                        reg_we_single  = 1'b1;
+                        rd_addr_single = rd_addr;
+                        reg_wdata_single = dmem_rdata; 
                     end
                     
                     // STORE Rs, Addr (Opcode 3)
@@ -292,31 +322,35 @@ module RVDSPCoProc(
                     
                     // MOVE Rd, Imm (Opcode 4)
                     4'b0100: begin 
-                        reg_we    = 1'b1; 
-                        reg_wdata = {{12{instruction[19]}}, instruction[19:0]}; 
+                        reg_we_single    = 1'b1; 
+                        rd_addr_single   = rd_addr;
+                        reg_wdata_single = {{12{instruction[19]}}, instruction[19:0]}; 
                     end
                     
                     // JUMP Addr (Opcode 5)
                     4'b0101: begin 
-                        pc_next = {12'h000, instruction[19:0]}; // Override PC for JUMP
+                        pc_next = {24'h000000, instruction[7:0]}; 
                     end
 
-                    // READ_ACCH Rd (Opcode 6) -> Read High 32 bits (95:64)
+                    // READ_ACCH Rd (Opcode 6)
                     4'b0110: begin
-                        reg_we    = 1'b1;
-                        reg_wdata = r_mac_accum_96[95:64];
+                        reg_we_single    = 1'b1;
+                        rd_addr_single   = rd_addr;
+                        reg_wdata_single = r_mac_accum_96[95:64];
                     end
                     
-                    // READ_ACCM Rd (Opcode 7) -> Read Middle 32 bits (63:32)
+                    // READ_ACCM Rd (Opcode 7)
                     4'b0111: begin
-                        reg_we    = 1'b1;
-                        reg_wdata = r_mac_accum_96[63:32];
+                        reg_we_single    = 1'b1;
+                        rd_addr_single   = rd_addr;
+                        reg_wdata_single = r_mac_accum_96[63:32];
                     end
                     
-                    // READ_ACCL Rd (Opcode 8) -> Read Low 32 bits (31:0)
+                    // READ_ACCL Rd (Opcode 8)
                     4'b1000: begin
-                        reg_we    = 1'b1;
-                        reg_wdata = r_mac_accum_96[31:0];
+                        reg_we_single    = 1'b1;
+                        rd_addr_single   = rd_addr;
+                        reg_wdata_single = r_mac_accum_96[31:0];
                     end
 
                     // CLR_ACC (Opcode 9)
@@ -327,6 +361,18 @@ module RVDSPCoProc(
                     // LOAD_ACCR (Opcode A / 10)
                     4'b1010: begin
                         // Accumulator update is handled in the MAC sequential block
+                    end
+                    
+                    // MUL Rd, Rs1, Rs2 (Opcode B / 11)
+                    4'b1011: begin
+                        // Write 1: High Word to Rd
+                        reg_we_mul_high = 1'b1;
+                        reg_wdata_high  = r_mac_mul_64[63:32];
+                        
+                        // Write 2: Low Word to Rd+1 (R15 wraps to R0)
+                        reg_we_mul_low  = 1'b1;
+                        rd_addr_low     = rd_addr + 1; 
+                        reg_wdata_low   = r_mac_mul_64[31:0];
                     end
                     
                     // NOP (Opcode 0)
@@ -343,7 +389,6 @@ module RVDSPCoProc(
                 if (!start_flag) begin
                     state_next = STATE_IDLE;
                 end else begin
-                    // ALWAYS go to FETCH after execution 
                     state_next = STATE_FETCH; 
                 end
                 
