@@ -21,6 +21,7 @@ def generate_verilog_block(hex_file, output_file=None):
 
     verilog_output = []
     verilog_output.append(f"// --- Generated from {hex_file} ---")
+    verilog_output.append("integer i;")
     verilog_output.append("initial begin")
 
     # 1. Write Instructions
@@ -30,12 +31,11 @@ def generate_verilog_block(hex_file, output_file=None):
     # 2. Fill the rest of iMEM with NOP (0x00000000)
     if len(hex_instructions) < max_memory_size:
         verilog_output.append("\n    // Initialize the rest of the memory to NOP (0x00000000)")
-        verilog_output.append(f"    for (integer i = {len(hex_instructions)}; i < {max_memory_size}; i++) begin ")
+        verilog_output.append(f"    for (i = {len(hex_instructions)}; i < {max_memory_size}; i++) begin ")
         verilog_output.append("        iMEM[i] = 32'h00000000;")
         verilog_output.append("    end        ")
 
     # 3. Final block closing and metadata (copied from your original style)
-    verilog_output.append("    $display(\"iMEM loaded.\");")
     verilog_output.append("    start_flag = 1'b1;")
     verilog_output.append("end")
     verilog_output.append("// ----------------------------------")

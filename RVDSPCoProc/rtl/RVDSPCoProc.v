@@ -94,6 +94,7 @@ module RVDSPCoProc(
     
     // Hardcoded iMEM Initialization
 // --- Generated from program.hex ---
+integer i;
 initial begin
     iMEM[0] = 32'h41000000;
     iMEM[1] = 32'h42000000;
@@ -112,7 +113,7 @@ initial begin
     iMEM[14] = 32'h50000005;
 
     // Initialize the rest of the memory to NOP (0x00000000)
-    for (integer i = 15; i < 256; i++) begin 
+    for (i = 15; i < 256; i++) begin 
         iMEM[i] = 32'h00000000;
     end        
     $display("iMEM loaded.");
