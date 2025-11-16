@@ -50,9 +50,9 @@ module RVDSPCoProc(
     reg [31:0]                  reg_wdata;                  
     reg                         reg_we;                     
     
-    // MAC Unit Signals (Simplified to Non-Accumulating 32-bit Add)
+    // MAC Unit Signals (Dedicated 96-bit Accumulator)
     wire [31:0] mac_op1, mac_op2; 
-    wire [63:0] mac_mul_64; // R1 + R2 result
+    wire [95:0] mac_mul_96; // Combinatorial Accumulation Result (96-bit)
     
     // Data Memory Signals
     reg [ADDR_BITS-1:0] dmem_addr;  
@@ -92,12 +92,12 @@ module RVDSPCoProc(
         // Opcode=4, Rd=2, Imm=0x000A
         iMEM[1] = 32'h4200000A;
         
-        // Infinite ADD Loop 
-        // Address 2: MAC R0, R1, R2 (R0 = R1 + R2, i.e., R0 = 5 + 10. Expected R0 sequence: 15, 15, 15...)
+        // Infinite MAC Loop 
+        // Address 2: MAC R0, R1, R2 (R0 = Low 32 bits of Acc)
         // Opcode=1, Rd=0, Rs1=1, Rs2=2 
         iMEM[2] = 32'h10120000; 
 
-        // Address 3: JUMP 0x002 (JUMP back to the MAC/ADD instruction)
+        // Address 3: JUMP 0x002 (JUMP back to the MAC instruction)
         // Opcode=5, Imm=0x00000002
         iMEM[3] = 32'h50000002;
         
@@ -156,31 +156,37 @@ module RVDSPCoProc(
     end
     
     //
-    // Core MAC/DSP Unit - Non-Accumulating 32-bit Addition
+    // Core MAC/DSP Unit - 96-bit Multiply-Accumulate
     //
 
     // MAC accum
     wire mac_store_enable = (state_reg == STATE_EXECUTE)&&(opcode == 4'b0001);
-    reg [63:0] r_mac_mul_64;
-    reg [63:0] r_mac_accum;
+    reg [63:0] r_mac_mul_64; // Product register (64-bit)
+    reg [95:0] r_mac_accum_96;  // Accumulator register (96-bit)
     always @(posedge i_clk) begin
         if(!i_rst_n) begin
-            r_mac_accum <= 'h0;
-            r_mac_mul_64 <= 'h0;
+            r_mac_accum_96 <= 96'h0; // Initialize 96-bit accum
+            r_mac_mul_64 <= 64'h0; // Initialize 64-bit product
         end else begin
-            r_mac_accum <= r_mac_mul_64;
+            // Explicitly registering the accumulator's next state
+            r_mac_accum_96 <= mac_mul_96;
+            
+            // Explicitly registering the current product
             if(mac_store_enable)
-                r_mac_mul_64 <= mac_mul_64;
+                r_mac_mul_64 <= $signed(mac_op1) * $signed(mac_op2); // Store 32x32 signed product
         end
     end
     
     // Operands are R1 and R2
-    assign mac_op1 = gpr[1]; // Explicitly use R1
-    assign mac_op2 = gpr[2]; // Explicitly use R2
+    assign mac_op1 = reg_rdata1; // Use Rs1 (from instruction)
+    assign mac_op2 = reg_rdata2; // Use Rs2 (from instruction)
     
-    // Combinatorial 32-bit addition (R1 + R2)
-    assign mac_mul_64 = r_mac_accum + (mac_op1 * mac_op2);
-    // Note: This is the final 32-bit result written to R0 via reg_wdata.
+    // Combinatorial Accumulation (r_mac_accum_96 + Sign-Extended Product)
+    // The 64-bit registered product (r_mac_mul_64) is sign-extended to 96 bits for addition.
+    wire [95:0] mac_product_96 = {{32{r_mac_mul_64[63]}}, r_mac_mul_64};
+    assign mac_mul_96 = r_mac_accum_96 + mac_product_96;
+    
+    // Note: The accumulation result is now mac_mul_96.
 
     //
     // Control Unit (FSM, PC, Decode, Execute) 
@@ -240,10 +246,12 @@ module RVDSPCoProc(
                 
                 // Control Signal and Data Path Assignment based on Opcode
                 case (opcode)
-                    // MAC/ADD R0, R1, R2 (Opcode 1) -> R0 = R1 + R2
+                    // MAC/ADD R0, R1, R2 (Opcode 1) -> R0 = Low 32 bits of Acc
                     4'b0001: begin 
+                        // The MAC operation now updates the 96-bit register (r_mac_accum_96) sequentially.
+                        // We write the low 32 bits back to R0 for compatibility.
                         reg_we    = 1'b1;               // Enable write to Rd (R0)
-                        reg_wdata = mac_mul_64[31:0];   // Write the 32-bit MAC
+                        reg_wdata = mac_mul_96[31:0];   // Write the Low 32 bits of the 96-bit Accumulator
                     end
                     
                     // LOAD Rd, Addr (Opcode 2)
