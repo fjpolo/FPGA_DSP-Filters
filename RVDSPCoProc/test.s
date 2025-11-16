@@ -15,13 +15,17 @@
     READ_ACCM R5
     // Address 7: Read Low 32 bits (R3) into R6
     READ_ACCL R6
-    // R1 (High): 0x00000000
+    // R1 (High): 0x00000002
     MOVE R1, 2
-    // R2 (Middle): 0x00000000
+    // R2 (Middle): 0x00000002
     MOVE R2, 2
-    // R3 (Low): 0x00000002
-    MOVE R3, 0
-    // Address 11: Run a single MAC to ensure it still works: (1*1) + Acc = 1 + Acc
-    MAC R1, R1 
-    // Address 12: JUMP back to Address 5 to continually read the stable value.
+    // Address 10: Run a single MAC to ensure it still works: (1*1) + Acc = 1 + Acc
+    MAC R0, R1, R2
+    // R1 (High): 0x00000000
+    MOVE R8, 3
+    // R2 (Middle): 0x00000000
+    MOVE R9, 3
+    // Address 13: MUL R10, R8, R9. R10 = High (0), R11 = Low (30)
+    MUL R10, R8, R9
+    // Address 14: JUMP back to Address 5 to continually read the stable value.
     JUMP 5

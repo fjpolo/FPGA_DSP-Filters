@@ -5,7 +5,7 @@ import sys
 # Fields: Rd (27:24), Rs1 (23:20), Rs2 (19:16), Imm/Addr (15:0)
 ISA = {
     "NOP":         (0b0000, "NOP"),
-    "MAC":         (0b0001, "MAC Rs1, Rs2"),  # Acc96 = Acc96 + (Rs1 * Rs2)
+    "MAC":         (0b0001, "MAC Rd, Rs1, Rs2"), # Acc96 = Acc96 + (Rs1 * Rs2)
     "LOAD":        (0b0010, "LOAD Rd, Addr"),
     "STORE":       (0b0011, "STORE Rs1, Addr"),
     "MOVE":        (0b0100, "MOVE Rd, Imm"),
@@ -15,6 +15,7 @@ ISA = {
     "READ_ACCL":   (0b1000, "READ_ACCL Rd"), # Read Low 32 bits (31:0)
     "CLR_ACC":     (0b1001, "CLR_ACC"),      # Clear Accumulator
     "LOAD_ACCR":   (0b1010, "LOAD_ACCR Rs_H, Rs_M, Rs_L"), # Load Acc from 3 Registers
+    "MUL":         (0b1011, "MUL Rd, Rs1, Rs2"), # Multiply 32x32 -> 64 bits (Rd=High, Rd+1=Low)
 }
 
 def parse_register(reg_str):
@@ -39,10 +40,7 @@ def parse_immediate(imm_str):
     else:
         value = int(imm_str, 10)
 
-    # Allow 20-bit Imm/Addr, although Python uses 16 bits in the instruction format logic
-    # The ISA defines the Imm/Addr field as 20 bits [19:0], but the encoding only uses [19:0] if no Rs fields are present.
-    # Given the current implementation only uses bits [19:0] for Imm/Addr or split fields (Rs1, Rs2), 
-    # and the assembler limits it to 16 bits (0xFFFF) for safety, we'll keep that limit.
+    # Limiting to 16 bits (0xFFFF) for safety, although the field is 20 bits.
     if not 0 <= value <= 0xFFFF:
         raise ValueError(f"Immediate/Address value {value} (0x{value:X}) exceeds 16-bit limit (0xFFFF).")
     return value
@@ -65,7 +63,6 @@ def assemble_line(line, line_num):
     mnemonic = parts[0].upper()
 
     if mnemonic not in ISA:
-        # This is the point where the error from the user's prompt occurred.
         raise ValueError(f"Unknown instruction mnemonic: {mnemonic}")
 
     opcode, format_str = ISA[mnemonic]
@@ -74,7 +71,6 @@ def assemble_line(line, line_num):
     # --- Instruction Encoding Logic ---
 
     if mnemonic == "NOP" or mnemonic == "CLR_ACC":
-        # NOP: 00000000, CLR_ACC: 90000000
         return f"{instr:08X}" 
 
     elif mnemonic == "MOVE" or mnemonic == "LOAD":
@@ -93,16 +89,18 @@ def assemble_line(line, line_num):
         Addr = parse_immediate(parts[2])
         instr |= (Rs1 << 20) | (Addr & 0xFFFF)
 
-    elif mnemonic == "MAC":
-        # Format: MAC Rs1, Rs2 (Rd is implicitly 0, but the field must be present)
-        if len(parts) != 3:
-            raise ValueError(f"Expected MAC Rs1, Rs2")
-        # MAC output is written to R0 implicitly, but the instruction structure 
-        # is just Rs1 and Rs2, ignoring Rd. We must ensure Rs1/Rs2 are in the right place.
-        Rs1 = parse_register(parts[1])
-        Rs2 = parse_register(parts[2])
-        # Rd is implicitly 0, so we just set Rs1 and Rs2 fields.
-        instr |= (Rs1 << 20) | (Rs2 << 16) 
+    elif mnemonic == "MAC" or mnemonic == "MUL":
+        # Format: MAC Rd, Rs1, Rs2 / MUL Rd, Rs1, Rs2
+        if len(parts) != 4:
+            raise ValueError(f"Expected {mnemonic} Rd, Rs1, Rs2")
+            
+        Rd = parse_register(parts[1])
+        Rs1 = parse_register(parts[2])
+        Rs2 = parse_register(parts[3])
+        
+        # Encoding: Rd << 24 | Rs1 << 20 | Rs2 << 16
+        instr |= (Rd << 24) | (Rs1 << 20) | (Rs2 << 16)
+
 
     elif mnemonic == "JUMP":
         # Format: JUMP Addr
@@ -120,7 +118,6 @@ def assemble_line(line, line_num):
         
     elif mnemonic == "LOAD_ACCR":
         # Format: LOAD_ACCR Rs_H, Rs_M, Rs_L
-        # Uses Rd, Rs1, Rs2 fields for the three source registers
         if len(parts) != 4:
             raise ValueError(f"Expected LOAD_ACCR Rs_H, Rs_M, Rs_L (3 registers)")
         
@@ -135,54 +132,38 @@ def assemble_line(line, line_num):
 
 def main(input_file, output_file):
     """Main function to process the assembly file."""
-    print(f"Assembling {input_file}...")
-    
     try:
-        # We explicitly assume the input file is the assembly source (.asm)
         with open(input_file, 'r') as f:
             lines = f.readlines()
-    except FileNotFoundError:
-        print(f"Error: Input file not found: {input_file}")
-        sys.exit(1)
-
-    hex_instructions = []
-    
-    # Assembly address tracking for debugging (not used for label resolution here)
-    # address = 0 
-
-    for i, line in enumerate(lines):
-        try:
-            hex_code = assemble_line(line, i + 1)
-            if hex_code:
-                hex_instructions.append(hex_code)
-                # address += 1
-        except ValueError as e:
-            # Report the error with context
-            print(f"Assembly Error on line {i + 1} ('{line.strip()}'): {e}")
-            sys.exit(1)
-
-    try:
-        with open(output_file, 'w') as f:
-            for hex_code in hex_instructions:
-                f.write(f"{hex_code}\n")
-        print(f"Successfully assembled {len(hex_instructions)} instructions to {output_file}")
         
-    except IOError:
-        print(f"Error: Could not write to output file: {output_file}")
-        sys.exit(1)
+        hex_instructions = []
+        for i, line in enumerate(lines):
+            try:
+                hex_instr = assemble_line(line, i + 1)
+                if hex_instr:
+                    hex_instructions.append(hex_instr)
+            except ValueError as e:
+                print(f"Error on line {i+1}: {line.strip()}\n  {e}", file=sys.stderr)
+                # Exit gracefully or skip line, depending on required robustness
+                sys.exit(1)
 
+        with open(output_file, 'w') as f:
+            for hex_instr in hex_instructions:
+                f.write(f"{hex_instr}\n")
+        
+        # print(f"Successfully assembled {len(hex_instructions)} instructions to {output_file}")
+
+    except FileNotFoundError:
+        print(f"Error: Input file not found at {input_file}", file=sys.stderr)
+        sys.exit(1)
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}", file=sys.stderr)
+        sys.exit(1)
 
 if __name__ == "__main__":
+    # Simplified main for in-context execution:
     if len(sys.argv) != 3:
-        print("Usage: python assembler.py <input_asm_file> <output_hex_file>")
-        print("\nExample Assembly Syntax:")
-        print("MOVE R1, 5")
-        print("MOVE R2, 0xA")
-        print("MAC R1, R2")
-        print("READ_ACCL R3")
-        print("JUMP 2")
-        print("CLR_ACC")
-        print("LOAD_ACCR R1, R2, R3")
-        sys.exit(1)
-        
-    main(sys.argv[1], sys.argv[2])
+        pass
+    else:
+        main(sys.argv[1], sys.argv[2])
+    pass

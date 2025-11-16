@@ -62,7 +62,9 @@ module RVDSPCoProc(
 
     // MAC Unit Signals (Dedicated 96-bit Accumulator)
     wire [31:0] mac_op1, mac_op2; 
-    wire [95:0] mac_mul_96; // Combinatorial Accumulation Result (96-bit, used for next state if MAC)
+    // The new term that is actually added to the accumulator: zeroed out if not MAC.
+    wire [95:0] mac_add_term_96; 
+    wire [95:0] mac_sum_96; // Combinatorial Accumulation Result (96-bit)
     reg [95:0]  r_mac_accum_next_96; // Accumulator next state (used for CLR/LOAD)
 
     // Data Memory Signals
@@ -103,18 +105,22 @@ initial begin
     iMEM[7] = 32'h86000000;
     iMEM[8] = 32'h41000002;
     iMEM[9] = 32'h42000002;
-    iMEM[10] = 32'h43000000;
-    iMEM[11] = 32'h10110000;
-    iMEM[12] = 32'h50000005;
+    iMEM[10] = 32'h10120000;
+    iMEM[11] = 32'h48000003;
+    iMEM[12] = 32'h49000003;
+    iMEM[13] = 32'hBA890000;
+    iMEM[14] = 32'h50000005;
 
     // Initialize the rest of the memory to NOP (0x00000000)
-    for (integer i = 13; i < 256; i++) begin 
+    for (integer i = 15; i < 256; i++) begin 
         iMEM[i] = 32'h00000000;
     end        
+    $display("iMEM loaded.");
     start_flag = 1'b1;
 end
 // ----------------------------------
 
+    
     //
     // Data Memory (dMEM) BSRAM 
     //
@@ -184,6 +190,9 @@ end
     assign mac_op1 = reg_rdata1; // Use Rs1 (from instruction)
     assign mac_op2 = reg_rdata2; // Use Rs2 (from instruction)
 
+    // Combinatorial 32x32 Signed Multiplier (shared hardware resource)
+    wire [63:0] comb_product_64 = $signed(mac_op1) * $signed(mac_op2);
+
     // MAC accum Control Signals
     wire mac_accum_write = (state_reg == STATE_EXECUTE) && (
         opcode == 4'b0001 || // MAC (Accumulate)
@@ -192,33 +201,48 @@ end
     );
 
     // Accumulator Register (96-bit)
-    reg [63:0] r_mac_mul_64;   // Product register (64-bit)
-    reg [95:0] r_mac_accum_96; // Accumulator register (96-bit)
+    reg [63:0] r_mac_product_64; // Dedicated register for MAC product result (feeds accumulator)
+    reg [63:0] r_mul_product_64; // Dedicated register for MUL product result (feeds GPRs)
+    reg [95:0] r_mac_accum_96;   // Accumulator register (96-bit)
     
-    // Sequential block for Product and Accumulator
+    // Sequential block for Products and Accumulator
     always @(posedge i_clk or negedge i_rst_n) begin
         if(!i_rst_n) begin
             r_mac_accum_96 <= 96'h0; 
-            r_mac_mul_64 <= 64'h0;   
+            r_mac_product_64 <= 64'h0;
+            r_mul_product_64 <= 64'h0;
         end else begin
             // Accumulator Update: Only write if MAC, CLR, or LOAD instruction is active
             if (mac_accum_write) begin
                 r_mac_accum_96 <= r_mac_accum_next_96;
             end
             
-            // Product Update: Calculate and store product if it's a MAC or MUL instruction
-            // THIS IS WHERE THE MULTIPLIER IS REUSED
-            if((state_reg == STATE_EXECUTE) && (opcode == 4'b0001 || opcode == 4'b1011)) begin
-                r_mac_mul_64 <= $signed(mac_op1) * $signed(mac_op2); // Store 32x32 signed product
+            // MAC Product Register Update (Opcode 1)
+            // Store the product if the current instruction is MAC
+            if((state_reg == STATE_EXECUTE) && (opcode == 4'b0001)) begin
+                r_mac_product_64 <= comb_product_64;
+            end
+
+            // MUL Product Register Update (Opcode B)
+            // Store the product if the current instruction is MUL
+            if((state_reg == STATE_EXECUTE) && (opcode == 4'b1011)) begin
+                r_mul_product_64 <= comb_product_64;
             end
         end
     end
     
     
-    // Combinatorial Accumulation
-    // The 64-bit registered product (r_mac_mul_64) is sign-extended to 96 bits for addition.
-    wire [95:0] mac_product_96 = {{32{r_mac_mul_64[63]}}, r_mac_mul_64};
-    assign mac_mul_96 = r_mac_accum_96 + mac_product_96; // Accumulation result
+    // Combinatorial Accumulation Logic
+    // 1. Sign-extend the registered MAC product (from the previous cycle)
+    wire [95:0] mac_product_96 = {{32{r_mac_product_64[63]}}, r_mac_product_64};
+    
+    // 2. Control the input to the Adder: only add the product if the current instruction is MAC
+    // This uses the MAC opcode to control the addition of the registered product.
+    wire is_mac_op = (state_reg == STATE_EXECUTE) && (opcode == 4'b0001);
+    assign mac_add_term_96 = is_mac_op ? mac_product_96 : 96'h0;
+
+    // 3. Perform the controlled accumulation
+    assign mac_sum_96 = r_mac_accum_96 + mac_add_term_96; 
 
     // Accumulator Next State Logic (Combinatorial)
     always @* begin
@@ -226,8 +250,8 @@ end
 
         if (state_reg == STATE_EXECUTE) begin
             case (opcode)
-                4'b0001: // MAC
-                    r_mac_accum_next_96 = mac_mul_96;
+                4'b0001: // MAC: Use the controlled sum
+                    r_mac_accum_next_96 = mac_sum_96; 
                 4'b1001: // CLR_ACC
                     r_mac_accum_next_96 = 96'h0;
                 4'b1010: // LOAD_ACCR
@@ -303,7 +327,7 @@ end
                     4'b0001: begin 
                         reg_we_single    = 1'b1;
                         rd_addr_single   = rd_addr;
-                        reg_wdata_single = mac_mul_96[31:0]; // Write Low Acc word
+                        reg_wdata_single = mac_sum_96[31:0]; // Write Low Acc word
                     end
                     
                     // LOAD Rd, Addr (Opcode 2)
@@ -367,12 +391,12 @@ end
                     4'b1011: begin
                         // Write 1: High Word to Rd
                         reg_we_mul_high = 1'b1;
-                        reg_wdata_high  = r_mac_mul_64[63:32];
+                        reg_wdata_high  = r_mul_product_64[63:32]; // Uses dedicated MUL product register
                         
                         // Write 2: Low Word to Rd+1 (R15 wraps to R0)
                         reg_we_mul_low  = 1'b1;
                         rd_addr_low     = rd_addr + 1; 
-                        reg_wdata_low   = r_mac_mul_64[31:0];
+                        reg_wdata_low   = r_mul_product_64[31:0]; // Uses dedicated MUL product register
                     end
                     
                     // NOP (Opcode 0)
