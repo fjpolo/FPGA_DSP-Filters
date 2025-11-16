@@ -1,170 +1,259 @@
+# assembler.py for RVDSP Co-Processor
+
 import re
 import sys
 
-# Instruction Set Architecture (Opcode, Format, Fields)
-# Fields: Rd (27:24), Rs1 (23:20), Rs2 (19:16), Imm/Addr (15:0)
-ISA = {
-    "NOP":         (0b0000, "NOP"),
-    "MAC":         (0b0001, "MAC Rd, Rs1, Rs2"), # Acc96 = Acc96 + (Rs1 * Rs2)
-    "LOAD":        (0b0010, "LOAD Rd, Addr"),
-    "STORE":       (0b0011, "STORE Rs1, Addr"),
-    "MOVE":        (0b0100, "MOVE Rd, Imm"),
-    "JUMP":        (0b0101, "JUMP Addr"),
-    "READ_ACCH":   (0b0110, "READ_ACCH Rd"), # Read High 32 bits (95:64)
-    "READ_ACCM":   (0b0111, "READ_ACCM Rd"), # Read Middle 32 bits (63:32)
-    "READ_ACCL":   (0b1000, "READ_ACCL Rd"), # Read Low 32 bits (31:0)
-    "CLR_ACC":     (0b1001, "CLR_ACC"),      # Clear Accumulator
-    "LOAD_ACCR":   (0b1010, "LOAD_ACCR Rs_H, Rs_M, Rs_L"), # Load Acc from 3 Registers
-    "MUL":         (0b1011, "MUL Rd, Rs1, Rs2"), # Multiply 32x32 -> 64 bits (Rd=High, Rd+1=Low)
-    "DIV":         (0b1100, "DIV Rd, Rs1, Rs2"), # Divide 32/32 -> Quotient (Rd), Remainder (Rd+1)
+# --- Instruction Definitions ---
+# The 'fields' tuple defines (field_name, field_bit_width, field_start_position)
+INSTRUCTION_MAP = {
+    # Opcode 0
+    'NOP': {
+        'opcode': 0x0, 
+        'format': '',
+        'fields': []
+    },
+    
+    # Opcode 1: MAC Rd, Rs1, Rs2
+    'MAC': {
+        'opcode': 0x1,
+        'format': 'Rd,Rs1,Rs2',
+        'fields': [('Rd', 4, 24), ('Rs1', 4, 20), ('Rs2', 4, 16)]
+    },
+    
+    # Opcode 2: LOAD Rd, Addr
+    'LOAD': {
+        'opcode': 0x2,
+        'format': 'Rd,Addr',
+        'fields': [('Rd', 4, 24), ('Addr', 8, 0)]
+    },
+    
+    # Opcode 3: STORE Rs1, Addr (Rs1 is the register being stored)
+    'STORE': {
+        'opcode': 0x3,
+        'format': 'Rs1,Addr',
+        'fields': [('Rs1', 4, 20), ('Addr', 8, 0)]
+    },
+    
+    # Opcode 4: MOVE Rd, Imm (20-bit immediate)
+    'MOVE': {
+        'opcode': 0x4,
+        'format': 'Rd,Imm',
+        'fields': [('Rd', 4, 24), ('Imm', 20, 0)]
+    },
+    
+    # Opcode 5: JUMP Addr (8-bit address)
+    'JUMP': {
+        'opcode': 0x5,
+        'format': 'Addr',
+        'fields': [('Addr', 8, 0)]
+    },
+
+    # Opcode 6: READ_ACCH Rd (Read Accumulator High)
+    'READ_ACCH': {
+        'opcode': 0x6,
+        'format': 'Rd',
+        'fields': [('Rd', 4, 24)]
+    },
+    
+    # Opcode 7: READ_ACCM Rd (Read Accumulator Middle)
+    'READ_ACCM': {
+        'opcode': 0x7,
+        'format': 'Rd',
+        'fields': [('Rd', 4, 24)]
+    },
+
+    # Opcode 8: READ_ACCL Rd (Read Accumulator Low)
+    'READ_ACCL': {
+        'opcode': 0x8,
+        'format': 'Rd',
+        'fields': [('Rd', 4, 24)]
+    },
+
+    # Opcode 9: CLR_ACC
+    'CLR_ACC': {
+        'opcode': 0x9,
+        'format': '',
+        'fields': []
+    },
+    
+    # Opcode A (10): LOAD_ACCR Rs_H, Rs_M, Rs_L
+    # Rs_H uses Rd field, Rs_M uses Rs1 field, Rs_L uses Rs2 field
+    'LOAD_ACCR': {
+        'opcode': 0xA,
+        'format': 'Rs_H,Rs_M,Rs_L',
+        'fields': [('Rs_H', 4, 24), ('Rs_M', 4, 20), ('Rs_L', 4, 16)]
+    },
+
+    # Opcode B (11): MUL Rd, Rs1, Rs2
+    'MUL': {
+        'opcode': 0xB,
+        'format': 'Rd,Rs1,Rs2',
+        'fields': [('Rd', 4, 24), ('Rs1', 4, 20), ('Rs2', 4, 16)]
+    },
+
+    # Opcode C (12): DIV Rd, Rs1, Rs2 (Rd = Quotient, Rd+1 = Remainder)
+    'DIV': {
+        'opcode': 0xC,
+        'format': 'Rd,Rs1,Rs2',
+        'fields': [('Rd', 4, 24), ('Rs1', 4, 20), ('Rs2', 4, 16)]
+    },
+    
+    # Opcode D (13): LSETUP Rd, N (Loop Count), EndAddr
+    'LSETUP': {
+        'opcode': 0xD,
+        'format': 'Rd,N,EndAddr',
+        'fields': [('Rd', 4, 24), ('N', 8, 16), ('EndAddr', 8, 8)]
+    },
+
+    # Placeholder for Opcode E (14) - RSHR
+    'RSHR': {
+        'opcode': 0xE,
+        'format': 'Rd,Rs1,Imm',
+        'fields': [('Rd', 4, 24), ('Rs1', 4, 20), ('Imm', 5, 0)]
+    },
+
+    # Placeholder for Opcode F (15) - MAC4
+    'MAC4': {
+        'opcode': 0xF,
+        'format': 'Rs1,Rs2',
+        'fields': [('Rs1', 4, 20), ('Rs2', 4, 16)]
+    },
 }
 
-def parse_register(reg_str):
-    """Converts Rx string to 4-bit integer."""
-    match = re.match(r'^R(\d+)$', reg_str.strip())
-    if not match:
-        raise ValueError(f"Invalid register format: {reg_str}")
-    reg_val = int(match.group(1))
-    if not 0 <= reg_val <= 15:
-        raise ValueError(f"Register index out of range (0-15): {reg_val}")
-    return reg_val
+# --- Utility Functions ---
 
-def parse_immediate(imm_str):
-    """Converts immediate/address string (decimal or hex) to 16-bit integer."""
-    imm_str = imm_str.strip()
-    # Check for empty string before attempting conversion
-    if not imm_str:
-        raise ValueError("Immediate/Address cannot be empty.")
-        
-    if imm_str.startswith('0x'):
-        value = int(imm_str, 16)
-    else:
-        value = int(imm_str, 10)
-
-    # Limiting to 16 bits (0xFFFF) for safety, although the field is 20 bits.
-    if not 0 <= value <= 0xFFFF:
-        raise ValueError(f"Immediate/Address value {value} (0x{value:X}) exceeds 16-bit limit (0xFFFF).")
-    return value
-
-def assemble_line(line, line_num):
-    """Parses a single assembly line and returns the 32-bit hex instruction."""
-    line = line.split('//')[0].strip() # Remove comments and strip whitespace
-    if not line:
-        return None # Empty line
-
-    # Replace commas and multiple spaces with a single space for consistent splitting
-    parts = re.split(r'[\s,]+', line)
+def parse_operand(op_str):
+    """
+    Parses an operand string (e.g., "R10", "15", "0xdead").
+    Returns the numeric value.
+    """
+    op_str = op_str.strip()
     
-    # Filter out empty strings that might result from splitting (e.g., if input had 'MAC R1, , R2')
-    parts = [p for p in parts if p]
-    
-    if not parts:
-        return None
-        
-    mnemonic = parts[0].upper()
+    # Check for register format R<num>
+    reg_match = re.match(r'^R(\d+)$', op_str, re.IGNORECASE)
+    if reg_match:
+        val = int(reg_match.group(1))
+        if 0 <= val <= 15:
+            return val
+        else:
+            raise ValueError(f"Register number '{val}' is out of range (0-15).")
 
-    if mnemonic not in ISA:
-        raise ValueError(f"Unknown instruction mnemonic: {mnemonic}")
+    # Check for hex immediate
+    if op_str.lower().startswith('0x'):
+        return int(op_str, 16)
 
-    opcode, format_str = ISA[mnemonic]
-    instr = opcode << 28 # Start with the 4-bit opcode
-
-    # --- Instruction Encoding Logic ---
-
-    if mnemonic == "NOP" or mnemonic == "CLR_ACC":
-        return f"{instr:08X}" 
-
-    elif mnemonic == "MOVE" or mnemonic == "LOAD":
-        # Format: MOVE Rd, Imm / LOAD Rd, Addr
-        if len(parts) != 3:
-            raise ValueError(f"Expected {mnemonic} Rd, Imm/Addr")
-        Rd = parse_register(parts[1])
-        Imm = parse_immediate(parts[2])
-        instr |= (Rd << 24) | (Imm & 0xFFFF)
-    
-    elif mnemonic == "STORE":
-        # Format: STORE Rs1, Addr
-        if len(parts) != 3:
-            raise ValueError(f"Expected STORE Rs1, Addr")
-        Rs1 = parse_register(parts[1])
-        Addr = parse_immediate(parts[2])
-        instr |= (Rs1 << 20) | (Addr & 0xFFFF)
-
-    elif mnemonic == "MAC" or mnemonic == "MUL" or mnemonic == "DIV":
-        # Format: MAC Rd, Rs1, Rs2 / MUL Rd, Rs1, Rs2 / DIV Rd, Rs1, Rs2
-        if len(parts) != 4:
-            raise ValueError(f"Expected {mnemonic} Rd, Rs1, Rs2")
-            
-        Rd = parse_register(parts[1])
-        Rs1 = parse_register(parts[2])
-        Rs2 = parse_register(parts[3])
-        
-        # Encoding: Rd << 24 | Rs1 << 20 | Rs2 << 16
-        instr |= (Rd << 24) | (Rs1 << 20) | (Rs2 << 16)
-
-
-    elif mnemonic == "JUMP":
-        # Format: JUMP Addr
-        if len(parts) != 2:
-            raise ValueError(f"Expected JUMP Addr")
-        Addr = parse_immediate(parts[1])
-        instr |= (Addr & 0xFFFF)
-
-    elif mnemonic.startswith("READ_ACC"):
-        # Format: READ_ACCH/M/L Rd
-        if len(parts) != 2:
-            raise ValueError(f"Expected {mnemonic} Rd")
-        Rd = parse_register(parts[1])
-        instr |= (Rd << 24)
-        
-    elif mnemonic == "LOAD_ACCR":
-        # Format: LOAD_ACCR Rs_H, Rs_M, Rs_L
-        if len(parts) != 4:
-            raise ValueError(f"Expected LOAD_ACCR Rs_H, Rs_M, Rs_L (3 registers)")
-        
-        Rs_H = parse_register(parts[1]) # High word source (uses Rd field)
-        Rs_M = parse_register(parts[2]) # Middle word source (uses Rs1 field)
-        Rs_L = parse_register(parts[3]) # Low word source (uses Rs2 field)
-        
-        # Encoding: Rd(Rs_H) << 24 | Rs1(Rs_M) << 20 | Rs2(Rs_L) << 16
-        instr |= (Rs_H << 24) | (Rs_M << 20) | (Rs_L << 16)
-        
-    return f"{instr:08X}"
-
-def main(input_file, output_file):
-    """Main function to process the assembly file."""
+    # Check for decimal immediate
     try:
-        with open(input_file, 'r') as f:
-            lines = f.readlines()
-        
-        hex_instructions = []
-        for i, line in enumerate(lines):
-            try:
-                hex_instr = assemble_line(line, i + 1)
-                if hex_instr:
-                    hex_instructions.append(hex_instr)
-            except ValueError as e:
-                print(f"Error on line {i+1}: {line.strip()}\n  {e}", file=sys.stderr)
-                # Exit gracefully or skip line, depending on required robustness
-                sys.exit(1)
+        return int(op_str)
+    except ValueError:
+        raise ValueError(f"Invalid operand format or value: '{op_str}'")
 
-        with open(output_file, 'w') as f:
-            for hex_instr in hex_instructions:
-                f.write(f"{hex_instr}\n")
-        
-        # print(f"Successfully assembled {len(hex_instructions)} instructions to {output_file}")
+def assemble_line(line_number, line):
+    """
+    Assembles a single line of assembly code.
+    Returns the 32-bit machine code as an integer.
+    """
+    # Remove comments and trim whitespace
+    line = line.split(';')[0].strip()
+    if not line:
+        return None
 
-    except FileNotFoundError:
-        print(f"Error: Input file not found at {input_file}", file=sys.stderr)
-        sys.exit(1)
-    except Exception as e:
-        print(f"An unexpected error occurred: {e}", file=sys.stderr)
-        sys.exit(1)
+    # Use regex to split instruction and operands
+    match = re.match(r'(\w+)\s*(.*)', line)
+    if not match:
+        raise ValueError(f"Syntax error on line {line_number}: Invalid instruction format.")
 
-if __name__ == "__main__":
-    # Simplified main for in-context execution:
-    if len(sys.argv) != 3:
-        pass
+    mnemonic = match.group(1).upper()
+    operands_str = match.group(2).strip()
+
+    if mnemonic not in INSTRUCTION_MAP:
+        raise ValueError(f"Unknown instruction '{mnemonic}' on line {line_number}.")
+
+    instr_def = INSTRUCTION_MAP[mnemonic]
+    
+    # Parse operands
+    if operands_str:
+        operands = [op.strip() for op in operands_str.split(',')]
     else:
-        main(sys.argv[1], sys.argv[2])
-    pass
+        operands = []
+
+    # Check operand count
+    expected_count = len(instr_def['format'].split(',')) if instr_def['format'] else 0
+    if len(operands) != expected_count:
+        raise ValueError(f"Incorrect number of operands for '{mnemonic}' on line {line_number}. Expected {expected_count}, got {len(operands)}.")
+
+    # Initialize instruction word with opcode
+    instruction_word = instr_def['opcode'] << 28
+    
+    # Process fields
+    for i, (field_name, width, start_bit) in enumerate(instr_def['fields']):
+        op_val = parse_operand(operands[i])
+        
+        # Check value bounds
+        max_val = (1 << width) - 1
+        if op_val < 0 or op_val > max_val:
+            # Note: 20-bit MOVE Imm allows signed, but we check max unsigned here
+            if field_name != 'Imm' or op_val < -(1 << (width - 1)) or op_val >= (1 << (width - 1)):
+                 # For 20-bit immediate, allow signed range check for MOVE
+                if field_name == 'Imm' and mnemonic == 'MOVE':
+                    # Value is okay, just needs to fit in 20 bits
+                    pass
+                else:
+                    raise ValueError(f"Value '{op_val}' for field '{field_name}' exceeds {width}-bit unsigned limit on line {line_number}.")
+        
+        # Apply mask and shift
+        # The '& max_val' ensures only the lower 'width' bits are used.
+        instruction_word |= ((op_val & max_val) << start_bit)
+
+    return instruction_word
+
+def assemble(assembly_code):
+    """
+    Main assembly function.
+    Returns a list of 32-bit integers (machine code).
+    """
+    machine_code = []
+    lines = assembly_code.split('\n')
+    
+    for line_number, line in enumerate(lines, 1):
+        try:
+            instruction = assemble_line(line_number, line)
+            if instruction is not None:
+                machine_code.append(instruction)
+        except ValueError as e:
+            print(f"Assembly Error: {e}", file=sys.stderr)
+            # Exit on the first error to keep error messages simple
+            # Alternatively, collect all errors and continue parsing.
+            sys.exit(1) 
+            
+    return machine_code
+
+# --- Example Usage (Commented out for file generation) ---
+# example_code = """
+#     MOVE R1, 10           ; Opcode 4, R1, 10
+#     MOVE R2, 2            ; Opcode 4, R2, 2
+#     CLR_ACC               ; Opcode 9
+#     LSETUP R5, 5, 0x1A    ; Opcode D, R5, N=5, EndAddr=0x1A
+#     MAC R0, R1, R2        ; Opcode 1, R0, R1, R2
+#     JUMP 0x00             ; Opcode 5
+# """
+
+# if __name__ == '__main__':
+#     # You'd typically load this from a file
+#     if len(sys.argv) < 2:
+#         print("Usage: python assembler.py <assembly_file.asm>", file=sys.stderr)
+#         sys.exit(1)
+
+#     try:
+#         with open(sys.argv[1], 'r') as f:
+#             asm_code = f.read()
+#     except FileNotFoundError:
+#         print(f"Error: File not found: {sys.argv[1]}", file=sys.stderr)
+#         sys.exit(1)
+
+#     code = assemble(asm_code)
+    
+#     print("// Machine Code (Verilog $readmemh format):")
+#     for word in code:
+#         # Prints in 8-digit hexadecimal format (32 bits)
+#         print(f"{word:08X}")

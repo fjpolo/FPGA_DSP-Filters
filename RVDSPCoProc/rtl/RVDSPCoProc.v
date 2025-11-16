@@ -87,12 +87,56 @@ module RVDSPCoProc(
         STATE_EXECUTE   = 2'b10;
     reg [1:0] state_reg, state_next; 
         
+    // --- NEW: Zero-Overhead Loop Control Registers (LSETUP) ---
+    // LSETUP Rd, LC (8-bit), EndAddr (8-bit) - Opcode 1101 (D)
+    reg [ADDR_BITS-1:0] r_loop_start_addr; // PC + 1 when LSETUP executes (address to jump back to)
+    reg [ADDR_BITS-1:0] r_loop_end_addr;   // instruction[15:8] (address of the last instruction in the loop)
+    reg [31:0]          r_loop_counter;    // The current loop iteration count (N+1 initial value)
+    reg                 r_loop_active;     // 1 when a hardware loop is active
+    reg                 loop_setup_en;     // Enable signal to latch LSETUP parameters in sequential block
+    localparam [3:0]    OPCODE_LSETUP = 4'b1101; 
+    // --------------------------------------------------------
+        
     //
     // Instruction Memory (iMEM) BSRAM 
     //
     reg [31:0] iMEM [0:255] /* syn_ramstyle=block_ram */; 
     
-    // Hardcoded iMEM Initialization
+// Hardcoded iMEM Initialization
+`define TEST_LSETUP
+`ifdef TEST_LSETUP
+// Hardcoded iMEM Initialization - LSETUP Test Program
+integer i;
+initial begin
+    // Setup: R1=2, R2=3, R3=4, R4=5. Clear Acc.
+    iMEM[0] = 32'h41000002; // MOVE R1, 2
+    iMEM[1] = 32'h42000003; // MOVE R2, 3
+    iMEM[2] = 32'h43000004; // MOVE R3, 4
+    iMEM[3] = 32'h44000005; // MOVE R4, 5
+    iMEM[4] = 32'h90000000; // CLR_ACC
+    
+    // LSETUP: LSETUP R5, LC=3, EndAddr=7
+    // Loop over PC 6 and PC 7 exactly 3 times. Store N=3 in R5.
+    // LSA is PC 5 + 1 = 6.
+    iMEM[5] = 32'hD5030700; // LSETUP R5, 3, 7 
+    
+    // Loop Body (Start Address: PC 6)
+    iMEM[6] = 32'h10120000; // MAC R1, R2 (Acc += 6)
+    iMEM[7] = 32'h10340000; // MAC R3, R4 (Acc += 20) -> Loop End Address (PC 7)
+    
+    // Verification (Program Counter should proceed to PC 8 after 3 iterations)
+    iMEM[8] = 32'h88000000; // READ_ACCL R8 (R8 should be 0x4E or 78)
+    iMEM[9] = 32'h50000009; // JUMP 9 (Halt)
+
+    // Initialize the rest of the memory to NOP (0x00000000)
+    for (i = 10; i < 256; i++) begin 
+        iMEM[i] = 32'h00000000;
+    end        
+    $display("iMEM loaded with LSETUP test program. Expected R8 = 0x4E.");
+    start_flag = 1'b1;
+end
+// ----------------------------------
+`else
 // --- Generated from program.hex ---
 integer i;
 initial begin
@@ -122,7 +166,7 @@ initial begin
     start_flag = 1'b1;
 end
 // ----------------------------------
-    
+`endif 
     //
     // Data Memory (dMEM) BSRAM 
     //
@@ -166,8 +210,14 @@ end
     always @(posedge  i_clk or negedge  i_rst_n) begin 
         if (! i_rst_n) begin
             gpr[0] <= 32'h0000_0000;
+            // --- NEW: Reset Loop Registers ---
+            r_loop_active     <= 1'b0;
+            r_loop_counter    <= 32'h0;
+            r_loop_start_addr <= 8'h0;
+            r_loop_end_addr   <= 8'h0;
+            // ---------------------------------
         end else begin
-            // 1. Single Write (MAC, LOAD, READ_ACC, MOVE)
+            // 1. Single Write (MAC, LOAD, READ_ACC, MOVE, LSETUP)
             if (reg_we_single) begin
                 gpr[rd_addr_single] <= reg_wdata_single;
             end
@@ -181,6 +231,31 @@ end
             if (reg_we_mul_low) begin
                 gpr[rd_addr_low] <= reg_wdata_low;
             end
+
+            // --- Loop Control Register Updates ---
+            if (loop_setup_en) begin
+                // LSETUP instruction just executed: Setup the loop parameters
+                r_loop_active     <= 1'b1;
+                // Start address is PC_REG (LSETUP) + 1
+                r_loop_start_addr <= pc_reg[ADDR_BITS-1:0] + 1; 
+                // End address is instruction[15:8]
+                r_loop_end_addr   <= instruction[15:8]; 
+                // Counter init: instruction[23:16] is N. Store N+1 for the loop control logic.
+                r_loop_counter    <= {24'h0, instruction[23:16]} + 1; 
+            end 
+            // Loop Iteration Update: Instruction at r_loop_end_addr just executed
+            else if (r_loop_active && (state_reg == STATE_EXECUTE) && (pc_reg[ADDR_BITS-1:0] == r_loop_end_addr)) begin
+                if (r_loop_counter > 32'h1) begin
+                    // Decrement counter for the next loop
+                    r_loop_counter <= r_loop_counter - 1;
+                end else begin
+                    // Counter reached 1, loop terminates on next cycle
+                    r_loop_active <= 1'b0;
+                    r_loop_counter <= 32'h0;
+                end
+            end
+            // -------------------------------------
+
         end
     end
     
@@ -307,7 +382,7 @@ end
         dmem_re    = 1'b0;
         dmem_addr  = instruction[ADDR_BITS-1:0]; 
         
-        // Reset register write paths
+        // Reset register write paths and loop setup enable
         reg_we_single = 1'b0;
         rd_addr_single = 4'b0;
         reg_wdata_single = 32'h0;
@@ -316,6 +391,7 @@ end
         rd_addr_low = 4'b0;
         reg_wdata_high = 32'h0;
         reg_wdata_low = 32'h0;
+        loop_setup_en = 1'b0; // NEW: Reset loop setup enable
         
         // Instruction Decode 
         opcode   = instruction[31:28];
@@ -364,12 +440,14 @@ end
                     4'b0100: begin 
                         reg_we_single    = 1'b1; 
                         rd_addr_single   = rd_addr;
+                        // instruction[19:0] is the 20-bit immediate (sign extended)
                         reg_wdata_single = {{12{instruction[19]}}, instruction[19:0]}; 
                     end
                     
                     // JUMP Addr (Opcode 5)
                     4'b0101: begin 
-                        pc_next = {24'h000000, instruction[7:0]}; 
+                        // PC update is now handled lower down, but must be the lowest priority jump
+                        // We rely on the jump logic at the end of STATE_EXECUTE
                     end
 
                     // READ_ACCH Rd (Opcode 6)
@@ -426,6 +504,17 @@ end
                         rd_addr_low     = rd_addr + 1; 
                         reg_wdata_low   = div_remainder; 
                     end
+
+                    // LSETUP Rd, LC (8-bit), EndAddr (8-bit) (Opcode D / 13)
+                    OPCODE_LSETUP: begin 
+                        loop_setup_en    = 1'b1; // Trigger sequential update of loop registers
+                        
+                        // Write the initial loop count N (instruction[23:16]) to the destination register Rd
+                        reg_we_single    = 1'b1; 
+                        rd_addr_single   = rd_addr; 
+                        // The loop count N is 8 bits (sign-extended for 32-bit register)
+                        reg_wdata_single = {{24{instruction[23]}}, instruction[23:16]}; 
+                    end
                     
                     // NOP (Opcode 0)
                     4'b0000: begin
@@ -437,9 +526,26 @@ end
                     end
                 endcase
                 
-                // State Transition Logic 
-                if (!start_flag) begin
+                // State Transition and PC Update Logic 
+                
+                // 1. Check for Loop Branch (highest priority PC update)
+                // If loop is active and we are executing the last instruction of the loop
+                if (r_loop_active && (pc_reg[ADDR_BITS-1:0] == r_loop_end_addr)) begin
+                    // r_loop_counter will be decremented in the sequential block in this cycle
+                    if (r_loop_counter > 32'h1) begin 
+                        // Loop back to start address
+                        pc_next = {24'h0, r_loop_start_addr};
+                    end else begin
+                        // Last iteration completed, fall through to the next instruction
+                        pc_next = pc_reg + 1;
+                    end
+                // 2. Check for JUMP
+                end else if (opcode == 4'b0101) begin // JUMP Addr
+                    pc_next = {24'h000000, instruction[7:0]}; 
+                // 3. Check for HALT
+                end else if (!start_flag) begin
                     state_next = STATE_IDLE;
+                // 4. Default: Fetch next instruction
                 end else begin
                     state_next = STATE_FETCH; 
                 end
