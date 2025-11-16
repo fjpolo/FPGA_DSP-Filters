@@ -52,8 +52,9 @@ module RVDSPCoProc(
     
     // MAC Unit Signals (Dedicated 96-bit Accumulator)
     wire [31:0] mac_op1, mac_op2; 
-    wire [95:0] mac_mul_96; // Combinatorial Accumulation Result (96-bit)
-    
+    wire [95:0] mac_mul_96; // Combinatorial Accumulation Result (96-bit, used for next state if MAC)
+    reg [95:0]  r_mac_accum_next_96; // Accumulator next state (used for CLR/LOAD)
+
     // Data Memory Signals
     reg [ADDR_BITS-1:0] dmem_addr;  
     reg [31:0]          dmem_rdata;          
@@ -143,6 +144,11 @@ module RVDSPCoProc(
     // Register Read (Combinational)
     assign reg_rdata1 = gpr[rs1_addr];
     assign reg_rdata2 = gpr[rs2_addr];
+
+    // Read signals for LOAD_ACCR (Rs_H, Rs_M, Rs_L)
+    wire [31:0] reg_rdata_h = gpr[rd_addr];  // Rd field holds Rs_H
+    wire [31:0] reg_rdata_m = gpr[rs1_addr]; // Rs1 field holds Rs_M
+    wire [31:0] reg_rdata_l = gpr[rs2_addr]; // Rs2 field holds Rs_L
     
     // Register Write - Registered write from the execution result (reg_wdata)
     always @(posedge  i_clk or negedge  i_rst_n) begin 
@@ -159,34 +165,62 @@ module RVDSPCoProc(
     // Core MAC/DSP Unit - 96-bit Multiply-Accumulate
     //
 
-    // MAC accum
-    wire mac_store_enable = (state_reg == STATE_EXECUTE)&&(opcode == 4'b0001);
-    reg [63:0] r_mac_mul_64; // Product register (64-bit)
-    reg [95:0] r_mac_accum_96;  // Accumulator register (96-bit)
-    always @(posedge i_clk) begin
+    // MAC accum Control Signals
+    wire mac_accum_write = (state_reg == STATE_EXECUTE) && (
+        opcode == 4'b0001 || // MAC (Accumulate)
+        opcode == 4'b1001 || // CLR_ACC (Clear)
+        opcode == 4'b1010    // LOAD_ACCR (Load)
+    );
+
+    // Accumulator Register (96-bit)
+    reg [63:0] r_mac_mul_64;   // Product register (64-bit)
+    reg [95:0] r_mac_accum_96; // Accumulator register (96-bit)
+    
+    // Sequential block for Product and Accumulator
+    always @(posedge i_clk or negedge i_rst_n) begin
         if(!i_rst_n) begin
             r_mac_accum_96 <= 96'h0; // Initialize 96-bit accum
-            r_mac_mul_64 <= 64'h0; // Initialize 64-bit product
+            r_mac_mul_64 <= 64'h0;   // Initialize 64-bit product
         end else begin
-            // Explicitly registering the accumulator's next state
-            r_mac_accum_96 <= mac_mul_96;
+            // Accumulator Update: Only write if MAC, CLR, or LOAD instruction is active
+            if (mac_accum_write) begin
+                r_mac_accum_96 <= r_mac_accum_next_96;
+            end
             
-            // Explicitly registering the current product
-            if(mac_store_enable)
+            // Product Update: Only calculate and store product if it's a MAC instruction
+            if((state_reg == STATE_EXECUTE) && (opcode == 4'b0001)) begin
                 r_mac_mul_64 <= $signed(mac_op1) * $signed(mac_op2); // Store 32x32 signed product
+            end
         end
     end
     
-    // Operands are R1 and R2
+    // Operands for the Multiplier are R1 and R2
     assign mac_op1 = reg_rdata1; // Use Rs1 (from instruction)
     assign mac_op2 = reg_rdata2; // Use Rs2 (from instruction)
     
-    // Combinatorial Accumulation (r_mac_accum_96 + Sign-Extended Product)
+    // Combinatorial Accumulation
     // The 64-bit registered product (r_mac_mul_64) is sign-extended to 96 bits for addition.
     wire [95:0] mac_product_96 = {{32{r_mac_mul_64[63]}}, r_mac_mul_64};
-    assign mac_mul_96 = r_mac_accum_96 + mac_product_96;
-    
-    // Note: The accumulation result is now mac_mul_96.
+    assign mac_mul_96 = r_mac_accum_96 + mac_product_96; // Accumulation result
+
+    // Accumulator Next State Logic (Combinatorial)
+    always @* begin
+        r_mac_accum_next_96 = r_mac_accum_96; // Default: hold value
+
+        if (state_reg == STATE_EXECUTE) begin
+            case (opcode)
+                4'b0001: // MAC
+                    r_mac_accum_next_96 = mac_mul_96;
+                4'b1001: // CLR_ACC
+                    r_mac_accum_next_96 = 96'h0;
+                4'b1010: // LOAD_ACCR
+                    // Concatenate the three GPRs (Rs_H, Rs_M, Rs_L) into the 96-bit accumulator
+                    r_mac_accum_next_96 = {reg_rdata_h, reg_rdata_m, reg_rdata_l};
+                default:
+                    r_mac_accum_next_96 = r_mac_accum_96;
+            endcase
+        end
+    end
 
     //
     // Control Unit (FSM, PC, Decode, Execute) 
@@ -242,16 +276,14 @@ module RVDSPCoProc(
             
             STATE_EXECUTE: begin
                 // PC advancement is now exclusively handled in STATE_FETCH and JUMP.
-                // pc_next defaults to pc_reg (hold) for sequential execution flow.
                 
                 // Control Signal and Data Path Assignment based on Opcode
                 case (opcode)
-                    // MAC/ADD R0, R1, R2 (Opcode 1) -> R0 = Low 32 bits of Acc
+                    // MAC R0, R1, R2 (Opcode 1) -> R0 = Low 32 bits of Acc
                     4'b0001: begin 
-                        // The MAC operation now updates the 96-bit register (r_mac_accum_96) sequentially.
-                        // We write the low 32 bits back to R0 for compatibility.
+                        // Write the low 32 bits back to R0 for compatibility.
                         reg_we    = 1'b1;               // Enable write to Rd (R0)
-                        reg_wdata = mac_mul_96[31:0];   // Write the Low 32 bits of the 96-bit Accumulator
+                        reg_wdata = mac_mul_96[31:0];   // Write the Low 32 bits of the Accumulator
                     end
                     
                     // LOAD Rd, Addr (Opcode 2)
@@ -294,6 +326,16 @@ module RVDSPCoProc(
                     4'b1000: begin
                         reg_we    = 1'b1;
                         reg_wdata = r_mac_accum_96[31:0];
+                    end
+
+                    // CLR_ACC (Opcode 9)
+                    4'b1001: begin
+                        // Accumulator update is handled in the MAC sequential block
+                    end
+
+                    // LOAD_ACCR (Opcode A / 10)
+                    4'b1010: begin
+                        // Accumulator update is handled in the MAC sequential block
                     end
                     
                     // NOP (Opcode 0)
