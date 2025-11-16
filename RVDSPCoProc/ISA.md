@@ -44,5 +44,5 @@ All instructions are 32-bits wide. Fields are defined as:
 | **B (11)** | `MUL` | `B Rd, Rs1, Rs2` | 1 | **Multiply: $\{\text{Rd}, \text{Rd}+1\} \leftarrow \text{Rs1} \times \text{Rs2}$.** |
 | **C (12)** | `DIV` | `C Rd, Rs1, Rs2` | 1 | **Divide: $\{\text{Rd}, \text{Rd}+1\} \leftarrow \text{Rs1} / \text{Rs2}$ (Quotient, Remainder).** |
 | **D (13)** | `LSETUP` | `D Rd, N, EndAddr` | 1 | **Setup Hardware Loop: $\text{Rd} \leftarrow \text{N}$. Loop $\text{N}$ times from $\text{PC}+1$ up to $\text{EndAddr}$.** |
-| **E (14)** | `RSHR` | `E Rd, Rs1, Imm` | 1 | **Rounding Shift Right: $\text{Rd} \leftarrow \text{Round}(\text{Rs1} \gg \text{Imm}[4:0])$.** |
-| **F (15)** | `MAC4` | `F Rs1, Rs2` | 1 | **4-way 16-bit MAC: Acc $\leftarrow$ Acc + (Rs1[15:0] * Rs2[15:0]) + (Rs1[31:16] * Rs2[31:16])** (Lower two 16-bit products). Result is 64-bit and accumulated. |
+| **E (14)** | *(Reserved)* | | | |
+| **F (15)** | *(Reserved)* | | | |
