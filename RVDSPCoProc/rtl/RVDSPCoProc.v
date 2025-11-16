@@ -52,7 +52,7 @@ module RVDSPCoProc(
     
     // MAC Unit Signals (Simplified to Non-Accumulating 32-bit Add)
     wire [31:0] mac_op1, mac_op2; 
-    wire [31:0] mac_sum_32; // R1 + R2 result
+    wire [63:0] mac_mul_64; // R1 + R2 result
     
     // Data Memory Signals
     reg [ADDR_BITS-1:0] dmem_addr;  
@@ -105,9 +105,7 @@ module RVDSPCoProc(
         for (integer i = 4; i < 256; i++) begin 
             iMEM[i] = 32'h00000000;
         end        
-        
-        $display("iMEM loaded with non-accumulating ADD loop setup (R0 should be 15).");
-        
+                
         // Initialize start_flag high for immediate simulation run
         start_flag = 1'b1;
     end
@@ -163,16 +161,16 @@ module RVDSPCoProc(
 
     // MAC accum
     wire mac_store_enable = (state_reg == STATE_EXECUTE)&&(opcode == 4'b0001);
-    reg [31:0] r_mac_sum_32;
-    reg [31:0] r_mac_accum;
+    reg [63:0] r_mac_mul_64;
+    reg [63:0] r_mac_accum;
     always @(posedge i_clk) begin
         if(!i_rst_n) begin
             r_mac_accum <= 'h0;
-            r_mac_sum_32 <= 'h0;
+            r_mac_mul_64 <= 'h0;
         end else begin
-            r_mac_accum <= r_mac_sum_32;
+            r_mac_accum <= r_mac_mul_64;
             if(mac_store_enable)
-                r_mac_sum_32 <= mac_sum_32;
+                r_mac_mul_64 <= mac_mul_64;
         end
     end
     
@@ -181,7 +179,7 @@ module RVDSPCoProc(
     assign mac_op2 = gpr[2]; // Explicitly use R2
     
     // Combinatorial 32-bit addition (R1 + R2)
-    assign mac_sum_32 = r_mac_accum + mac_op1 + mac_op2;
+    assign mac_mul_64 = r_mac_accum + (mac_op1 * mac_op2);
     // Note: This is the final 32-bit result written to R0 via reg_wdata.
 
     //
@@ -244,8 +242,8 @@ module RVDSPCoProc(
                 case (opcode)
                     // MAC/ADD R0, R1, R2 (Opcode 1) -> R0 = R1 + R2
                     4'b0001: begin 
-                        reg_we    = 1'b1;         // Enable write to Rd (R0)
-                        reg_wdata = mac_sum_32;   // Write the 32-bit sum
+                        reg_we    = 1'b1;               // Enable write to Rd (R0)
+                        reg_wdata = mac_mul_64[31:0];   // Write the 32-bit MAC
                     end
                     
                     // LOAD Rd, Addr (Opcode 2)
