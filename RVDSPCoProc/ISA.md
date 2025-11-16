@@ -28,39 +28,21 @@ All instructions are 32-bits wide. Fields are defined as:
 
 ## Instruction Set Table
 
-| Opcode | Mnemonic | Format | Description |
-| :---: | :--- | :--- | :--- |
-| **0** | `NOP` | `0xxx xxxx xxxx xxxx xxxx xxxx xxxx` | No Operation. |
-| **1** | `MAC` | `1 Rd, Rs1, Rs2` | Multiply-Accumulate: $\text{Acc} \leftarrow \text{Acc} + (\text{Rs1} \times \text{Rs2})$. Writes $\text{Acc}[31:0]$ (Low Word) to Rd. |
-| **2** | `LOAD` | `2 Rd, Addr` | Load Word: $\text{Rd} \leftarrow \text{dMEM}[\text{Addr}]$. |
-| **3** | `STORE` | `3 Rs, Addr` | Store Word: $\text{dMEM}[\text{Addr}] \leftarrow \text{Rs}$. |
-| **4** | `MOVE` | `4 Rd, Imm` | Move Immediate: $\text{Rd} \leftarrow \text{SignExtend}(\text{Imm}[19:0])$. |
-| **5** | `JUMP` | `5 Addr` | Unconditional Jump: $\text{PC} \leftarrow \text{Addr}[7:0]$ (20-bit field truncated to 8-bit address). |
-| **6** | `READ_ACCH` | `6 Rd` | Read Accumulator High: $\text{Rd} \leftarrow \text{Acc}[95:64]$ (High Word). |
-| **7** | `READ_ACCM` | `7 Rd` | Read Accumulator Middle: $\text{Rd} \leftarrow \text{Acc}[63:32]$ (Middle Word). |
-| **8** | `READ_ACCL` | `8 Rd` | Read Accumulator Low: $\text{Rd} \leftarrow \text{Acc}[31:0]$ (Low Word). |
-| **9** | `CLR_ACC` | `9` | **Clear Accumulator: $\text{Acc} \leftarrow 96'h0$.** |
-| **A (10)** | `LOAD_ACCR`| `A Rs_H, Rs_M, Rs_L` | **Load Accumulator from Registers: $\text{Acc} \leftarrow \{\text{Rs\_H}, \text{Rs\_M}, \text{Rs\_L}\}$.** |
-| **B (11)** | `MUL` | `B Rd, Rs1, Rs2` | **Multiply: $\{\text{Rd}, \text{Rd}+1\} \leftarrow \text{Rs1} \times \text{Rs2}$. Writes product $\text{High}[63:32]$ to $\text{Rd}$ and $\text{Low}[31:0]$ to $\text{Rd}+1$.** |
-| **C (12)** | `DIV` | `C Rd, Rs1, Rs2` | **Divide: $\{\text{Rd}, \text{Rd}+1\} \leftarrow \text{Rs1} / \text{Rs2}$. Writes Quotient to $\text{Rd}$ and Remainder to $\text{Rd}+1$.** |
-
----
-
-## Detailed Instruction Descriptions (New)
-
-... (Existing descriptions for 9, 10, 11)
-
-### 12. `DIV Rd, Rs1, Rs2` (Opcode C)
-
-Performs a 32-bit signed division ($\text{Rs1} / \text{Rs2}$) and stores the 32-bit quotient into $\text{Rd}$ and the 32-bit remainder into $\text{Rd}+1$.
-
-* $\text{Rs1}$ is the Dividend.
-* $\text{Rs2}$ is the Divisor.
-* The quotient is written to $\text{Rd}$.
-* The remainder is written to $\text{Rd}+1$.
-
-**Operation:**
-$\text{Quotient} \leftarrow \text{Rs1} / \text{Rs2}$
-$\text{Remainder} \leftarrow \text{Rs1} \pmod{\text{Rs2}}$
-$\text{Rd} \leftarrow \text{Quotient}$
-$\text{Rd}+1 \leftarrow \text{Remainder}$
+| Opcode | Mnemonic | Format | Cycles | Description |
+| :---: | :--- | :---: | :---: | :--- |
+| **0** | `NOP` | `0xxx xxxx ...` | 1 | No Operation. |
+| **1** | `MAC` | `1 Rd, Rs1, Rs2` | 1 | $\text{Acc} \leftarrow \text{Acc} + (\text{Rs1} \times \text{Rs2})$. Writes $\text{Acc}[31:0]$ to Rd. |
+| **2** | `LOAD` | `2 Rd, Addr` | 1 | Load Word: $\text{Rd} \leftarrow \text{dMEM}[\text{Addr}]$. |
+| **3** | `STORE` | `3 Rs, Addr` | 1 | Store Word: $\text{dMEM}[\text{Addr}] \leftarrow \text{Rs}$. |
+| **4** | `MOVE` | `4 Rd, Imm` | 1 | Move Immediate: $\text{Rd} \leftarrow \text{SignExtend}(\text{Imm})$. |
+| **5** | `JUMP` | `5 Addr` | 1 | Unconditional Jump: $\text{PC} \leftarrow \text{Addr}[7:0]$. |
+| **6** | `READ_ACCH` | `6 Rd` | 1 | Read Accumulator High: $\text{Rd} \leftarrow \text{Acc}[95:64]$. |
+| **7** | `READ_ACCM` | `7 Rd` | 1 | Read Accumulator Middle: $\text{Rd} \leftarrow \text{Acc}[63:32]$. |
+| **8 (8)** | `READ_ACCL` | `8 Rd` | 1 | Read Accumulator Low: $\text{Rd} \leftarrow \text{Acc}[31:0]$. |
+| **9 (9)** | `CLR_ACC` | `9` | 1 | **Clear Accumulator: $\text{Acc} \leftarrow 96'h0$.** |
+| **A (10)** | `LOAD_ACCR`| `A Rs_H, Rs_M, Rs_L` | 1 | **Load Accumulator from Registers: $\text{Acc} \leftarrow \{\text{Rs\_H}, \text{Rs\_M}, \text{Rs\_L}\}$.** |
+| **B (11)** | `MUL` | `B Rd, Rs1, Rs2` | 1 | **Multiply: $\{\text{Rd}, \text{Rd}+1\} \leftarrow \text{Rs1} \times \text{Rs2}$.** |
+| **C (12)** | `DIV` | `C Rd, Rs1, Rs2` | 1 | **Divide: $\{\text{Rd}, \text{Rd}+1\} \leftarrow \text{Rs1} / \text{Rs2}$ (Quotient, Remainder).** |
+| **D (13)** | `LSETUP` | `D Rd, N, EndAddr` | 1 | **Setup Hardware Loop: $\text{Rd} \leftarrow \text{N}$. Loop $\text{N}$ times from $\text{PC}+1$ up to $\text{EndAddr}$.** |
+| **E (14)** | `RSHR` | `E Rd, Rs1, Imm` | 1 | **Rounding Shift Right: $\text{Rd} \leftarrow \text{Round}(\text{Rs1} \gg \text{Imm}[4:0])$.** |
+| **F (15)** | `MAC4` | `F Rs1, Rs2` | 1 | **4-way 16-bit MAC: Acc $\leftarrow$ Acc + (Rs1[15:0] * Rs2[15:0]) + (Rs1[31:16] * Rs2[31:16])** (Lower two 16-bit products). Result is 64-bit and accumulated. |
