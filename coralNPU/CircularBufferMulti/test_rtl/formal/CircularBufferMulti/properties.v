@@ -346,6 +346,30 @@
         end
     end
 
+    // Multi-Cycle Integrity Check (Enqueue 3, Dequeue 1, Check Count)
+    always @(posedge i_clk) begin
+        // Ensure all cycles in the history window (T, T-1, T-2) are valid and not in reset.
+        if(
+            ($past(f_past_valid,2))&&($past($past(f_past_valid)))&&(f_past_valid) &&
+            (!$past(reset,2))&&(!$past($past(reset)))&&(!reset)
+        ) begin
+            
+            // Step 1 (T-2): Check for Enqueue of 3 words (2 cycles ago)
+            // We check the requested amount (io_enqValid) and assume 3 words were accepted (io_nEnqueued)
+            if (($past($past(io_enqValid)) == 3)&& ($past($past(io_nEnqueued)) == 3)) begin
+                // Step 2 (T-1): Check for Dequeue of 1 word (1 cycle ago)
+                if (
+                    ($past(io_deqValid) == 1) // Assuming io_deqValid is the accepted dequeue count
+                ) begin 
+                    // Step 3 (T): Check the final occupancy count
+                    // If (Enqueued 3) - (Dequeued 1) occurred successfully, 
+                    // the FIFO occupancy (io_count) should be 2 (assuming an empty FIFO start).
+                    assert(io_count == 2);
+                end
+            end
+        end
+    end
+
     ////////////////////////////////////////////////////
     //
     // Induction

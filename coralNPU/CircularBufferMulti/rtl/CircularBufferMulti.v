@@ -1,4 +1,4 @@
-`define ORIGINAL
+// `define ORIGINAL
 `ifdef ORIGINAL
 module CircularBufferMulti(
   input         clock,
@@ -464,13 +464,22 @@ module CircularBufferMulti(
   // READ DATA OUTPUTS (Registered from memory read) 
   reg [DATA_W-1:0] rdata_0, rdata_1, rdata_2, rdata_3;
 
-  // SEQUENTIAL LOGIC (Pointer & Memory Update) 
+  // PARALLEL? LOGIC (Pointer & Memory Update) 
   always @(posedge clock) begin
     if (reset || io_flush) begin
       enqPtr    <= {ADDR_W{1'b0}};
       deqPtr    <= {ADDR_W{1'b0}};
       nEnqueued <= 4'h0;
     end else begin
+      // Pointer Updates (Implicit modulo 8 due to 3-bit width)
+      enqPtr    <= enqPtr + io_enqValid;
+      deqPtr    <= deqPtr + io_deqReady;
+      nEnqueued <= nEnqueued + {1'h0, io_enqValid} - {1'h0, io_deqReady};
+    end
+  end
+  // Write
+  always @(posedge clock) begin
+    if ((!reset)&&(io_flush)) begin
       // Multi-Write logic (Distributed RAM handles these non-conflicting writes)
       if (write_enable_0) begin
         buffer_memory[write_addr_0] <= enq_data_0;
@@ -481,17 +490,16 @@ module CircularBufferMulti(
       if (write_enable_2) begin
         buffer_memory[write_addr_2] <= enq_data_2;
       end
-      
+    end
+  end
+  // Read
+  always @(posedge clock) begin
+    if ((!reset)&&(io_flush)) begin
       // Multi-Read logic (Outputs are registered from memory, 4 parallel reads)
       rdata_0 <= buffer_memory[read_addr_0];
       rdata_1 <= buffer_memory[read_addr_1];
       rdata_2 <= buffer_memory[read_addr_2];
       rdata_3 <= buffer_memory[read_addr_3];
-
-      // Pointer Updates (Implicit modulo 8 due to 3-bit width)
-      enqPtr    <= enqPtr + io_enqValid;
-      deqPtr    <= deqPtr + io_deqReady;
-      nEnqueued <= nEnqueued + {1'h0, io_enqValid} - {1'h0, io_deqReady};
     end
   end
 
