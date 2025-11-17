@@ -41,7 +41,7 @@ module testbench;
     // Instantiate the Unit Under Test (UUT)
     RVDSPCoProc_top uut (
         .i_clk     (i_clk),
-        .i_rst_n   (i_rst_n)
+        .i_rst   (~i_rst_n)
     );
 
     // Clock generation

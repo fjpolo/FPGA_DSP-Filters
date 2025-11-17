@@ -30,38 +30,39 @@
 `timescale 1ps/1ps
 
 module RVDSPCoProc_top(
-    input i_clk,
-    input i_rst_n
+    input wire i_clk,
+    input wire i_rst,
+    output wire [1:0] led
 );
 
-wire    [31:0]  top_imem_data;
-wire            top_imem_data_valid;
-wire            top_imem_data_ready;
-wire            top_imem_read_ce;
-wire    [7:0]  top_imem_address;
-wire            top_dmem_read_ce;
-wire    [7:0]   top_dmem_read_address;
-wire    [31:0]  top_dmem_read_data;
-wire            top_dmem_read_data_valid;
-wire            top_dmem_read_data_ready;
-wire            top_dmem_write_ce;
-wire    [7:0]   top_dmem_write_address;
-wire    [31:0]  top_dmem_write_data;
-wire            top_dmem_write_done;
+wire    [31:0]  top_imem_data/* synthesis syn_keep=1 */;
+wire            top_imem_data_valid/* synthesis syn_keep=1 */;
+wire            top_imem_data_ready/* synthesis syn_keep=1 */;
+wire            top_imem_read_ce/* synthesis syn_keep=1 */;
+wire    [7:0]   top_imem_address/* synthesis syn_keep=1 */; // 8-bit address
+wire            top_dmem_read_ce/* synthesis syn_keep=1 */;
+wire    [7:0]   top_dmem_read_address/* synthesis syn_keep=1 */;
+wire    [31:0]  top_dmem_read_data/* synthesis syn_keep=1 */;
+wire            top_dmem_read_data_valid/* synthesis syn_keep=1 */;
+wire            top_dmem_read_data_ready/* synthesis syn_keep=1 */;
+wire            top_dmem_write_ce/* synthesis syn_keep=1 */;
+wire    [7:0]   top_dmem_write_address/* synthesis syn_keep=1 */;
+wire    [31:0]  top_dmem_write_data/* synthesis syn_keep=1 */;
+wire            top_dmem_write_done/* synthesis syn_keep=1 */;
 // iMEM
 iMEM i_iMEM(
     .i_clk(i_clk),
-    .i_rst_n(i_rst_n),
+    .i_rst_n(~i_rst),
     .i_read_ce(top_imem_read_ce),
-    .i_address(top_imem_address),
+    .i_address(top_imem_address), // 8-bit wire
     .o_data(top_imem_data),
     .o_data_valid(top_imem_data_valid),
     .o_data_ready(top_imem_data_ready)
-);
+)/* synthesis syn_keep=1 */;
 
 dMEM i_dMEM(
     .i_clk(i_clk),
-    .i_rst_n(i_rst_n),
+    .i_rst_n(~i_rst),
     .i_read_ce(top_dmem_read_ce),
     .i_read_address(top_dmem_read_address),
     .o_read_data(top_dmem_read_data),
@@ -71,16 +72,16 @@ dMEM i_dMEM(
     .i_write_address(top_dmem_write_address),
     .i_write_data(top_dmem_write_data),
     .o_write_done(top_dmem_write_done)
-);
+)/* synthesis syn_keep=1 */;
 
 RVDSPCoProc i_RVDSPCoProc(
     .i_clk(i_clk),
-    .i_rst_n(i_rst_n),
+    .i_rst_n(~i_rst),
     .i_imem_data(top_imem_data),
     .i_imem_data_valid(top_imem_data_valid),
     .i_imem_data_ready(top_imem_data_ready),
     .o_imem_read_ce(top_imem_read_ce),
-    .o_imem_address(top_imem_address),
+    .o_imem_address(top_imem_address), // 8-bit port
     .o_read_ce(top_dmem_read_ce),
     .o_read_address(top_dmem_read_address),
     .i_read_data(top_dmem_read_data),
@@ -90,30 +91,46 @@ RVDSPCoProc i_RVDSPCoProc(
     .o_write_address(top_dmem_write_address),
     .o_write_data(top_dmem_write_data),
     .i_write_done(top_dmem_write_done)
-);
+)/* synthesis syn_keep=1 */;
+
+assign led[0] = 
+                     (|top_imem_data)^
+                     (|top_imem_data_valid)^
+                     (|top_imem_data_ready)^
+                     (|top_imem_read_ce)^
+                     (|top_imem_address)^
+                     (|top_dmem_read_ce)^
+                     (|top_dmem_read_address)^
+                     (|top_dmem_read_data)^
+                     (|top_dmem_read_data_valid)^
+                     (|top_dmem_read_data_ready)^
+                     (|top_dmem_write_ce)^
+                     (|top_dmem_write_address)^
+                     (|top_dmem_write_data)^
+                     (|top_dmem_write_done);
 
 endmodule
 
 module dMEM#(
     parameter DEPTH = 256,
     parameter DATA_WIDTH = 32,
-    parameter ADDR_WIDTH = $clog2(DEPTH)
+    parameter ADDR_WIDTH = $clog2(DEPTH) // 8-bit
 )(
-    input   wire                        i_clk,    // Clock 
-    input   wire                        i_rst_n,  // Active low reset
+    input  wire                 i_clk,     // Clock 
+    input  wire                 i_rst_n,   // Active low reset
     // READ
-    input   wire                        i_read_ce,
-    input   wire    [(ADDR_WIDTH-1):0]  i_read_address,
-    output  reg     [(DATA_WIDTH-1):0]  o_read_data,
-    output  wire                        o_read_data_valid,
-    output  wire                        o_read_data_ready,
+    input  wire                 i_read_ce,
+    input  wire [(ADDR_WIDTH-1):0] i_read_address,
+    output reg  [(DATA_WIDTH-1):0] o_read_data,
+    output wire                 o_read_data_valid,
+    output wire                 o_read_data_ready,
     // WRITE
-    input   wire                        i_write_ce,
-    input   wire    [(ADDR_WIDTH-1):0]  i_write_address,
-    input   wire    [(DATA_WIDTH-1):0]  i_write_data,
-    output  wire                        o_write_done
+    input  wire                 i_write_ce,
+    input  wire [(ADDR_WIDTH-1):0] i_write_address,
+    input  wire [(DATA_WIDTH-1):0] i_write_data,
+    output wire                 o_write_done
 );
-    reg [(DATA_WIDTH-1):0] dMEM [0:DEPTH] /* syn_ramstyle=block_ram */; 
+    reg [(DATA_WIDTH-1):0] dMEM [0:DEPTH-1] /* syn_ramstyle=block_ram */; // Corrected range to DEPTH-1
     
     // Data Memory Write 
     always @(posedge  i_clk or negedge  i_rst_n) begin 
@@ -173,15 +190,15 @@ endmodule
 module iMEM#(
     parameter DEPTH = 256,
     parameter DATA_WIDTH = 32,
-    parameter ADDR_WIDTH = $clog2(DEPTH)
+    parameter ADDR_WIDTH = $clog2(DEPTH) // <-- FIXED: Was 5, now correctly calculated as 8
 )(
-    input   wire                        i_clk,    // Clock 
-    input   wire                        i_rst_n,  // Active low reset
-    input   wire                        i_read_ce,
-    input   wire    [(ADDR_WIDTH-1):0]  i_address,
-    output  reg     [(DATA_WIDTH-1):0]  o_data,
-    output  wire                        o_data_valid,
-    output  wire                        o_data_ready
+    input  wire                 i_clk,     // Clock 
+    input  wire                 i_rst_n,   // Active low reset
+    input  wire                 i_read_ce,
+    input  wire [(ADDR_WIDTH-1):0] i_address, // <-- Port is now 8 bits wide
+    output reg  [(DATA_WIDTH-1):0] o_data,
+    output wire                 o_data_valid,
+    output wire                 o_data_ready
 );
 
     //
@@ -189,43 +206,24 @@ module iMEM#(
     //
     reg [(DATA_WIDTH-1):0] iMEM [0:(DEPTH-1)] /* syn_ramstyle=block_ram */; 
     
-    // Hardcoded iMEM Initialization
-    // --- Generated from program.hex ---
+// --- Generated from program.hex ---
 integer i;
 initial begin
-    iMEM[0] = 32'h41000000;
-    iMEM[1] = 32'h42000000;
-    iMEM[2] = 32'h43000002;
-    iMEM[3] = 32'h90000000;
-    iMEM[4] = 32'hA1230000;
-    iMEM[5] = 32'h64000000;
-    iMEM[6] = 32'h75000000;
-    iMEM[7] = 32'h86000000;
-    iMEM[8] = 32'h41000002;
-    iMEM[9] = 32'h42000002;
-    iMEM[10] = 32'h10120000;
-    iMEM[11] = 32'h48000003;
-    iMEM[12] = 32'h49000003;
-    iMEM[13] = 32'hBA890000;
-    iMEM[14] = 32'h4C00000A;
-    iMEM[15] = 32'h4D000003;
-    iMEM[16] = 32'hCECD0000;
-    iMEM[17] = 32'h30D00000;
-    iMEM[18] = 32'h30D00001;
-    iMEM[19] = 32'h30D00002;
-    iMEM[20] = 32'h30D00003;
-    iMEM[21] = 32'h30D00004;
-    iMEM[22] = 32'h30D00005;
-    iMEM[23] = 32'h30D00006;
-    iMEM[24] = 32'h30D00007;
-    iMEM[25] = 32'h50000005;
+    iMEM[0] = 32'h44000005;
+    iMEM[1] = 32'h4500000A;
+    iMEM[2] = 32'h46000002;
+    iMEM[3] = 32'h47000003;
+    iMEM[4] = 32'h90000000;
+    iMEM[5] = 32'hF0460000;
 
     // Initialize the rest of the memory to NOP (0x00000000)
-    for (i = 26; i < 256; i++) begin 
+    for (i = 6; i < 256; i++) begin 
         iMEM[i] = 32'h00000000;
     end        
 end
 // ----------------------------------
+
+
 
 
     // Read
@@ -261,30 +259,30 @@ endmodule
 
 module RVDSPCoProc(
     // Global Signals
-    input   wire            i_clk,    // Clock 
-    input   wire            i_rst_n,  // Active low reset
+    input  wire         i_clk,     // Clock 
+    input  wire         i_rst_n,   // Active low reset
     // iMEM
-    input   wire    [31:0]  i_imem_data,
-    input   wire            i_imem_data_valid,
-    input   wire            i_imem_data_ready,
-    output  reg             o_imem_read_ce,
-    output  reg      [7:0]  o_imem_address,
+    input  wire [31:0]  i_imem_data,
+    input  wire         i_imem_data_valid,
+    input  wire         i_imem_data_ready,
+    output reg          o_imem_read_ce,
+    output reg  [7:0]   o_imem_address,
     // dMEM
-    output  reg             o_read_ce,
-    output  reg     [7:0]   o_read_address,
-    input   wire    [31:0]  i_read_data,
-    input   wire            i_read_data_valid,
-    input   wire            i_read_data_ready,
-    output  reg             o_write_ce,
-    output  reg     [7:0]   o_write_address,
-    output  reg     [31:0]  o_write_data,
-    input   wire            i_write_done
+    output reg          o_read_ce,
+    output reg  [7:0]   o_read_address,
+    input  wire [31:0]  i_read_data,
+    input  wire         i_read_data_valid,
+    input  wire         i_read_data_ready,
+    output reg          o_write_ce,
+    output reg  [7:0]   o_write_address,
+    output reg  [31:0]  o_write_data,
+    input  wire         i_write_done
     );
 
     // Configuration Constants 
-    localparam ADDR_BITS     = 8;             // 256 word memory size (iMEM/dMEM)
-    localparam REG_ADDR_BITS = 4;             // 16 registers
-    localparam REG_COUNT     = 1 << REG_ADDR_BITS;
+    localparam ADDR_BITS       = 8;             // 256 word memory size (iMEM/dMEM)
+    localparam REG_ADDR_BITS   = 4;             // 16 registers
+    localparam REG_COUNT       = 1 << REG_ADDR_BITS;
     
     // Core Pipeline Signals - Single-Cycle FSM
     reg [31:0]                  pc_reg;       
@@ -292,7 +290,7 @@ module RVDSPCoProc(
     reg [31:0]                  instruction;  
     reg [3:0]                   opcode;       
     reg [REG_ADDR_BITS-1:0]     rd_addr, rs1_addr, rs2_addr; 
-    wire [31:0]                 reg_rdata1, reg_rdata2;     
+    wire [31:0]                 reg_rdata1, reg_rdata2;       
     
     // Multi-write Register Path Controls (for MUL/DIV)
     reg                         reg_we_mul_high; // Write enable for Rd (High word / Quotient)
@@ -315,10 +313,10 @@ module RVDSPCoProc(
 
     // Data Memory Signals
     reg [ADDR_BITS-1:0] dmem_addr;  
-    reg [31:0]          dmem_rdata;          
+    reg [31:0]          dmem_rdata;          // <-- This REG is now only updated sequentially
     reg [31:0]          dmem_wdata; 
-    reg                 dmem_we;    
-    reg                 dmem_re;    
+    reg                 dmem_we;     
+    reg                 dmem_re;     
 
     // Control/Status Register
     /* verilator lint_off UNUSEDSIGNAL */
@@ -328,13 +326,13 @@ module RVDSPCoProc(
     
     // FSM States
     parameter [2:0] 
-        STATE_IDLE          = 3'h0,
-        STATE_FETCH         = 3'h1,
-        STATE_READ_IMEM     = 3'h2,
-        STATE_DECODE        = 3'h3,
-        STATE_READ_DMEM     = 3'h4,
-        STATE_EXECUTE       = 3'h5,
-        STATE_WRITE_DMEM    = 3'h6;
+        STATE_IDLE      = 3'h0,
+        STATE_FETCH     = 3'h1,
+        STATE_READ_IMEM = 3'h2,
+        STATE_DECODE    = 3'h3,
+        STATE_READ_DMEM = 3'h4,
+        STATE_EXECUTE   = 3'h5,
+        STATE_WRITE_DMEM = 3'h6;
     reg [2:0] state_reg, state_next; 
         
     // Zero-Overhead Loop Control Registers (LSETUP) ---
@@ -345,6 +343,12 @@ module RVDSPCoProc(
     reg                 r_loop_active;     // 1 when a hardware loop is active
     reg                 loop_setup_en;     // Enable signal to latch LSETUP parameters in sequential block
     localparam [3:0]    OPCODE_LSETUP = 4'b1101; 
+    
+    // MAC4 Instruction Signals
+    // Format: MAC4 Rs1, Rs2 (uses Rs1 and Rs2 fields from instruction)
+    // Operation: acc += (Rs1 * Rs1) + (Rs2 * Rs2)
+    wire [63:0] mac4_product1, mac4_product2;
+    wire [95:0] mac4_sum_96;
         
     //
     // Register File
@@ -356,7 +360,7 @@ module RVDSPCoProc(
     assign reg_rdata2 = gpr[rs2_addr];
 
     // Read signals for LOAD_ACCR (Rs_H, Rs_M, Rs_L)
-    wire [31:0] reg_rdata_h = gpr[rd_addr];  // Rd field holds Rs_H
+    wire [31:0] reg_rdata_h = gpr[rd_addr];   // Rd field holds Rs_H
     wire [31:0] reg_rdata_m = gpr[rs1_addr]; // Rs1 field holds Rs_M
     wire [31:0] reg_rdata_l = gpr[rs2_addr]; // Rs2 field holds Rs_L
     
@@ -370,7 +374,7 @@ module RVDSPCoProc(
             r_loop_start_addr <= 8'h0;
             r_loop_end_addr   <= 8'h0;
         end else begin
-            // 1. Single Write (MAC, LOAD, READ_ACC, MOVE, LSETUP)
+            // 1. Single Write (MAC, LOAD, READ_ACC, MOVE, LSETUP, MAC4)
             if (reg_we_single) begin
                 gpr[rd_addr_single] <= reg_wdata_single;
             end
@@ -426,6 +430,7 @@ module RVDSPCoProc(
     // MAC accum Control Signals
     wire mac_accum_write = (state_reg == STATE_EXECUTE) && (
         opcode == 4'b0001 || // MAC (Accumulate)
+        opcode == 4'b1111 || // MAC4 (Dual-MAC)
         opcode == 4'b1001 || // CLR_ACC (Clear)
         opcode == 4'b1010    // LOAD_ACCR (Load)
     );
@@ -474,6 +479,13 @@ module RVDSPCoProc(
     // 3. Perform the controlled accumulation
     assign mac_sum_96 = r_mac_accum_96 + mac_add_term_96; 
 
+    // MAC4 Instruction Logic
+    // Format: MAC4 Rs1, Rs2 (Opcode F)
+    // Operation: acc += (Rs1 * Rs1) + (Rs2 * Rs2)
+    assign mac4_product1 = $signed(reg_rdata1) * $signed(reg_rdata1);
+    assign mac4_product2 = $signed(reg_rdata2) * $signed(reg_rdata2);
+    assign mac4_sum_96 = r_mac_accum_96 + {{32{mac4_product1[63]}}, mac4_product1} + {{32{mac4_product2[63]}}, mac4_product2};
+
     // Accumulator Next State Logic (Combinatorial)
     always @* begin
         r_mac_accum_next_96 = r_mac_accum_96; // Default: hold value
@@ -482,6 +494,8 @@ module RVDSPCoProc(
             case (opcode)
                 4'b0001: // MAC: Use the controlled sum
                     r_mac_accum_next_96 = mac_sum_96; 
+                4'b1111: // MAC4: Add two products to accumulator
+                    r_mac_accum_next_96 = mac4_sum_96;
                 4'b1001: // CLR_ACC
                     r_mac_accum_next_96 = 96'h0;
                 4'b1010: // LOAD_ACCR
@@ -520,11 +534,12 @@ module RVDSPCoProc(
             o_imem_read_ce <= 1'b0;
             o_read_ce <= 1'b0;
             o_write_ce <= 1'b0;
+            dmem_rdata <= 32'h0000_0000; // Initialize read data register
         end else begin
             state_reg <= state_next;
             pc_reg    <= pc_next;
             
-            // Default memory control signals
+            // Default memory control signals (reset to 0 every cycle)
             o_imem_read_ce <= 1'b0;
             o_read_ce <= 1'b0;
             o_write_ce <= 1'b0;
@@ -543,11 +558,16 @@ module RVDSPCoProc(
                 STATE_READ_DMEM: begin
                     o_read_ce <= 1'b1;
                     o_read_address <= dmem_addr[7:0];
+                    
+                    // FIX: Sequentially latch read data when handshake is complete 
+                    // and we are transitioning to the EXECUTE state.
+                    if (i_read_data_valid && i_read_data_ready) begin
+                        dmem_rdata <= i_read_data; 
+                    end
                 end
                 
                 STATE_EXECUTE: begin
-                    // if ((opcode == 4'b0011)||(opcode == 4'b1000)) begin
-                    if (opcode == 4'b0011) begin
+                    if (opcode == 4'b0011) begin // Only STORE
                         o_write_ce <= 1'b1;
                         o_write_address <= dmem_addr[7:0];
                         o_write_data <= dmem_wdata;
@@ -565,6 +585,7 @@ module RVDSPCoProc(
         pc_next    = pc_reg;    
         dmem_we    = 1'b0;
         dmem_re    = 1'b0;
+        // Use register file data for dMEM address if not an immediate address (LOAD/STORE/JUMP are non-reg addresses)
         dmem_addr  = instruction[ADDR_BITS-1:0]; 
         dmem_wdata = reg_rdata1;
         
@@ -615,7 +636,7 @@ module RVDSPCoProc(
             STATE_READ_DMEM: begin
                 // Wait for dMEM read to complete
                 if(i_read_data_valid && i_read_data_ready) begin
-                    dmem_rdata = i_read_data;
+                    // dmem_rdata = i_read_data; // <-- ILLEGAL ASSIGNMENT REMOVED
                     state_next = STATE_EXECUTE;
                 end else begin
                     state_next = STATE_READ_DMEM;
@@ -629,7 +650,6 @@ module RVDSPCoProc(
                     state_next = STATE_WRITE_DMEM;
                 end else begin
                     state_next = STATE_FETCH;
-                    pc_next    = pc_reg + 1; 
                 end
                 
                 case (opcode)
@@ -644,12 +664,12 @@ module RVDSPCoProc(
                     4'b0010: begin 
                         reg_we_single  = 1'b1;
                         rd_addr_single = rd_addr;
-                        reg_wdata_single = dmem_rdata; 
+                        reg_wdata_single = dmem_rdata; // Use the sequentially latched data
                     end
                     
                     // STORE Rs, Addr (Opcode 3)
                     4'b0011: begin 
-                        // Memory write will be handled in STATE_WRITE_DMEM
+                        // Memory write will be handled in STATE_WRITE_DMEM sequential block
                     end
                     
                     // MOVE Rd, Imm (Opcode 4)
@@ -722,13 +742,18 @@ module RVDSPCoProc(
 
                     // LSETUP Rd, LC (8-bit), EndAddr (8-bit) (Opcode D / 13)
                     OPCODE_LSETUP: begin 
-                        loop_setup_en    = 1'b1; // Trigger sequential update of loop registers
+                        loop_setup_en     = 1'b1; // Trigger sequential update of loop registers
                         
                         // Write the initial loop count N (instruction[23:16]) to the destination register Rd
-                        reg_we_single    = 1'b1; 
-                        rd_addr_single   = rd_addr; 
+                        reg_we_single     = 1'b1; 
+                        rd_addr_single    = rd_addr; 
                         // The loop count N is 8 bits (sign-extended for 32-bit register)
                         reg_wdata_single = {{24{instruction[23]}}, instruction[23:16]}; 
+                    end
+                    
+                    // MAC4 Rs1, Rs2 (Opcode F / 15)
+                    4'b1111: begin 
+                        // MAC4 doesn't write to any register, only updates accumulator
                     end
                     
                     // NOP (Opcode 0)

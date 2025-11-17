@@ -103,14 +103,9 @@ INSTRUCTION_MAP = {
         'fields': [('Rd', 4, 24), ('N', 8, 16), ('EndAddr', 8, 8)]
     },
 
-    # Placeholder for Opcode E (14) - RSHR
-    'RSHR': {
-        'opcode': 0xE,
-        'format': 'Rd,Rs1,Imm',
-        'fields': [('Rd', 4, 24), ('Rs1', 4, 20), ('Imm', 5, 0)]
-    },
-
-    # Placeholder for Opcode F (15) - MAC4
+    # Opcode E (14) is unused/reserved
+    
+    # Opcode F (15): MAC4 (Dual-MAC)
     'MAC4': {
         'opcode': 0xF,
         'format': 'Rs1,Rs2',
@@ -151,7 +146,6 @@ def assemble_line(line_number, line):
     Assembles a single line of assembly code.
     Returns the 32-bit machine code as an integer.
     """
-    # --- FIX: Handle both '//' (C-style) and ';' (Assembly-style) comments ---
     # 1. Split by C-style comment (//) first
     line = line.split('//')[0] 
     
@@ -192,20 +186,26 @@ def assemble_line(line_number, line):
     for i, (field_name, width, start_bit) in enumerate(instr_def['fields']):
         op_val = parse_operand(operands[i])
         
-        # Check value bounds
+        # Calculate the maximum unsigned value for this width
         max_val = (1 << width) - 1
-        if op_val < 0 or op_val > max_val:
-            # Note: 20-bit MOVE Imm allows signed, but we check max unsigned here
-            if field_name != 'Imm' or op_val < -(1 << (width - 1)) or op_val >= (1 << (width - 1)):
-                # For 20-bit immediate, allow signed range check for MOVE
-                if field_name == 'Imm' and mnemonic == 'MOVE':
-                    # Value is okay, just needs to fit in 20 bits
-                    pass
-                else:
-                    raise ValueError(f"Value '{op_val}' for field '{field_name}' exceeds {width}-bit unsigned limit on line {line_number}.")
+        
+        # --- Handle signed vs unsigned bounds checking and conversion ---
+        if field_name == 'Imm' and mnemonic == 'MOVE':
+            # MOVE uses a 20-bit SIGNED immediate
+            signed_max = (1 << 19) - 1
+            signed_min = -(1 << 19)
+            if not (signed_min <= op_val <= signed_max):
+                 raise ValueError(f"Value '{op_val}' for MOVE 'Imm' exceeds 20-bit signed limit ({signed_min} to {signed_max}) on line {line_number}.")
+            
+            # Convert negative value to 20-bit two's complement representation
+            if op_val < 0:
+                op_val = op_val & max_val
+        else:
+            # All other fields (including Rd, Rs1, Rs2, Addr, N) are UNsigned
+            if not (0 <= op_val <= max_val):
+                raise ValueError(f"Value '{op_val}' for field '{field_name}' exceeds {width}-bit unsigned limit (0 to {max_val}) on line {line_number}.")
             
         # Apply mask and shift
-        # The '& max_val' ensures only the lower 'width' bits are used.
         instruction_word |= ((op_val & max_val) << start_bit)
 
     return instruction_word
