@@ -3,7 +3,7 @@ import sys
 def generate_verilog_block(hex_file, output_file=None):
     """
     Reads a .hex file (one instruction per line) and generates a Verilog 
-    initial begin...end block for i_mem initialization.
+    initial begin...end block for iMEM initialization.
     """
     try:
         with open(hex_file, 'r') as f:
@@ -16,7 +16,7 @@ def generate_verilog_block(hex_file, output_file=None):
     max_memory_size = 1 << address_bits
     
     if len(hex_instructions) > max_memory_size:
-        print(f"Warning: Program size ({len(hex_instructions)}) exceeds i_mem size ({max_memory_size}). Truncating.")
+        print(f"Warning: Program size ({len(hex_instructions)}) exceeds iMEM size ({max_memory_size}). Truncating.")
         hex_instructions = hex_instructions[:max_memory_size]
 
     verilog_output = []
@@ -26,13 +26,13 @@ def generate_verilog_block(hex_file, output_file=None):
 
     # 1. Write Instructions
     for i, hex_code in enumerate(hex_instructions):
-        verilog_output.append(f"    i_mem[{i}] = 32'h{hex_code};")
+        verilog_output.append(f"    iMEM[{i}] = 32'h{hex_code};")
 
-    # 2. Fill the rest of i_mem with NOP (0x00000000)
+    # 2. Fill the rest of iMEM with NOP (0x00000000)
     if len(hex_instructions) < max_memory_size:
         verilog_output.append("\n    // Initialize the rest of the memory to NOP (0x00000000)")
         verilog_output.append(f"    for (i = {len(hex_instructions)}; i < {max_memory_size}; i++) begin ")
-        verilog_output.append("        i_mem[i] = 32'h00000000;")
+        verilog_output.append("        iMEM[i] = 32'h00000000;")
         verilog_output.append("    end        ")
 
     # 3. Final block closing and metadata (copied from your original style)

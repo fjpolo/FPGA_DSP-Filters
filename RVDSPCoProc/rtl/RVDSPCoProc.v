@@ -191,67 +191,43 @@ module iMEM#(
     reg [(DATA_WIDTH-1):0] iMEM [0:(DEPTH-1)] /* syn_ramstyle=block_ram */; 
     
     // Hardcoded iMEM Initialization
-    `define TEST_LSETUP
-    `ifdef TEST_LSETUP
-    // Hardcoded iMEM Initialization - LSETUP Test Program
-    integer i;
-    initial begin
-        // Setup: R1=2, R2=3, R3=4, R4=5. Clear Acc.
-        iMEM[0] = 32'h41000002; // MOVE R1, 2
-        iMEM[1] = 32'h42000003; // MOVE R2, 3
-        iMEM[2] = 32'h43000004; // MOVE R3, 4
-        iMEM[3] = 32'h44000005; // MOVE R4, 5
-        iMEM[4] = 32'h90000000; // CLR_ACC
-        
-        // LSETUP: LSETUP R5, LC=3, EndAddr=7
-        // Loop over PC 6 and PC 7 exactly 3 times. Store N=3 in R5.
-        // LSA is PC 5 + 1 = 6.
-        iMEM[5] = 32'hD5030700; // LSETUP R5, 3, 7 
-        
-        // Loop Body (Start Address: PC 6)
-        iMEM[6] = 32'h10120000; // MAC R1, R2 (Acc += 6)
-        iMEM[7] = 32'h10340000; // MAC R3, R4 (Acc += 20) -> Loop End Address (PC 7)
-        
-        // Verification (Program Counter should proceed to PC 8 after 3 iterations)
-        iMEM[8] = 32'h88000000; // READ_ACCL R8 (R8 should be 0x4E or 78)
-        iMEM[9] = 32'h50000009; // JUMP 9 (Halt)
-
-        // Initialize the rest of the memory to NOP (0x00000000)
-        for (i = 10; i < 256; i++) begin 
-            iMEM[i] = 32'h00000000;
-        end        
-    end
-    // ----------------------------------
-    `else
     // --- Generated from program.hex ---
-    integer i;
-    initial begin
-        iMEM[0] = 32'h41000000;
-        iMEM[1] = 32'h42000000;
-        iMEM[2] = 32'h43000002;
-        iMEM[3] = 32'h90000000;
-        iMEM[4] = 32'hA1230000;
-        iMEM[5] = 32'h64000000;
-        iMEM[6] = 32'h75000000;
-        iMEM[7] = 32'h86000000;
-        iMEM[8] = 32'h41000002;
-        iMEM[9] = 32'h42000002;
-        iMEM[10] = 32'h10120000;
-        iMEM[11] = 32'h48000003;
-        iMEM[12] = 32'h49000003;
-        iMEM[13] = 32'hBA890000;
-        iMEM[14] = 32'h4C00000A;
-        iMEM[15] = 32'h4D000003;
-        iMEM[16] = 32'hCECD0000;
-        iMEM[17] = 32'h50000005;
+integer i;
+initial begin
+    iMEM[0] = 32'h41000000;
+    iMEM[1] = 32'h42000000;
+    iMEM[2] = 32'h43000002;
+    iMEM[3] = 32'h90000000;
+    iMEM[4] = 32'hA1230000;
+    iMEM[5] = 32'h64000000;
+    iMEM[6] = 32'h75000000;
+    iMEM[7] = 32'h86000000;
+    iMEM[8] = 32'h41000002;
+    iMEM[9] = 32'h42000002;
+    iMEM[10] = 32'h10120000;
+    iMEM[11] = 32'h48000003;
+    iMEM[12] = 32'h49000003;
+    iMEM[13] = 32'hBA890000;
+    iMEM[14] = 32'h4C00000A;
+    iMEM[15] = 32'h4D000003;
+    iMEM[16] = 32'hCECD0000;
+    iMEM[17] = 32'h30D00000;
+    iMEM[18] = 32'h30D00001;
+    iMEM[19] = 32'h30D00002;
+    iMEM[20] = 32'h30D00003;
+    iMEM[21] = 32'h30D00004;
+    iMEM[22] = 32'h30D00005;
+    iMEM[23] = 32'h30D00006;
+    iMEM[24] = 32'h30D00007;
+    iMEM[25] = 32'h50000005;
 
-        // Initialize the rest of the memory to NOP (0x00000000)
-        for (i = 18; i < 256; i++) begin 
-            iMEM[i] = 32'h00000000;
-        end        
-    end
-    // ----------------------------------
-`endif
+    // Initialize the rest of the memory to NOP (0x00000000)
+    for (i = 26; i < 256; i++) begin 
+        iMEM[i] = 32'h00000000;
+    end        
+end
+// ----------------------------------
+
 
     // Read
     always @(posedge i_clk) begin
@@ -295,14 +271,14 @@ module RVDSPCoProc(
     output  reg             o_imem_read_ce,
     output  reg      [4:0]  o_imem_address,
     // dMEM
-    output  wire            o_read_ce,
-    output  wire    [4:0]   o_read_address,
+    output  reg             o_read_ce,
+    output  reg     [4:0]   o_read_address,
     input   wire    [31:0]  i_read_data,
     input   wire            i_read_data_valid,
     input   wire            i_read_data_ready,
-    output  wire            o_write_ce,
-    output  wire    [4:0]   o_write_address,
-    output  wire    [31:0]  o_write_data,
+    output  reg             o_write_ce,
+    output  reg     [4:0]   o_write_address,
+    output  reg     [31:0]  o_write_data,
     input   wire            i_write_done
     );
 
@@ -371,16 +347,6 @@ module RVDSPCoProc(
     reg                 loop_setup_en;     // Enable signal to latch LSETUP parameters in sequential block
     localparam [3:0]    OPCODE_LSETUP = 4'b1101; 
         
-    //
-    // Instruction Memory
-    //
-
-
-    //
-    // Data Memory (dMEM) BSRAM 
-    //
-
-    
     //
     // Register File
     //
@@ -552,25 +518,45 @@ module RVDSPCoProc(
             pc_reg    <= 32'h0000_0000;
             instruction <= 32'h00000000; 
             done_flag <= 1'b0;
+            o_imem_read_ce <= 1'b0;
+            o_read_ce <= 1'b0;
+            o_write_ce <= 1'b0;
         end else begin
             state_reg <= state_next;
             pc_reg    <= pc_next;
+            
+            // Default memory control signals
             o_imem_read_ce <= 1'b0;
-            o_write_read_ce <= 1'b0;
-            if (state_reg == STATE_FETCH) begin
-                // instruction <= iMEM[pc_reg[ADDR_BITS-1:0]];
-                o_imem_read_ce <= 1'b1;
-                o_imem_address <= pc_reg[ADDR_BITS-1:0];
-            end
-            if (state_reg == STATE_READ_IMEM) begin
-                if((i_imem_data_valid)&&(i_imem_data_ready))
-                    instruction <= i_imem_data;
-            end 
-            if(state_reg == STATE_DECODE) begin
-                o_write_ce <= 1b1;
-                o_write_address <= ;
-            end
-            done_flag <= (state_reg == STATE_EXECUTE) && (state_next == STATE_IDLE);
+            o_read_ce <= 1'b0;
+            o_write_ce <= 1'b0;
+            
+            case (state_reg)
+                STATE_FETCH: begin
+                    o_imem_read_ce <= 1'b1;
+                    o_imem_address <= pc_reg[4:0];
+                end
+                
+                STATE_READ_IMEM: begin
+                    if((i_imem_data_valid)&&(i_imem_data_ready))
+                        instruction <= i_imem_data;
+                end
+                
+                STATE_READ_DMEM: begin
+                    o_read_ce <= 1'b1;
+                    o_read_address <= dmem_addr[4:0];
+                end
+                
+                STATE_EXECUTE: begin
+                    // if ((opcode == 4'b0011)||(opcode == 4'b1000)) begin
+                    if (opcode == 4'b0011) begin
+                        o_write_ce <= 1'b1;
+                        o_write_address <= dmem_addr[4:0];
+                        o_write_data <= dmem_wdata;
+                    end
+                end
+            endcase
+            
+            done_flag <= ((state_reg == STATE_EXECUTE)&&(state_next == STATE_IDLE)||(state_reg == STATE_WRITE_DMEM)&&(state_next == STATE_IDLE));
         end
     end
     
@@ -581,6 +567,7 @@ module RVDSPCoProc(
         dmem_we    = 1'b0;
         dmem_re    = 1'b0;
         dmem_addr  = instruction[ADDR_BITS-1:0]; 
+        dmem_wdata = reg_rdata1;
         
         // Reset register write paths and loop setup enable
         reg_we_single = 1'b0;
@@ -591,7 +578,7 @@ module RVDSPCoProc(
         rd_addr_low = 4'b0;
         reg_wdata_high = 32'h0;
         reg_wdata_low = 32'h0;
-        loop_setup_en = 1'b0; // NEW: Reset loop setup enable
+        loop_setup_en = 1'b0;
         
         // Instruction Decode 
         opcode   = instruction[31:28];
@@ -606,18 +593,46 @@ module RVDSPCoProc(
             end
             
             STATE_FETCH: begin
-                // pc_next    = pc_reg + 1; 
                 state_next = STATE_READ_IMEM;
             end
             
             STATE_READ_IMEM: begin
-                state_next = STATE_READ_IMEM;
                 if((i_imem_data_valid)&&(i_imem_data_ready))
+                    state_next = STATE_DECODE;
+                else
+                    state_next = STATE_READ_IMEM;
+            end
+            
+            STATE_DECODE: begin
+                // Check if instruction needs data memory read (LOAD)
+                if (opcode == 4'b0010) begin // LOAD
+                    dmem_re = 1'b1;
+                    state_next = STATE_READ_DMEM;
+                end else begin
                     state_next = STATE_EXECUTE;
+                end
+            end
+            
+            STATE_READ_DMEM: begin
+                // Wait for dMEM read to complete
+                if(i_read_data_valid && i_read_data_ready) begin
+                    dmem_rdata = i_read_data;
+                    state_next = STATE_EXECUTE;
+                end else begin
+                    state_next = STATE_READ_DMEM;
+                end
             end
             
             STATE_EXECUTE: begin
-                pc_next    = pc_reg + 1; 
+                // Check if instruction needs data memory write (STORE)
+                if (opcode == 4'b0011) begin // STORE
+                    dmem_we = 1'b1;
+                    state_next = STATE_WRITE_DMEM;
+                end else begin
+                    state_next = STATE_FETCH;
+                    pc_next    = pc_reg + 1; 
+                end
+                
                 case (opcode)
                     // MAC Rd, Rs1, Rs2 (Opcode 1)
                     4'b0001: begin 
@@ -628,7 +643,6 @@ module RVDSPCoProc(
                     
                     // LOAD Rd, Addr (Opcode 2)
                     4'b0010: begin 
-                        dmem_re        = 1'b1;
                         reg_we_single  = 1'b1;
                         rd_addr_single = rd_addr;
                         reg_wdata_single = dmem_rdata; 
@@ -636,8 +650,7 @@ module RVDSPCoProc(
                     
                     // STORE Rs, Addr (Opcode 3)
                     4'b0011: begin 
-                        dmem_we   = 1'b1;
-                        dmem_wdata = reg_rdata1; 
+                        // Memory write will be handled in STATE_WRITE_DMEM
                     end
                     
                     // MOVE Rd, Imm (Opcode 4)
@@ -650,8 +663,7 @@ module RVDSPCoProc(
                     
                     // JUMP Addr (Opcode 5)
                     4'b0101: begin 
-                        // PC update is now handled lower down, but must be the lowest priority jump
-                        // We rely on the jump logic at the end of STATE_EXECUTE
+                        // PC update handled below
                     end
 
                     // READ_ACCH Rd (Opcode 6)
@@ -730,30 +742,35 @@ module RVDSPCoProc(
                     end
                 endcase
                 
-                // State Transition and PC Update Logic 
-                
-                // 1. Check for Loop Branch (highest priority PC update)
-                // If loop is active and we are executing the last instruction of the loop
-                if (r_loop_active && (pc_reg[ADDR_BITS-1:0] == r_loop_end_addr)) begin
-                    // r_loop_counter will be decremented in the sequential block in this cycle
-                    if (r_loop_counter > 32'h1) begin 
-                        // Loop back to start address
-                        pc_next = {24'h0, r_loop_start_addr};
+                // PC Update Logic (only if not going to WRITE_DMEM)
+                if (state_next == STATE_FETCH) begin
+                    // 1. Check for Loop Branch (highest priority PC update)
+                    if (r_loop_active && (pc_reg[ADDR_BITS-1:0] == r_loop_end_addr)) begin
+                        if (r_loop_counter > 32'h1) begin 
+                            // Loop back to start address
+                            pc_next = {24'h0, r_loop_start_addr};
+                        end else begin
+                            // Last iteration completed, fall through to the next instruction
+                            pc_next = pc_reg + 1;
+                        end
+                    // 2. Check for JUMP
+                    end else if (opcode == 4'b0101) begin // JUMP Addr
+                        pc_next = {24'h000000, instruction[7:0]}; 
+                    // 3. Default: Increment PC
                     end else begin
-                        // Last iteration completed, fall through to the next instruction
                         pc_next = pc_reg + 1;
                     end
-                // 2. Check for JUMP
-                end else if (opcode == 4'b0101) begin // JUMP Addr
-                    pc_next = {24'h000000, instruction[7:0]}; 
-                // 3. Check for HALT
-                end else if (!start_flag) begin
-                    state_next = STATE_IDLE;
-                // 4. Default: Fetch next instruction
-                end else begin
-                    state_next = STATE_FETCH; 
                 end
-                
+            end
+            
+            STATE_WRITE_DMEM: begin
+                // Wait for dMEM write to complete
+                if(i_write_done) begin
+                    state_next = STATE_FETCH;
+                    pc_next    = pc_reg + 1;
+                end else begin
+                    state_next = STATE_WRITE_DMEM;
+                end
             end
             
             default: begin

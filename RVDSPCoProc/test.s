@@ -33,5 +33,14 @@
     MOVE R13, 3
     // Address 15: DIV R14, R12, R13. R14 = Quotient, R15 = Remainder
     DIV R14, R12, R13
+    //
+    STORE R13, 0x00
+    STORE R13, 0x01
+    STORE R13, 0x02
+    STORE R13, 0x03
+    STORE R13, 0x04
+    STORE R13, 0x05
+    STORE R13, 0x06
+    STORE R13, 0x07
     // Address 16: JUMP back to Address 5 to continually read the stable value.
     JUMP 5
