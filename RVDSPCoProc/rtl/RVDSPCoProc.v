@@ -38,7 +38,16 @@ wire    [31:0]  top_imem_data;
 wire            top_imem_data_valid;
 wire            top_imem_data_ready;
 wire            top_imem_read_ce;
-wire     [4:0] top_imem_address;
+wire     [4:0]  top_imem_address;
+wire            top_dmem_read_ce;
+wire    [4:0]   top_dmem_read_address;
+wire    [31:0]  top_dmem_read_data;
+wire            top_dmem_read_data_valid;
+wire            top_dmem_read_data_ready;
+wire            top_dmem_write_ce;
+wire    [4:0]   top_dmem_write_address;
+wire    [31:0]  top_dmem_write_data;
+wire            top_dmem_write_done;
 // iMEM
 iMEM i_iMEM(
     .i_clk(i_clk),
@@ -50,6 +59,20 @@ iMEM i_iMEM(
     .o_data_ready(top_imem_data_ready)
 );
 
+dMEM i_dMEM(
+    .i_clk(i_clk),
+    .i_rst_n(i_rst_n),
+    .i_read_ce(top_dmem_read_ce),
+    .i_read_address(top_dmem_read_address),
+    .o_read_data(top_dmem_read_data),
+    .o_read_data_valid(top_dmem_read_data_valid),
+    .o_read_data_ready(top_dmem_read_data_ready),
+    .i_write_ce(top_dmem_write_ce),
+    .i_write_address(top_dmem_write_address),
+    .i_write_data(top_dmem_write_data),
+    .o_write_done(top_dmem_write_done)
+);
+
 RVDSPCoProc i_RVDSPCoProc(
     .i_clk(i_clk),
     .i_rst_n(i_rst_n),
@@ -57,14 +80,94 @@ RVDSPCoProc i_RVDSPCoProc(
     .i_imem_data_valid(top_imem_data_valid),
     .i_imem_data_ready(top_imem_data_ready),
     .o_imem_read_ce(top_imem_read_ce),
-    .o_imem_address(top_imem_address)
+    .o_imem_address(top_imem_address),
+    .o_read_ce(top_dmem_read_ce),
+    .o_read_address(top_dmem_read_address),
+    .i_read_data(top_dmem_read_data),
+    .i_read_data_valid(top_dmem_read_data_valid),
+    .i_read_data_ready(top_dmem_read_data_ready),
+    .o_write_ce(top_dmem_write_ce),
+    .o_write_address(top_dmem_write_address),
+    .o_write_data(top_dmem_write_data),
+    .i_write_done(top_dmem_write_done)
 );
 
 endmodule
 
-module dMEM(
-
+module dMEM#(
+    parameter DEPTH = 256,
+    parameter DATA_WIDTH = 32,
+    parameter ADDR_WIDTH = 5
+)(
+    input   wire                        i_clk,    // Clock 
+    input   wire                        i_rst_n,  // Active low reset
+    // READ
+    input   wire                        i_read_ce,
+    input   wire    [(ADDR_WIDTH-1):0]  i_read_address,
+    output  reg     [(DATA_WIDTH-1):0]  o_read_data,
+    output  wire                        o_read_data_valid,
+    output  wire                        o_read_data_ready,
+    // WRITE
+    input   wire                        i_write_ce,
+    input   wire    [(ADDR_WIDTH-1):0]  i_write_address,
+    input   wire    [(DATA_WIDTH-1):0]  i_write_data,
+    output  wire                        o_write_done
 );
+
+    reg [(DATA_WIDTH-1):0] dMEM [0:DEPTH] /* syn_ramstyle=block_ram */; 
+    
+    // Data Memory Write 
+    always @(posedge  i_clk or negedge  i_rst_n) begin 
+        if (! i_rst_n) begin
+            // Reset logic for memory data if needed
+        end else if (i_write_ce) begin
+            // Synchronous Write (for STORE instruction)
+            dMEM[i_write_address] <= i_write_data;
+        end
+    end
+    
+    // Data Memory Read
+    always @(posedge  i_clk or negedge  i_rst_n) begin 
+        if (! i_rst_n) begin
+            o_read_data <= 32'h0; // Initialize read data
+        end else if (i_read_ce) begin
+            // Synchronous Read (for LOAD instruction result)
+            o_read_data <= dMEM[i_read_address]; 
+        end
+    end
+
+    // Read Handshake
+    reg read_data_valid;
+    reg read_data_ready;
+    wire read_addres_valid = (i_read_address <= 255);
+    always @(posedge i_clk) begin
+        if(!i_rst_n) begin
+            read_data_valid <= 1'h0;
+            read_data_ready <= 1'h0;
+        end else begin
+            read_data_valid <= 1'b0;
+            read_data_ready <= 1'b0;
+            if((i_read_ce)&&(read_addres_valid))
+                read_data_valid <= 1'b1;
+                read_data_ready <= 1'b1;
+        end
+    end
+    assign o_read_data_valid = read_data_valid;
+    assign o_read_data_ready = read_data_ready;
+
+    // Write Handshake
+    reg write_done;
+    wire write_addres_valid = (i_write_address <= 255);
+    always @(posedge i_clk) begin
+        if(!i_rst_n) begin
+            write_done <= 1'h0;
+        end else begin
+            write_done <= 1'b0;
+            if((i_write_ce)&&(write_addres_valid))
+                write_done <= 1'b1;
+        end
+    end
+    assign o_write_done = write_done;
 
 endmodule
 
@@ -78,8 +181,8 @@ module iMEM#(
     input   wire                        i_read_ce,
     input   wire    [(ADDR_WIDTH-1):0]  i_address,
     output  reg     [(DATA_WIDTH-1):0]  o_data,
-    output  reg                         o_data_valid,
-    output  reg                         o_data_ready
+    output  wire                        o_data_valid,
+    output  wire                        o_data_ready
 );
 
     //
@@ -190,7 +293,17 @@ module RVDSPCoProc(
     input   wire            i_imem_data_valid,
     input   wire            i_imem_data_ready,
     output  reg             o_imem_read_ce,
-    output  reg     [4:0]   o_imem_address
+    output  reg      [4:0]  o_imem_address,
+    // dMEM
+    output  wire            o_read_ce,
+    output  wire    [4:0]   o_read_address,
+    input   wire    [31:0]  i_read_data,
+    input   wire            i_read_data_valid,
+    input   wire            i_read_data_ready,
+    output  wire            o_write_ce,
+    output  wire    [4:0]   o_write_address,
+    output  wire    [31:0]  o_write_data,
+    input   wire            i_write_done
     );
 
     // Configuration Constants 
@@ -240,10 +353,13 @@ module RVDSPCoProc(
     
     // FSM States
     parameter [2:0] 
-        STATE_IDLE          = 2'b00,
-        STATE_FETCH         = 2'b01,
-        STATE_READ_IMEM     = 2'b10,
-        STATE_EXECUTE       = 2'b11;
+        STATE_IDLE          = 3'h0,
+        STATE_FETCH         = 3'h1,
+        STATE_READ_IMEM     = 3'h2,
+        STATE_DECODE        = 3'h3,
+        STATE_READ_DMEM     = 3'h4,
+        STATE_EXECUTE       = 3'h5,
+        STATE_WRITE_DMEM    = 3'h6;
     reg [2:0] state_reg, state_next; 
         
     // Zero-Overhead Loop Control Registers (LSETUP) ---
@@ -263,27 +379,7 @@ module RVDSPCoProc(
     //
     // Data Memory (dMEM) BSRAM 
     //
-    reg [31:0] dMEM [0:255] /* syn_ramstyle=block_ram */; 
-    
-    // Data Memory Write 
-    always @(posedge  i_clk or negedge  i_rst_n) begin 
-        if (! i_rst_n) begin
-            // Reset logic for memory data if needed
-        end else if (dmem_we) begin
-            // Synchronous Write (for STORE instruction)
-            dMEM[dmem_addr] <= dmem_wdata;
-        end
-    end
-    
-    // Data Memory Read
-    always @(posedge  i_clk or negedge  i_rst_n) begin 
-        if (! i_rst_n) begin
-            dmem_rdata <= 32'h0; // Initialize read data
-        end else if (dmem_re) begin
-            // Synchronous Read (for LOAD instruction result)
-            dmem_rdata <= dMEM[dmem_addr]; 
-        end
-    end
+
     
     //
     // Register File
@@ -460,7 +556,7 @@ module RVDSPCoProc(
             state_reg <= state_next;
             pc_reg    <= pc_next;
             o_imem_read_ce <= 1'b0;
-            // o_imem_address <= 'h0;
+            o_write_read_ce <= 1'b0;
             if (state_reg == STATE_FETCH) begin
                 // instruction <= iMEM[pc_reg[ADDR_BITS-1:0]];
                 o_imem_read_ce <= 1'b1;
@@ -470,6 +566,10 @@ module RVDSPCoProc(
                 if((i_imem_data_valid)&&(i_imem_data_ready))
                     instruction <= i_imem_data;
             end 
+            if(state_reg == STATE_DECODE) begin
+                o_write_ce <= 1b1;
+                o_write_address <= ;
+            end
             done_flag <= (state_reg == STATE_EXECUTE) && (state_next == STATE_IDLE);
         end
     end
