@@ -38,14 +38,14 @@ wire    [31:0]  top_imem_data;
 wire            top_imem_data_valid;
 wire            top_imem_data_ready;
 wire            top_imem_read_ce;
-wire     [4:0]  top_imem_address;
+wire    [7:0]  top_imem_address;
 wire            top_dmem_read_ce;
-wire    [4:0]   top_dmem_read_address;
+wire    [7:0]   top_dmem_read_address;
 wire    [31:0]  top_dmem_read_data;
 wire            top_dmem_read_data_valid;
 wire            top_dmem_read_data_ready;
 wire            top_dmem_write_ce;
-wire    [4:0]   top_dmem_write_address;
+wire    [7:0]   top_dmem_write_address;
 wire    [31:0]  top_dmem_write_data;
 wire            top_dmem_write_done;
 // iMEM
@@ -97,7 +97,7 @@ endmodule
 module dMEM#(
     parameter DEPTH = 256,
     parameter DATA_WIDTH = 32,
-    parameter ADDR_WIDTH = 5
+    parameter ADDR_WIDTH = $clog2(DEPTH)
 )(
     input   wire                        i_clk,    // Clock 
     input   wire                        i_rst_n,  // Active low reset
@@ -113,7 +113,6 @@ module dMEM#(
     input   wire    [(DATA_WIDTH-1):0]  i_write_data,
     output  wire                        o_write_done
 );
-
     reg [(DATA_WIDTH-1):0] dMEM [0:DEPTH] /* syn_ramstyle=block_ram */; 
     
     // Data Memory Write 
@@ -174,7 +173,7 @@ endmodule
 module iMEM#(
     parameter DEPTH = 256,
     parameter DATA_WIDTH = 32,
-    parameter ADDR_WIDTH = 5
+    parameter ADDR_WIDTH = $clog2(DEPTH)
 )(
     input   wire                        i_clk,    // Clock 
     input   wire                        i_rst_n,  // Active low reset
@@ -269,15 +268,15 @@ module RVDSPCoProc(
     input   wire            i_imem_data_valid,
     input   wire            i_imem_data_ready,
     output  reg             o_imem_read_ce,
-    output  reg      [4:0]  o_imem_address,
+    output  reg      [7:0]  o_imem_address,
     // dMEM
     output  reg             o_read_ce,
-    output  reg     [4:0]   o_read_address,
+    output  reg     [7:0]   o_read_address,
     input   wire    [31:0]  i_read_data,
     input   wire            i_read_data_valid,
     input   wire            i_read_data_ready,
     output  reg             o_write_ce,
-    output  reg     [4:0]   o_write_address,
+    output  reg     [7:0]   o_write_address,
     output  reg     [31:0]  o_write_data,
     input   wire            i_write_done
     );
@@ -533,7 +532,7 @@ module RVDSPCoProc(
             case (state_reg)
                 STATE_FETCH: begin
                     o_imem_read_ce <= 1'b1;
-                    o_imem_address <= pc_reg[4:0];
+                    o_imem_address <= pc_reg[7:0];
                 end
                 
                 STATE_READ_IMEM: begin
@@ -543,14 +542,14 @@ module RVDSPCoProc(
                 
                 STATE_READ_DMEM: begin
                     o_read_ce <= 1'b1;
-                    o_read_address <= dmem_addr[4:0];
+                    o_read_address <= dmem_addr[7:0];
                 end
                 
                 STATE_EXECUTE: begin
                     // if ((opcode == 4'b0011)||(opcode == 4'b1000)) begin
                     if (opcode == 4'b0011) begin
                         o_write_ce <= 1'b1;
-                        o_write_address <= dmem_addr[4:0];
+                        o_write_address <= dmem_addr[7:0];
                         o_write_data <= dmem_wdata;
                     end
                 end
