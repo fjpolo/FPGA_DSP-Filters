@@ -39,7 +39,7 @@ module testbench;
     wire [7:0]  o_data;
 
     // Instantiate the Unit Under Test (UUT)
-    RVDSPCoProc uut (
+    RVDSPCoProc_top uut (
         .i_clk     (i_clk),
         .i_rst_n   (i_rst_n)
     );

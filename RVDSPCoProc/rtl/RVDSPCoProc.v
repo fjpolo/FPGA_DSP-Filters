@@ -29,10 +29,168 @@
 `default_nettype none
 `timescale 1ps/1ps
 
+module RVDSPCoProc_top(
+    input i_clk,
+    input i_rst_n
+);
+
+wire    [31:0]  top_imem_data;
+wire            top_imem_data_valid;
+wire            top_imem_data_ready;
+wire            top_imem_read_ce;
+wire     [4:0] top_imem_address;
+// iMEM
+iMEM i_iMEM(
+    .i_clk(i_clk),
+    .i_rst_n(i_rst_n),
+    .i_read_ce(top_imem_read_ce),
+    .i_address(top_imem_address),
+    .o_data(top_imem_data),
+    .o_data_valid(top_imem_data_valid),
+    .o_data_ready(top_imem_data_ready)
+);
+
+RVDSPCoProc i_RVDSPCoProc(
+    .i_clk(i_clk),
+    .i_rst_n(i_rst_n),
+    .i_imem_data(top_imem_data),
+    .i_imem_data_valid(top_imem_data_valid),
+    .i_imem_data_ready(top_imem_data_ready),
+    .o_imem_read_ce(top_imem_read_ce),
+    .o_imem_address(top_imem_address)
+);
+
+endmodule
+
+module dMEM(
+
+);
+
+endmodule
+
+module iMEM#(
+    parameter DEPTH = 256,
+    parameter DATA_WIDTH = 32,
+    parameter ADDR_WIDTH = 5
+)(
+    input   wire                        i_clk,    // Clock 
+    input   wire                        i_rst_n,  // Active low reset
+    input   wire                        i_read_ce,
+    input   wire    [(ADDR_WIDTH-1):0]  i_address,
+    output  reg     [(DATA_WIDTH-1):0]  o_data,
+    output  reg                         o_data_valid,
+    output  reg                         o_data_ready
+);
+
+    //
+    // Instruction Memory (iMEM) BSRAM 
+    //
+    reg [(DATA_WIDTH-1):0] iMEM [0:(DEPTH-1)] /* syn_ramstyle=block_ram */; 
+    
+    // Hardcoded iMEM Initialization
+    `define TEST_LSETUP
+    `ifdef TEST_LSETUP
+    // Hardcoded iMEM Initialization - LSETUP Test Program
+    integer i;
+    initial begin
+        // Setup: R1=2, R2=3, R3=4, R4=5. Clear Acc.
+        iMEM[0] = 32'h41000002; // MOVE R1, 2
+        iMEM[1] = 32'h42000003; // MOVE R2, 3
+        iMEM[2] = 32'h43000004; // MOVE R3, 4
+        iMEM[3] = 32'h44000005; // MOVE R4, 5
+        iMEM[4] = 32'h90000000; // CLR_ACC
+        
+        // LSETUP: LSETUP R5, LC=3, EndAddr=7
+        // Loop over PC 6 and PC 7 exactly 3 times. Store N=3 in R5.
+        // LSA is PC 5 + 1 = 6.
+        iMEM[5] = 32'hD5030700; // LSETUP R5, 3, 7 
+        
+        // Loop Body (Start Address: PC 6)
+        iMEM[6] = 32'h10120000; // MAC R1, R2 (Acc += 6)
+        iMEM[7] = 32'h10340000; // MAC R3, R4 (Acc += 20) -> Loop End Address (PC 7)
+        
+        // Verification (Program Counter should proceed to PC 8 after 3 iterations)
+        iMEM[8] = 32'h88000000; // READ_ACCL R8 (R8 should be 0x4E or 78)
+        iMEM[9] = 32'h50000009; // JUMP 9 (Halt)
+
+        // Initialize the rest of the memory to NOP (0x00000000)
+        for (i = 10; i < 256; i++) begin 
+            iMEM[i] = 32'h00000000;
+        end        
+    end
+    // ----------------------------------
+    `else
+    // --- Generated from program.hex ---
+    integer i;
+    initial begin
+        iMEM[0] = 32'h41000000;
+        iMEM[1] = 32'h42000000;
+        iMEM[2] = 32'h43000002;
+        iMEM[3] = 32'h90000000;
+        iMEM[4] = 32'hA1230000;
+        iMEM[5] = 32'h64000000;
+        iMEM[6] = 32'h75000000;
+        iMEM[7] = 32'h86000000;
+        iMEM[8] = 32'h41000002;
+        iMEM[9] = 32'h42000002;
+        iMEM[10] = 32'h10120000;
+        iMEM[11] = 32'h48000003;
+        iMEM[12] = 32'h49000003;
+        iMEM[13] = 32'hBA890000;
+        iMEM[14] = 32'h4C00000A;
+        iMEM[15] = 32'h4D000003;
+        iMEM[16] = 32'hCECD0000;
+        iMEM[17] = 32'h50000005;
+
+        // Initialize the rest of the memory to NOP (0x00000000)
+        for (i = 18; i < 256; i++) begin 
+            iMEM[i] = 32'h00000000;
+        end        
+    end
+    // ----------------------------------
+`endif
+
+    // Read
+    always @(posedge i_clk) begin
+        if(!i_rst_n) begin
+            o_data <= 'h0;
+        end else begin
+            if(i_read_ce)
+                o_data <= iMEM[i_address];
+        end
+    end
+
+    // Handshake
+    reg data_valid;
+    reg data_ready;
+    wire addres_valid = (i_address <= 255);
+    always @(posedge i_clk) begin
+        if(!i_rst_n) begin
+            data_valid <= 1'h0;
+            data_ready <= 1'h0;
+        end else begin
+            data_valid <= 1'b0;
+            data_ready <= 1'b0;
+            if((i_read_ce)&&(addres_valid))
+                data_valid <= 1'b1;
+                data_ready <= 1'b1;
+        end
+    end
+    assign o_data_valid = data_valid;
+    assign o_data_ready = data_ready;
+
+endmodule
+
 module RVDSPCoProc(
     // Global Signals
-    input  wire         i_clk,    // Clock 
-    input  wire         i_rst_n  // Active low reset 
+    input   wire            i_clk,    // Clock 
+    input   wire            i_rst_n,  // Active low reset
+    // iMEM
+    input   wire    [31:0]  i_imem_data,
+    input   wire            i_imem_data_valid,
+    input   wire            i_imem_data_ready,
+    output  reg             o_imem_read_ce,
+    output  reg     [4:0]   o_imem_address
     );
 
     // Configuration Constants 
@@ -81,13 +239,14 @@ module RVDSPCoProc(
     /* verilator lint_on UNUSEDSIGNAL */
     
     // FSM States
-    parameter [1:0] 
-        STATE_IDLE      = 2'b00,
-        STATE_FETCH     = 2'b01,
-        STATE_EXECUTE   = 2'b10;
-    reg [1:0] state_reg, state_next; 
+    parameter [2:0] 
+        STATE_IDLE          = 2'b00,
+        STATE_FETCH         = 2'b01,
+        STATE_READ_IMEM     = 2'b10,
+        STATE_EXECUTE       = 2'b11;
+    reg [2:0] state_reg, state_next; 
         
-    // --- NEW: Zero-Overhead Loop Control Registers (LSETUP) ---
+    // Zero-Overhead Loop Control Registers (LSETUP) ---
     // LSETUP Rd, LC (8-bit), EndAddr (8-bit) - Opcode 1101 (D)
     reg [ADDR_BITS-1:0] r_loop_start_addr; // PC + 1 when LSETUP executes (address to jump back to)
     reg [ADDR_BITS-1:0] r_loop_end_addr;   // instruction[15:8] (address of the last instruction in the loop)
@@ -95,78 +254,12 @@ module RVDSPCoProc(
     reg                 r_loop_active;     // 1 when a hardware loop is active
     reg                 loop_setup_en;     // Enable signal to latch LSETUP parameters in sequential block
     localparam [3:0]    OPCODE_LSETUP = 4'b1101; 
-    // --------------------------------------------------------
         
     //
-    // Instruction Memory (iMEM) BSRAM 
+    // Instruction Memory
     //
-    reg [31:0] iMEM [0:255] /* syn_ramstyle=block_ram */; 
-    
-// Hardcoded iMEM Initialization
-`define TEST_LSETUP
-`ifdef TEST_LSETUP
-// Hardcoded iMEM Initialization - LSETUP Test Program
-integer i;
-initial begin
-    // Setup: R1=2, R2=3, R3=4, R4=5. Clear Acc.
-    iMEM[0] = 32'h41000002; // MOVE R1, 2
-    iMEM[1] = 32'h42000003; // MOVE R2, 3
-    iMEM[2] = 32'h43000004; // MOVE R3, 4
-    iMEM[3] = 32'h44000005; // MOVE R4, 5
-    iMEM[4] = 32'h90000000; // CLR_ACC
-    
-    // LSETUP: LSETUP R5, LC=3, EndAddr=7
-    // Loop over PC 6 and PC 7 exactly 3 times. Store N=3 in R5.
-    // LSA is PC 5 + 1 = 6.
-    iMEM[5] = 32'hD5030700; // LSETUP R5, 3, 7 
-    
-    // Loop Body (Start Address: PC 6)
-    iMEM[6] = 32'h10120000; // MAC R1, R2 (Acc += 6)
-    iMEM[7] = 32'h10340000; // MAC R3, R4 (Acc += 20) -> Loop End Address (PC 7)
-    
-    // Verification (Program Counter should proceed to PC 8 after 3 iterations)
-    iMEM[8] = 32'h88000000; // READ_ACCL R8 (R8 should be 0x4E or 78)
-    iMEM[9] = 32'h50000009; // JUMP 9 (Halt)
 
-    // Initialize the rest of the memory to NOP (0x00000000)
-    for (i = 10; i < 256; i++) begin 
-        iMEM[i] = 32'h00000000;
-    end        
-    $display("iMEM loaded with LSETUP test program. Expected R8 = 0x4E.");
-    start_flag = 1'b1;
-end
-// ----------------------------------
-`else
-// --- Generated from program.hex ---
-integer i;
-initial begin
-    iMEM[0] = 32'h41000000;
-    iMEM[1] = 32'h42000000;
-    iMEM[2] = 32'h43000002;
-    iMEM[3] = 32'h90000000;
-    iMEM[4] = 32'hA1230000;
-    iMEM[5] = 32'h64000000;
-    iMEM[6] = 32'h75000000;
-    iMEM[7] = 32'h86000000;
-    iMEM[8] = 32'h41000002;
-    iMEM[9] = 32'h42000002;
-    iMEM[10] = 32'h10120000;
-    iMEM[11] = 32'h48000003;
-    iMEM[12] = 32'h49000003;
-    iMEM[13] = 32'hBA890000;
-    iMEM[14] = 32'h4C00000A;
-    iMEM[15] = 32'h4D000003;
-    iMEM[16] = 32'hCECD0000;
-    iMEM[17] = 32'h50000005;
 
-    // Initialize the rest of the memory to NOP (0x00000000)
-    for (i = 18; i < 256; i++) begin 
-        iMEM[i] = 32'h00000000;
-    end        
-    start_flag = 1'b1;
-end
-// ----------------------------------
-`endif 
     //
     // Data Memory (dMEM) BSRAM 
     //
@@ -210,12 +303,11 @@ end
     always @(posedge  i_clk or negedge  i_rst_n) begin 
         if (! i_rst_n) begin
             gpr[0] <= 32'h0000_0000;
-            // --- NEW: Reset Loop Registers ---
+            // Reset Loop Registers
             r_loop_active     <= 1'b0;
             r_loop_counter    <= 32'h0;
             r_loop_start_addr <= 8'h0;
             r_loop_end_addr   <= 8'h0;
-            // ---------------------------------
         end else begin
             // 1. Single Write (MAC, LOAD, READ_ACC, MOVE, LSETUP)
             if (reg_we_single) begin
@@ -367,8 +459,16 @@ end
         end else begin
             state_reg <= state_next;
             pc_reg    <= pc_next;
+            o_imem_read_ce <= 1'b0;
+            // o_imem_address <= 'h0;
             if (state_reg == STATE_FETCH) begin
-                instruction <= iMEM[pc_reg[ADDR_BITS-1:0]];
+                // instruction <= iMEM[pc_reg[ADDR_BITS-1:0]];
+                o_imem_read_ce <= 1'b1;
+                o_imem_address <= pc_reg[ADDR_BITS-1:0];
+            end
+            if (state_reg == STATE_READ_IMEM) begin
+                if((i_imem_data_valid)&&(i_imem_data_ready))
+                    instruction <= i_imem_data;
             end 
             done_flag <= (state_reg == STATE_EXECUTE) && (state_next == STATE_IDLE);
         end
@@ -401,19 +501,23 @@ end
         
         case (state_reg)
             STATE_IDLE: begin
-                if (start_flag) begin
-                    state_next = STATE_FETCH;
-                    pc_next    = 32'h0000_0000; 
-                end
+                state_next = STATE_FETCH;
+                pc_next    = 32'h0000_0000; 
             end
             
             STATE_FETCH: begin
-                pc_next    = pc_reg + 1; 
-                state_next = STATE_EXECUTE;
+                // pc_next    = pc_reg + 1; 
+                state_next = STATE_READ_IMEM;
+            end
+            
+            STATE_READ_IMEM: begin
+                state_next = STATE_READ_IMEM;
+                if((i_imem_data_valid)&&(i_imem_data_ready))
+                    state_next = STATE_EXECUTE;
             end
             
             STATE_EXECUTE: begin
-                
+                pc_next    = pc_reg + 1; 
                 case (opcode)
                     // MAC Rd, Rs1, Rs2 (Opcode 1)
                     4'b0001: begin 

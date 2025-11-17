@@ -1,5 +1,3 @@
-# assembler.py for RVDSP Co-Processor
-
 import re
 import sys
 
@@ -153,8 +151,13 @@ def assemble_line(line_number, line):
     Assembles a single line of assembly code.
     Returns the 32-bit machine code as an integer.
     """
-    # Remove comments and trim whitespace
+    # --- FIX: Handle both '//' (C-style) and ';' (Assembly-style) comments ---
+    # 1. Split by C-style comment (//) first
+    line = line.split('//')[0] 
+    
+    # 2. Split by Assembly-style comment (;) and trim whitespace
     line = line.split(';')[0].strip()
+    
     if not line:
         return None
 
@@ -194,13 +197,13 @@ def assemble_line(line_number, line):
         if op_val < 0 or op_val > max_val:
             # Note: 20-bit MOVE Imm allows signed, but we check max unsigned here
             if field_name != 'Imm' or op_val < -(1 << (width - 1)) or op_val >= (1 << (width - 1)):
-                 # For 20-bit immediate, allow signed range check for MOVE
+                # For 20-bit immediate, allow signed range check for MOVE
                 if field_name == 'Imm' and mnemonic == 'MOVE':
                     # Value is okay, just needs to fit in 20 bits
                     pass
                 else:
                     raise ValueError(f"Value '{op_val}' for field '{field_name}' exceeds {width}-bit unsigned limit on line {line_number}.")
-        
+            
         # Apply mask and shift
         # The '& max_val' ensures only the lower 'width' bits are used.
         instruction_word |= ((op_val & max_val) << start_bit)
@@ -223,37 +226,36 @@ def assemble(assembly_code):
         except ValueError as e:
             print(f"Assembly Error: {e}", file=sys.stderr)
             # Exit on the first error to keep error messages simple
-            # Alternatively, collect all errors and continue parsing.
             sys.exit(1) 
             
     return machine_code
 
-# --- Example Usage (Commented out for file generation) ---
-# example_code = """
-#     MOVE R1, 10           ; Opcode 4, R1, 10
-#     MOVE R2, 2            ; Opcode 4, R2, 2
-#     CLR_ACC               ; Opcode 9
-#     LSETUP R5, 5, 0x1A    ; Opcode D, R5, N=5, EndAddr=0x1A
-#     MAC R0, R1, R2        ; Opcode 1, R0, R1, R2
-#     JUMP 0x00             ; Opcode 5
-# """
+if __name__ == '__main__':
+    # We expect two arguments: <assembly_file.asm> and <output_file.hex>
+    if len(sys.argv) < 3:
+        print("Usage: python assembler.py <assembly_file.asm> <output_file.hex>", file=sys.stderr)
+        sys.exit(1)
 
-# if __name__ == '__main__':
-#     # You'd typically load this from a file
-#     if len(sys.argv) < 2:
-#         print("Usage: python assembler.py <assembly_file.asm>", file=sys.stderr)
-#         sys.exit(1)
+    input_file_path = sys.argv[1]
+    output_file_path = sys.argv[2]
 
-#     try:
-#         with open(sys.argv[1], 'r') as f:
-#             asm_code = f.read()
-#     except FileNotFoundError:
-#         print(f"Error: File not found: {sys.argv[1]}", file=sys.stderr)
-#         sys.exit(1)
+    try:
+        with open(input_file_path, 'r') as f:
+            asm_code = f.read()
+    except FileNotFoundError:
+        print(f"Error: Input assembly file not found: {input_file_path}", file=sys.stderr)
+        sys.exit(1)
 
-#     code = assemble(asm_code)
+    # 1. Assemble the code
+    code = assemble(asm_code)
     
-#     print("// Machine Code (Verilog $readmemh format):")
-#     for word in code:
-#         # Prints in 8-digit hexadecimal format (32 bits)
-#         print(f"{word:08X}")
+    # 2. Write the machine code to the specified output file in HEX format
+    try:
+        with open(output_file_path, 'w') as f:
+            for word in code:
+                # Prints in 8-digit hexadecimal format (32 bits), followed by a newline
+                f.write(f"{word:08X}\n")
+        print(f"Successfully assembled {len(code)} instructions to '{output_file_path}'.")
+    except Exception as e:
+        print(f"Error writing output file '{output_file_path}': {e}", file=sys.stderr)
+        sys.exit(1)

@@ -1,4 +1,4 @@
-// Initialize registers for LOAD_ACCR test:
+    // Initialize registers for LOAD_ACCR test:
     // R1 (High): 0x00000000
     MOVE R1, 0
     // R2 (Middle): 0x00000000
