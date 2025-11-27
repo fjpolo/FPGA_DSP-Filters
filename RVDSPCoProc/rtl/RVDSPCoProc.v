@@ -2,10 +2,10 @@
 // File        : RVDSPCoProc.v
 // Author      : @fjpolo
 // email       : fjpolo@gmail.com
-// Description : DSP Coprocessor RTL
+// Description : DSP Coprocessor for Audio DSP (hopefully)
 // License     : MIT License
 //
-// Copyright (c) 2025 | @fjpolo
+// Copyright (c) 2025 - 2035 | @fjpolo
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,30 +26,36 @@
 // SOFTWARE.
 // =============================================================================
 
+// Make synth snitch out if you forgot to specify a type
 `default_nettype none
+// For simulation
 `timescale 1ps/1ps
 
+//
+// top
+//
+/* verilator lint_off DECLFILENAME */
 module RVDSPCoProc_top(
-    input wire i_clk,
-    input wire i_rst,
+/* verilator lint_ons DECLFILENAME */
+    input  wire i_clk,
+    input  wire i_rst,
     output wire [1:0] led
 );
-
-wire    [31:0]  top_imem_data/* synthesis syn_keep=1 */;
-wire            top_imem_data_valid/* synthesis syn_keep=1 */;
-wire            top_imem_data_ready/* synthesis syn_keep=1 */;
-wire            top_imem_read_ce/* synthesis syn_keep=1 */;
-wire    [7:0]   top_imem_address/* synthesis syn_keep=1 */; // 8-bit address
-wire            top_dmem_read_ce/* synthesis syn_keep=1 */;
-wire    [7:0]   top_dmem_read_address/* synthesis syn_keep=1 */;
-wire    [31:0]  top_dmem_read_data/* synthesis syn_keep=1 */;
-wire            top_dmem_read_data_valid/* synthesis syn_keep=1 */;
-wire            top_dmem_read_data_ready/* synthesis syn_keep=1 */;
-wire            top_dmem_write_ce/* synthesis syn_keep=1 */;
-wire    [7:0]   top_dmem_write_address/* synthesis syn_keep=1 */;
-wire    [31:0]  top_dmem_write_data/* synthesis syn_keep=1 */;
-wire            top_dmem_write_done/* synthesis syn_keep=1 */;
-// iMEM
+wire    [31:0]  top_imem_data               /* synthesis syn_keep=1 */;
+wire    [0:0]   top_imem_data_valid         /* synthesis syn_keep=1 */;
+wire    [0:0]   top_imem_data_ready         /* synthesis syn_keep=1 */;
+wire    [0:0]   top_imem_read_ce            /* synthesis syn_keep=1 */;
+wire    [7:0]   top_imem_address            /* synthesis syn_keep=1 */;
+wire    [0:0]   top_dmem_read_ce            /* synthesis syn_keep=1 */;
+wire    [7:0]   top_dmem_read_address       /* synthesis syn_keep=1 */;
+wire    [31:0]  top_dmem_read_data          /* synthesis syn_keep=1 */;
+wire    [0:0]   top_dmem_read_data_valid    /* synthesis syn_keep=1 */;
+wire    [0:0]   top_dmem_read_data_ready    /* synthesis syn_keep=1 */;
+wire    [0:0]   top_dmem_write_ce           /* synthesis syn_keep=1 */;
+wire    [7:0]   top_dmem_write_address      /* synthesis syn_keep=1 */;
+wire    [31:0]  top_dmem_write_data         /* synthesis syn_keep=1 */;
+wire    [0:0]   top_dmem_write_done         /* synthesis syn_keep=1 */;
+// Instantiate instruction memory
 iMEM i_iMEM(
     .i_clk(i_clk),
     .i_rst_n(~i_rst),
@@ -58,8 +64,9 @@ iMEM i_iMEM(
     .o_data(top_imem_data),
     .o_data_valid(top_imem_data_valid),
     .o_data_ready(top_imem_data_ready)
-)/* synthesis syn_keep=1 */;
+) /* synthesis syn_keep=1 */;
 
+// Instantiate data memory
 dMEM i_dMEM(
     .i_clk(i_clk),
     .i_rst_n(~i_rst),
@@ -72,8 +79,9 @@ dMEM i_dMEM(
     .i_write_address(top_dmem_write_address),
     .i_write_data(top_dmem_write_data),
     .o_write_done(top_dmem_write_done)
-)/* synthesis syn_keep=1 */;
+) /* synthesis syn_keep=1 */;
 
+// The DSP core itself
 RVDSPCoProc i_RVDSPCoProc(
     .i_clk(i_clk),
     .i_rst_n(~i_rst),
@@ -93,6 +101,7 @@ RVDSPCoProc i_RVDSPCoProc(
     .i_write_done(top_dmem_write_done)
 )/* synthesis syn_keep=1 */;
 
+// Keep GOWIN synth happy, so it doesn't sweep modules in optimization
 assign led[0] = 
                      (|top_imem_data)^
                      (|top_imem_data_valid)^
@@ -108,16 +117,19 @@ assign led[0] =
                      (|top_dmem_write_address)^
                      (|top_dmem_write_data)^
                      (|top_dmem_write_done);
-
+assign led[1] = 'b0;
 endmodule
 
+//
+// dMEM
+//
 module dMEM#(
     parameter DEPTH = 256,
     parameter DATA_WIDTH = 32,
-    parameter ADDR_WIDTH = $clog2(DEPTH) // 8-bit
+    parameter ADDR_WIDTH = $clog2(DEPTH)    // 8-bit
 )(
-    input  wire                 i_clk,     // Clock 
-    input  wire                 i_rst_n,   // Active low reset
+    input  wire                 i_clk,      // Clock 
+    input  wire                 i_rst_n,    // Active low reset
     // READ
     input  wire                 i_read_ce,
     input  wire [(ADDR_WIDTH-1):0] i_read_address,
@@ -130,10 +142,10 @@ module dMEM#(
     input  wire [(DATA_WIDTH-1):0] i_write_data,
     output wire                 o_write_done
 );
-    reg [(DATA_WIDTH-1):0] dMEM [0:DEPTH-1] /* syn_ramstyle=block_ram */; // Corrected range to DEPTH-1
+    reg [(DATA_WIDTH-1):0] dMEM [0:DEPTH-1] /* syn_ramstyle=block_ram */;
     
     // Data Memory Write 
-    always @(posedge  i_clk or negedge  i_rst_n) begin 
+    always @(posedge  i_clk) begin 
         if (! i_rst_n) begin
             // Reset logic for memory data if needed
         end else if (i_write_ce) begin
@@ -143,7 +155,7 @@ module dMEM#(
     end
     
     // Data Memory Read
-    always @(posedge  i_clk or negedge  i_rst_n) begin 
+    always @(posedge  i_clk) begin 
         if (! i_rst_n) begin
             o_read_data <= 32'h0; // Initialize read data
         end else if (i_read_ce) begin
@@ -163,9 +175,10 @@ module dMEM#(
         end else begin
             read_data_valid <= 1'b0;
             read_data_ready <= 1'b0;
-            if((i_read_ce)&&(read_addres_valid))
+            if((i_read_ce)&&(read_addres_valid)) begin
                 read_data_valid <= 1'b1;
                 read_data_ready <= 1'b1;
+            end
         end
     end
     assign o_read_data_valid = read_data_valid;
@@ -184,18 +197,20 @@ module dMEM#(
         end
     end
     assign o_write_done = write_done;
-
 endmodule
 
+//
+// iMEM
+//
 module iMEM#(
     parameter DEPTH = 256,
     parameter DATA_WIDTH = 32,
-    parameter ADDR_WIDTH = $clog2(DEPTH) // <-- FIXED: Was 5, now correctly calculated as 8
+    parameter ADDR_WIDTH = $clog2(DEPTH)
 )(
     input  wire                 i_clk,     // Clock 
     input  wire                 i_rst_n,   // Active low reset
     input  wire                 i_read_ce,
-    input  wire [(ADDR_WIDTH-1):0] i_address, // <-- Port is now 8 bits wide
+    input  wire [(ADDR_WIDTH-1):0] i_address,
     output reg  [(DATA_WIDTH-1):0] o_data,
     output wire                 o_data_valid,
     output wire                 o_data_ready
@@ -205,26 +220,21 @@ module iMEM#(
     // Instruction Memory (iMEM) BSRAM 
     //
     reg [(DATA_WIDTH-1):0] iMEM [0:(DEPTH-1)] /* syn_ramstyle=block_ram */; 
-    
-// --- Generated from program.hex ---
-integer i;
-initial begin
-    iMEM[0] = 32'h44000005;
-    iMEM[1] = 32'h4500000A;
-    iMEM[2] = 32'h46000002;
-    iMEM[3] = 32'h47000003;
-    iMEM[4] = 32'h90000000;
-    iMEM[5] = 32'hF0460000;
+ 
+    integer i;
+    initial begin
+        iMEM[0] = 32'h44000005;
+        iMEM[1] = 32'h4500000A;
+        iMEM[2] = 32'h46000002;
+        iMEM[3] = 32'h47000003;
+        iMEM[4] = 32'h90000000;
+        iMEM[5] = 32'hF0460000;
 
-    // Initialize the rest of the memory to NOP (0x00000000)
-    for (i = 6; i < 256; i++) begin 
-        iMEM[i] = 32'h00000000;
-    end        
-end
-// ----------------------------------
-
-
-
+        // Initialize the rest of the memory to NOP (0x00000000)
+        for (i = 6; i < 256; i++) begin 
+            iMEM[i] = 32'h00000000;
+        end        
+    end
 
     // Read
     always @(posedge i_clk) begin
@@ -247,16 +257,19 @@ end
         end else begin
             data_valid <= 1'b0;
             data_ready <= 1'b0;
-            if((i_read_ce)&&(addres_valid))
+            if((i_read_ce)&&(addres_valid)) begin
                 data_valid <= 1'b1;
                 data_ready <= 1'b1;
+            end
         end
     end
     assign o_data_valid = data_valid;
     assign o_data_ready = data_ready;
-
 endmodule
 
+//
+// RVDSPCoProc - the core itself
+//
 module RVDSPCoProc(
     // Global Signals
     input  wire         i_clk,     // Clock 
@@ -280,8 +293,8 @@ module RVDSPCoProc(
     );
 
     // Configuration Constants 
-    localparam ADDR_BITS       = 8;             // 256 word memory size (iMEM/dMEM)
-    localparam REG_ADDR_BITS   = 4;             // 16 registers
+    localparam ADDR_BITS       = 8; // 256 word memory size (iMEM/dMEM)
+    localparam REG_ADDR_BITS   = 4; // 16 registers
     localparam REG_COUNT       = 1 << REG_ADDR_BITS;
     
     // Core Pipeline Signals - Single-Cycle FSM
@@ -308,12 +321,12 @@ module RVDSPCoProc(
     wire [31:0] mac_op1, mac_op2; 
     // The new term that is actually added to the accumulator: zeroed out if not MAC.
     wire [95:0] mac_add_term_96; 
-    wire [95:0] mac_sum_96; // Combinatorial Accumulation Result (96-bit)
-    reg [95:0]  r_mac_accum_next_96; // Accumulator next state (used for CLR/LOAD)
+    wire [95:0] mac_sum_96;             // Combinatorial Accumulation Result (96-bit)
+    reg [95:0]  r_mac_accum_next_96;    // Accumulator next state (used for CLR/LOAD)
 
     // Data Memory Signals
     reg [ADDR_BITS-1:0] dmem_addr;  
-    reg [31:0]          dmem_rdata;          // <-- This REG is now only updated sequentially
+    reg [31:0]          dmem_rdata;
     reg [31:0]          dmem_wdata; 
     reg                 dmem_we;     
     reg                 dmem_re;     
@@ -335,7 +348,7 @@ module RVDSPCoProc(
         STATE_WRITE_DMEM = 3'h6;
     reg [2:0] state_reg, state_next; 
         
-    // Zero-Overhead Loop Control Registers (LSETUP) ---
+    // Zero-Overhead Loop Control Registers - LSETUP
     // LSETUP Rd, LC (8-bit), EndAddr (8-bit) - Opcode 1101 (D)
     reg [ADDR_BITS-1:0] r_loop_start_addr; // PC + 1 when LSETUP executes (address to jump back to)
     reg [ADDR_BITS-1:0] r_loop_end_addr;   // instruction[15:8] (address of the last instruction in the loop)
@@ -355,7 +368,7 @@ module RVDSPCoProc(
     //
     reg [31:0] gpr [0:REG_COUNT-1]; 
     
-    // Register Read (Combinational)
+    // Register Read - Comb
     assign reg_rdata1 = gpr[rs1_addr];
     assign reg_rdata2 = gpr[rs2_addr];
 
@@ -365,7 +378,7 @@ module RVDSPCoProc(
     wire [31:0] reg_rdata_l = gpr[rs2_addr]; // Rs2 field holds Rs_L
     
     // Register Write - Handles single (LOAD, READ_ACC, MOVE, MAC) and double (MUL/DIV) writes
-    always @(posedge  i_clk or negedge  i_rst_n) begin 
+    always @(posedge  i_clk) begin 
         if (! i_rst_n) begin
             gpr[0] <= 32'h0000_0000;
             // Reset Loop Registers
@@ -441,7 +454,7 @@ module RVDSPCoProc(
     reg [95:0] r_mac_accum_96;   // Accumulator register (96-bit)
     
     // Sequential block for Products and Accumulator
-    always @(posedge i_clk or negedge i_rst_n) begin
+    always @(posedge i_clk) begin
         if(!i_rst_n) begin
             r_mac_accum_96 <= 96'h0; 
             r_mac_product_64 <= 64'h0;
@@ -486,7 +499,7 @@ module RVDSPCoProc(
     assign mac4_product2 = $signed(reg_rdata2) * $signed(reg_rdata2);
     assign mac4_sum_96 = r_mac_accum_96 + {{32{mac4_product1[63]}}, mac4_product1} + {{32{mac4_product2[63]}}, mac4_product2};
 
-    // Accumulator Next State Logic (Combinatorial)
+    // Accumulator Next State Logic - Comb
     always @* begin
         r_mac_accum_next_96 = r_mac_accum_96; // Default: hold value
 
@@ -507,7 +520,7 @@ module RVDSPCoProc(
     end
 
     //
-    // Division Unit (Combinatorial)
+    // Division Unit - Comb
     //
     // Rs1 = Dividend, Rs2 = Divisor
     // We use the $signed operator to perform signed division.
@@ -524,8 +537,8 @@ module RVDSPCoProc(
     // Control Unit (FSM, PC, Decode, Execute) 
     //
     
-    // FSM State Logic (Sequential Block)
-    always @(posedge  i_clk or negedge  i_rst_n) begin 
+    // FSM State Logic - Seq
+    always @(posedge  i_clk) begin 
         if (! i_rst_n) begin
             state_reg <= STATE_IDLE;
             pc_reg    <= 32'h0000_0000;
@@ -573,13 +586,14 @@ module RVDSPCoProc(
                         o_write_data <= dmem_wdata;
                     end
                 end
+                default: begin end
             endcase
             
             done_flag <= ((state_reg == STATE_EXECUTE)&&(state_next == STATE_IDLE)||(state_reg == STATE_WRITE_DMEM)&&(state_next == STATE_IDLE));
         end
     end
     
-    // Next State Logic (Combinational Block)
+    // Next State Logic - Comb
     always @* begin 
         state_next = state_reg;
         pc_next    = pc_reg;    
@@ -802,5 +816,4 @@ module RVDSPCoProc(
             end
         endcase
     end
-
 endmodule
